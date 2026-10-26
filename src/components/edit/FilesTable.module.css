@@ -1,0 +1,299 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Upload-Feld */
+.upload {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 84px;
+  padding: 12px 16px;
+  border-radius: var(--radius-4);
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.upload:hover,
+.dragging {
+  background: var(--color-primary-tint);
+}
+
+.upload:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.uploadBorder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.uploadBorder rect {
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-dasharray: 14 10;
+}
+
+.dragging .uploadBorder rect {
+  animation: march 600ms linear infinite;
+}
+
+@keyframes march {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.uploadTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-primary);
+}
+
+.uploadTitle img {
+  margin: 0 2px;
+}
+
+.uploadHint {
+  color: var(--text-disabled);
+}
+
+/* Werkzeugleiste und Suche */
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 6px;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 300px;
+  max-width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #596978;
+  border-radius: 3px;
+  cursor: text;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.016px;
+  color: var(--text-high-emphasis);
+}
+
+.search input::placeholder {
+  color: var(--text-high-emphasis);
+}
+
+/* Tabelle: «Hochgeladen» und Aktionen fix, «Name» und «OCR» teilen sich den Rest (Figma-Notiz) */
+.grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) 190px 160px;
+  align-items: center;
+  min-height: 44px;
+  border-left: 1px solid var(--border-high-emphasis);
+  border-right: 1px solid var(--border-high-emphasis);
+  border-bottom: 1px solid var(--border-high-emphasis);
+  background: var(--color-white);
+  animation: row-in 300ms var(--ease-out);
+  transition: background-color 150ms ease;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.row:not(.head):hover,
+.selectedRow {
+  background: var(--color-textfield-grey);
+}
+
+.head {
+  height: 44px;
+  border: 0;
+  border-bottom: 2px solid var(--border-high-emphasis);
+  border-radius: var(--radius-4) var(--radius-4) 0 0;
+  background: var(--border-default);
+  animation: none;
+}
+
+.checkCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.checkbox {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 2px solid var(--color-primary);
+  border-radius: 1px;
+  background: var(--color-white) center / 14px no-repeat;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.checkbox:checked {
+  background-color: var(--color-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7.5l3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.checkbox:indeterminate {
+  background-color: var(--color-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7h8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.checkbox:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.nameHead {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 16px;
+  text-align: left;
+  color: var(--text-high-emphasis);
+}
+
+.nameHead img {
+  transition: transform 250ms var(--ease-out);
+}
+
+.descending img {
+  transform: rotate(180deg);
+}
+
+.nameWide {
+  grid-column: span 2;
+}
+
+.nameCell,
+.ocrCell,
+.dateCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 16px;
+}
+
+.cellText {
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.016px;
+  color: var(--text-high-emphasis);
+  min-width: 0;
+}
+
+.analysing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: row-in 300ms var(--ease-out);
+}
+
+.spinner {
+  margin: 0 3px;
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.empty {
+  padding: 16px;
+  border: 1px solid var(--border-high-emphasis);
+  border-top: 0;
+  color: var(--text-disabled);
+  font-size: 14px;
+}
+
+@media (max-width: 800px) {
+  .row {
+    grid-template-columns: 44px minmax(0, 1fr) auto 152px;
+  }
+
+  .nameHead {
+    grid-column: span 1;
+  }
+
+  .ocrCell {
+    padding: 0 8px;
+  }
+
+  .dateCell {
+    display: none;
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+}

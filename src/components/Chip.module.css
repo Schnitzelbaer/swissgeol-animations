@@ -21,6 +21,26 @@
   background: var(--border-default);
 }
 
+.white {
+  background: var(--color-white);
+}
+
+.review {
+  background: #b45309;
+  border-color: #b45309;
+  color: var(--color-white);
+}
+
+/* Kleiner Chip (24px, 12px Schrift) für Sprachen im Inhaltsverzeichnis */
+.small {
+  height: 24px;
+  padding: 0 4.6px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+}
+
 .separator {
   align-self: stretch;
   display: flex;

@@ -1,0 +1,43 @@
+.bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 56px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  background: var(--color-white);
+  border-top: 1px solid var(--border-default);
+  filter: drop-shadow(0 -4px 2px rgba(0, 0, 0, 0.05)) drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.03));
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #d8232a;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition:
+    opacity 250ms ease,
+    transform 300ms var(--ease-out);
+}
+
+.dirty {
+  opacity: 1;
+  transform: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.actions button:disabled {
+  opacity: 0.45;
+}

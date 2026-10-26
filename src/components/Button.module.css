@@ -37,6 +37,26 @@
   flex-shrink: 0;
 }
 
+/* 28px-Variante für Tabellenaktionen */
+.small.iconOnly {
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Deaktiviert: grauer Rahmen und Text */
+.disabled {
+  border: 1px solid var(--text-disabled);
+  color: var(--text-disabled);
+  cursor: default;
+}
+
 .round {
   border-radius: 30px;
 }

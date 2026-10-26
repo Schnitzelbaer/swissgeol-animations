@@ -4,6 +4,7 @@ import { Chip } from '../Chip'
 import { Section } from './Section'
 import { DocumentCard } from './DocumentCard'
 import { asset } from '../../data/asset'
+import { useStore } from '../../data/store'
 import styles from './PreviewPanel.module.css'
 import closeIcon from '../../assets/icons/close.svg'
 import linkIcon from '../../assets/icons/link.svg'
@@ -34,10 +35,17 @@ function LabeledValue({ label, value }: { label: string; value: string }) {
 type Props = {
   open: boolean
   onClose: () => void
+  onOpenDocument: (fileId: string, page?: number) => void
+  openTocs: string[]
+  onToggleToc: (fileId: string) => void
+  onEdit: () => void
 }
 
-export function PreviewPanel({ open, onClose }: Props) {
+export function PreviewPanel({ open, onClose, onOpenDocument, openTocs, onToggleToc, onEdit }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { files } = useStore()
+  const documents = files.filter((file) => !file.legal)
+  const legal = files.filter((file) => file.legal)
 
   // Beim erneuten Öffnen wieder oben beginnen
   useEffect(() => {
@@ -55,15 +63,23 @@ export function PreviewPanel({ open, onClose }: Props) {
         <div className={styles.content}>
           <div className={styles.group} style={{ gap: 16 }}>
             <Section title="Dokumente" gap={6}>
-              {asset.documents.map((file) => (
-                <DocumentCard key={file.name} file={file} />
+              {documents.map((file) => (
+                <DocumentCard
+                  key={file.id}
+                  file={file}
+                  tocOpen={openTocs.includes(file.id)}
+                  onToggleToc={() => onToggleToc(file.id)}
+                  onOpen={(page) => onOpenDocument(file.id, page)}
+                />
               ))}
             </Section>
-            <Section title="Rechtliche Einwilligungen">
-              {asset.legal.map((file) => (
-                <DocumentCard key={file.name} file={file} />
-              ))}
-            </Section>
+            {legal.length > 0 && (
+              <Section title="Rechtliche Einwilligungen">
+                {legal.map((file) => (
+                  <DocumentCard key={file.id} file={file} showToc={false} onOpen={(page) => onOpenDocument(file.id, page)} />
+                ))}
+              </Section>
+            )}
           </div>
 
           <hr className={styles.divider} />
@@ -159,7 +175,7 @@ export function PreviewPanel({ open, onClose }: Props) {
         <Button variant="secondary" grow icon={copyIcon} label="Direktlink" />
         <Button variant="secondary" grow icon={exportIcon} label="Export" />
         <Button variant="secondary" grow icon={duplicateIcon} label="Duplizieren" />
-        <Button variant="primary" grow icon={editIcon} label="Bearbeiten" />
+        <Button variant="primary" grow icon={editIcon} label="Bearbeiten" onClick={onEdit} />
       </footer>
     </aside>
   )

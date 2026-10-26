@@ -1,0 +1,309 @@
+.viewer {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: #46596b;
+}
+
+/* Inhaltsverzeichnis («Tab Navigation PDF Modal») */
+.toc {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  background: var(--color-white);
+  transition: width 400ms var(--ease-out);
+}
+
+.tocOpen .toc {
+  width: 380px;
+}
+
+.tocInner {
+  width: 380px;
+  height: 100%;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-default);
+}
+
+.tocList,
+.groupEntries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  padding-right: 16px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--color-white);
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.035px;
+  color: var(--text-high-emphasis);
+  transition: background-color 150ms ease;
+}
+
+.row:hover {
+  background: var(--color-textfield-grey);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Aktiver Eintrag: grauer Hintergrund, Balken links, fette grüne Schrift. Mehrere können aktiv sein. */
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #2e859d;
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition:
+    opacity 200ms ease,
+    transform 250ms var(--ease-out);
+}
+
+.active {
+  background: var(--color-textfield-grey);
+}
+
+.active::before {
+  opacity: 1;
+  transform: none;
+}
+
+.active .entryTitle {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.topLevel {
+  gap: 12px;
+  padding-left: 38px;
+}
+
+.groupRow {
+  padding: 5px 16px 5px 8px;
+}
+
+.groupChevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.groupChevron img {
+  transition: transform 250ms var(--ease-out);
+}
+
+.groupCollapsed .groupChevron img {
+  transform: rotate(-90deg);
+}
+
+.groupCollapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 300ms var(--ease-out);
+}
+
+.groupCollapsed .groupCollapse {
+  grid-template-rows: 0fr;
+}
+
+.groupEntries {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.entry {
+  gap: 12px;
+  padding: 10px 16px 10px 54px;
+}
+
+.entryTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  transition: color 150ms ease;
+}
+
+.entryMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pages {
+  color: var(--text-disabled);
+  white-space: nowrap;
+}
+
+/* Datei-Viewer */
+.area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-left: 1px solid var(--border-default);
+}
+
+.tocToggle {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--color-primary);
+  border-radius: 0 0 var(--radius-4) 0;
+  box-shadow: var(--shadow-bottom);
+  transition: background-color 150ms ease;
+}
+
+.tocToggle:hover {
+  background: var(--color-primary-hover);
+}
+
+.tocToggle img {
+  transform: scaleX(-1);
+  transition: transform 300ms var(--ease-out);
+}
+
+.tocOpen .tocToggle img {
+  transform: none;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  background: var(--color-white);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-4);
+  filter: drop-shadow(4px 4px 1px rgba(0, 0, 0, 0.12));
+}
+
+.topControls {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.zoomCard {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card button:disabled {
+  opacity: 0.35;
+}
+
+.pagination {
+  position: absolute;
+  z-index: 2;
+  right: 16px;
+  bottom: 16px;
+  gap: 4px;
+}
+
+.pageInput {
+  width: 52px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #596978;
+  border-radius: var(--radius-4);
+  font: inherit;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.016px;
+  color: var(--text-high-emphasis);
+  text-align: right;
+}
+
+.pageInput:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+.total {
+  margin: 0 2px 0 2px;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--color-white);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.error {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--color-white);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 800px) {
+  .toc {
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .tocOpen .toc,
+  .tocInner {
+    width: min(300px, 75vw);
+  }
+
+  .tocToggle {
+    z-index: 5;
+    transition:
+      background-color 150ms ease,
+      transform 400ms var(--ease-out);
+  }
+
+  .tocOpen .tocToggle {
+    transform: translateX(min(300px, 75vw));
+  }
+}

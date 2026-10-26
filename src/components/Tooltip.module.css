@@ -1,0 +1,35 @@
+.tooltip {
+  position: fixed;
+  z-index: 1000;
+  padding: 5px 8px;
+  background: var(--text-high-emphasis);
+  color: var(--color-white);
+  border-radius: var(--radius-4);
+  filter: drop-shadow(4px 4px 1px rgba(0, 0, 0, 0.12));
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0.048px;
+  font-weight: 400;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 150ms ease,
+    transform 200ms var(--ease-out);
+}
+
+.bottom {
+  transform: translateY(-4px);
+}
+
+.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

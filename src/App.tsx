@@ -1,58 +1,24 @@
-import { useCallback, useEffect, useState, type CSSProperties } from 'react'
-import { Header } from './components/Header'
-import { Sidebar } from './components/Sidebar'
-import { MapView } from './components/map/MapView'
-import { TableBar } from './components/TableBar'
-import { PreviewPanel } from './components/preview/PreviewPanel'
-import styles from './App.module.css'
-
-const PANEL_WIDTH = 540
-
-/** Ab dieser Breite liegt das Panel neben der Karte (Figma-Layout), darunter überdeckt es sie */
-const WIDE_QUERY = '(min-width: 1101px)'
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
-  useEffect(() => {
-    const media = window.matchMedia(query)
-    const onChange = () => setMatches(media.matches)
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [query])
-  return matches
-}
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { MapPage } from './pages/MapPage'
+import { EditPage } from './pages/EditPage'
+import { DocumentViewerHost } from './components/viewer/DocumentViewerHost'
+import { asset } from './data/asset'
 
 export default function App() {
-  const [panelOpen, setPanelOpen] = useState(true)
-  const wide = useMediaQuery(WIDE_QUERY)
-  const panelOffset = panelOpen && wide ? PANEL_WIDTH : 0
-
-  const openPanel = useCallback(() => setPanelOpen(true), [])
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setPanelOpen(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
-
-  const mainStyle = {
-    '--panel-width': `${PANEL_WIDTH}px`,
-    '--panel-offset': `${panelOffset}px`,
-  } as CSSProperties
-
   return (
-    <div className={styles.app}>
-      <Header />
-      <div className={styles.body}>
-        <Sidebar />
-        <main className={styles.main} style={mainStyle}>
-          <MapView panelOffset={panelOffset} onAssetClick={openPanel} />
-          <TableBar />
-          <PreviewPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
-        </main>
-      </div>
-    </div>
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to={`/asset/${asset.id}`} replace />} />
+        {/* Gemeinsames Layout, damit die Karte beim Öffnen und Schliessen des Panels erhalten bleibt */}
+        <Route element={<MapPage />}>
+          <Route path="/map" element={null} />
+          <Route path="/asset/:assetId" element={null} />
+        </Route>
+        <Route path="/asset/:assetId/edit" element={<Navigate to="files" replace />} />
+        <Route path="/asset/:assetId/edit/:section" element={<EditPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <DocumentViewerHost />
+    </>
   )
 }

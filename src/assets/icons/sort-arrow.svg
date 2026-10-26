@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon/ArrowDown">
+<g id="Vector">
+<path d="M2.6655 8.1145L6.1875 10.1475L9.7095 8.1145L9.522 7.79L6.375 9.606V2.0125H6V9.606L2.853 7.79L2.6655 8.1145Z" fill="#46596B"/>
+<mask id="stroke0_0_3149" maskUnits="userSpaceOnUse" x="1.6655" y="1.0125" width="9" height="10" fill="black">
+<rect fill="white" x="1.6655" y="1.0125" width="9" height="10"/>
+<path d="M2.6655 8.1145L6.1875 10.1475L9.7095 8.1145L9.522 7.79L6.375 9.606V2.0125H6V9.606L2.853 7.79L2.6655 8.1145Z"/>
+</mask>
+<path d="M2.6655 8.1145L6.1875 10.1475L9.7095 8.1145L9.522 7.79L6.375 9.606V2.0125H6V9.606L2.853 7.79L2.6655 8.1145Z" stroke-width="0.5" stroke="#46596B" mask="url(#stroke0_0_3149)"/>
+</g>
+</g>
+</svg>
