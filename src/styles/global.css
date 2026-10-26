@@ -1,0 +1,121 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/700.css';
+@import 'ol/ol.css';
+
+/* Design-Tokens aus der swissgeol-Figma-Datei */
+:root {
+  --color-primary: #337083;
+  --color-primary-hover: #2a5d6d;
+  --color-primary-tint: rgba(51, 112, 131, 0.08);
+  --color-bg-grey: #f1f3f5;
+  --color-textfield-grey: #f8f9fa;
+  --color-white: #ffffff;
+
+  --border-default: #dfe4e9;
+  --border-high-emphasis: #acb4bd;
+
+  --text-high-emphasis: #1c2834;
+  --text-medium-emphasis: #2f4356;
+  --text-disabled: #828e9a;
+  --text-invert: #ffffff;
+
+  --green-700: #047857;
+  --teal-500: #14afb8;
+  --teal-900: #13474e;
+  --blue-500: #3b82f6;
+  --blue-900: #1e3a8a;
+  --amber-500: #f59e0b;
+  --yellow-900: #78350f;
+
+  --radius-4: 4px;
+  --radius-8: 8px;
+
+  --shadow-overlay: 4px 4px 2px rgba(0, 0, 0, 0.12);
+  --shadow-bottom: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 4px 10px -1px rgba(0, 0, 0, 0.08);
+  --shadow-top: 0 -2px 4px -1px rgba(0, 0, 0, 0.03), 0 -4px 4px 0 rgba(0, 0, 0, 0.05);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text-high-emphasis);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-white);
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+}
+
+p {
+  margin: 0;
+}
+
+/* Typografie-Stile (ob/…) */
+.body2-bold {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.016px;
+}
+
+.body3 {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0.035px;
+}
+
+.body3-medium {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.035px;
+}
+
+.body3-bold {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 0.035px;
+}
+
+.button-text {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.21px;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

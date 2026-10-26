@@ -1,0 +1,35 @@
+/* Figma zeichnet den 1.4px-Rahmen innen; feste Höhe, weil Browser die Rahmenbreite auf ganze Pixel runden */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 6.6px;
+  border: 1.4px solid var(--border-default);
+  border-radius: 6px;
+  white-space: nowrap;
+  color: var(--text-high-emphasis);
+}
+
+.success {
+  background: var(--green-700);
+  border-color: var(--green-700);
+  color: var(--color-white);
+}
+
+.neutral {
+  background: var(--border-default);
+}
+
+.separator {
+  align-self: stretch;
+  display: flex;
+  padding: 6px 0;
+}
+
+.separator::before {
+  content: '';
+  width: 1px;
+  border-radius: 3px;
+  background: var(--border-default);
+}

@@ -1,0 +1,58 @@
+/* Figma zeichnet Rahmen innen; Abstände sind deshalb um die Rahmenbreite (1px) reduziert */
+.section {
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-8);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 51px;
+  padding: 0 8px 0 15px;
+  background: var(--color-bg-grey);
+  text-align: left;
+  transition: background-color 150ms ease;
+}
+
+.header:hover {
+  background: #e8ebee;
+}
+
+.header:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 350ms var(--ease-out);
+}
+
+.open .collapse {
+  grid-template-rows: 1fr;
+}
+
+.clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 15px 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 250ms ease,
+    transform 350ms var(--ease-out);
+}
+
+.open .content {
+  opacity: 1;
+  transform: none;
+}

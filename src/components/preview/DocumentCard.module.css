@@ -1,0 +1,147 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-4);
+  overflow: hidden;
+  transition: box-shadow 200ms ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-bottom);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+}
+
+.file {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fileIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.name {
+  min-width: 0;
+}
+
+.nameGrow {
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Trennlinie liegt in Figma ohne eigene Höhe zwischen den Zeilen */
+.divider {
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--border-default);
+  margin-top: -1px;
+}
+
+.contentRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.contentRow:not(:has(.contentLabel)) {
+  gap: 4px;
+}
+
+.multiline {
+  align-items: flex-start;
+}
+
+.contentLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/* Bei mehrzeiliger Inhaltsangabe ragt der Pfeil-Button über die 28px-Zeile hinaus */
+.multiline .contentLabel {
+  height: 28px;
+}
+
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-4);
+  transition: background-color 150ms ease;
+}
+
+.contentLabel:hover .chevron {
+  background: var(--color-primary-tint);
+}
+
+.lines {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chipLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Schmale Bildschirme: Aktionen und Inhaltsangabe rutschen auf eigene Zeilen */
+@media (max-width: 600px) {
+  .row {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .file {
+    flex-basis: 100%;
+  }
+
+  .name,
+  .nameGrow {
+    flex: 1 1 auto;
+    min-width: 64px;
+  }
+
+  .actions {
+    margin-left: 40px;
+  }
+
+  .lines {
+    flex-basis: 100%;
+  }
+}

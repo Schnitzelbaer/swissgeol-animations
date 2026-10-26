@@ -1,0 +1,184 @@
+.panel {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: var(--panel-width);
+  max-width: 100%;
+  background: var(--color-white);
+  border-left: 1px solid var(--border-default);
+  transform: translateX(100%);
+  transition:
+    transform 450ms var(--ease-out),
+    box-shadow 450ms ease;
+}
+
+.open {
+  transform: none;
+}
+
+/* Titel – Preview */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 68px;
+  flex-shrink: 0;
+  padding: 0 16px 0 28px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.title h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border: 3px solid var(--color-white);
+  border-radius: 6px;
+}
+
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--border-high-emphasis);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.divider {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--border-default);
+}
+
+.rule {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--border-default);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.statusRow {
+  display: flex;
+  gap: 8px;
+}
+
+.statusCard {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 13px 15px 15px;
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-4);
+}
+
+.columns {
+  display: flex;
+  align-items: flex-start;
+}
+
+.labeled {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--text-disabled);
+}
+
+.contactGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reference {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 8px;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-underline-position: from-font;
+  transition: color 150ms ease;
+}
+
+.reference:hover {
+  color: var(--color-primary-hover);
+}
+
+.reference img {
+  flex-shrink: 0;
+}
+
+/* Fusszeile mit Aktionen */
+.footer {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 68px;
+  padding: 15px 16px 16px;
+  background: var(--color-white);
+  border-top: 1px solid var(--border-default);
+  box-shadow: var(--shadow-top);
+}
+
+@media (max-width: 1100px) {
+  .open {
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: 16px;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    height: auto;
+  }
+
+  .footer > button {
+    flex-basis: calc(50% - 3px);
+  }
+}

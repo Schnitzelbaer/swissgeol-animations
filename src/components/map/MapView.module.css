@@ -1,0 +1,28 @@
+.root {
+  position: absolute;
+  inset: 0;
+}
+
+.map {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-grey);
+}
+
+/* Quellenangabe swisstopo, dezent über der Tabellenleiste (doppelte Klasse schlägt .ol-attribution.ol-uncollapsible) */
+.attribution.attribution {
+  top: auto;
+  right: auto;
+  left: 16px;
+  bottom: 76px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-4);
+}
+
+.attribution ul {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--text-medium-emphasis);
+  padding: 1px 6px;
+}

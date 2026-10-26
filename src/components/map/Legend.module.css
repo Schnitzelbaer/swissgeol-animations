@@ -1,0 +1,82 @@
+.legend {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 16px;
+  width: 179px;
+  background: var(--color-white);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px;
+  background: var(--color-bg-grey);
+  border-bottom: 1px solid transparent;
+  transition: border-color 250ms ease;
+}
+
+.open .header {
+  border-bottom-color: var(--border-default);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toggle img {
+  transform: rotate(180deg);
+  transition: transform 300ms var(--ease-out);
+}
+
+.open .toggle img {
+  transform: rotate(0deg);
+}
+
+/* Auf- und Zuklappen über grid-template-rows, damit die Höhe animierbar ist */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms var(--ease-out);
+}
+
+.open .collapse {
+  grid-template-rows: 1fr;
+}
+
+.items {
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0 16px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.items::before,
+.items::after {
+  content: '';
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.items::after {
+  height: 9px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}

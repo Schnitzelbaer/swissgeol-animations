@@ -1,0 +1,108 @@
+.header {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 500px) 1fr;
+  align-items: center;
+  gap: 16px;
+  height: 88px;
+  padding: 0 16px;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Logo-Wortmarke: «assets» ist in Figma über ein Raster neben «swissgeol» gesetzt */
+.logo {
+  position: relative;
+  display: block;
+  width: 131.37px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.logoAssets {
+  position: absolute;
+  left: 66.62px;
+  top: 16.39px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 6px 12px;
+  background: var(--color-textfield-grey);
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 6px;
+  cursor: text;
+  transition: background-color 150ms ease;
+}
+
+.search:hover,
+.search:focus-within {
+  background: var(--color-bg-grey);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.016px;
+  color: var(--text-high-emphasis);
+}
+
+.searchInput::placeholder {
+  color: var(--text-medium-emphasis);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.version {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  color: var(--text-disabled);
+}
+
+.lang {
+  background: var(--color-white);
+}
+
+@media (max-width: 900px) {
+  .header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .version {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .logoAssets,
+  .brand > button {
+    display: none;
+  }
+
+  .logo {
+    width: 61px;
+  }
+}

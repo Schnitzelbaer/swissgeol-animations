@@ -1,0 +1,82 @@
+.controls {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: calc(var(--panel-offset) + 16px);
+  bottom: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+  transition: right 450ms var(--ease-out);
+}
+
+.controls > * {
+  pointer-events: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  background: var(--color-bg-grey);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-overlay);
+}
+
+.basemap {
+  display: block;
+  border: 3px solid var(--color-bg-grey);
+  border-radius: 30px;
+  box-shadow: var(--shadow-overlay);
+  transition: transform 200ms var(--ease-out);
+}
+
+.basemap:hover {
+  transform: scale(1.06);
+}
+
+.basemap:active {
+  transform: scale(0.96);
+}
+
+.basemap:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Vorschaubild: 50px-Kreis, Bildausschnitt wie in Figma (77×100, versetzt um -11/-25) */
+.thumb {
+  position: relative;
+  display: block;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.thumbGrey {
+  position: absolute;
+  left: -11px;
+  top: -25px;
+  width: 77px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.thumbColor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+.thumbColor.visible {
+  opacity: 1;
+}
