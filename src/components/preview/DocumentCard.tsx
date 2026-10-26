@@ -1,12 +1,12 @@
 import { Button, ButtonLink } from '../Button'
 import { Chip } from '../Chip'
-import type { MouseEvent } from 'react'
 import { TruncatedText } from '../Tooltip'
 import { CLASSES_WITHOUT_LANGUAGE, fileLanguages, groupSections, pageRange, sectionTitle, type AssetFile } from '../../data/files'
 import styles from './DocumentCard.module.css'
 import pdfIcon from '../../assets/icons/filetype-pdf.svg'
 import csvIcon from '../../assets/icons/filetype-csv.svg'
 import downloadIcon from '../../assets/icons/download.svg'
+import eyeIcon from '../../assets/icons/eye.svg'
 import chevronRightIcon from '../../assets/icons/chevron-right.svg'
 
 type Props = {
@@ -26,27 +26,17 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
   const meta = [file.size, file.pages ? `${file.pages} Seiten` : null, languages.length ? languages.join(', ') : null].filter(Boolean) as string[]
   const withToc = showToc && groups.length > 0
   const isPdf = file.format === 'PDF'
-  const openable = Boolean(file.url)
 
-  // Klick irgendwo auf den Eintrag öffnet den Viewer, ausser auf Download, Pfeil und Inhaltsverzeichnis-Einträgen
-  const handleClick = (event: MouseEvent<HTMLElement>) => {
-    if (!openable) return
-    if ((event.target as HTMLElement).closest('a, button, input, select, textarea, [role="button"]')) return
-    onOpen()
-  }
-
+  // Der Eintrag selbst ist nicht klickbar; geöffnet wird über das Auge oder einen Inhaltsverzeichnis-Eintrag
   return (
-    <article className={`${styles.item} ${tocOpen ? styles.tocOpen : ''} ${openable ? styles.openable : ''}`} onClick={handleClick}>
+    <article className={`${styles.item} ${tocOpen ? styles.tocOpen : ''}`}>
       <div className={styles.head}>
         <div className={styles.row}>
           <div className={styles.file}>
             <span className={`${styles.badge} ${isPdf ? styles.pdf : styles.csv}`}>
               <img src={isPdf ? pdfIcon : csvIcon} alt={file.format === 'PDF' ? 'PDF' : 'CSV'} />
             </span>
-            {/* Der Name ist der fokussierbare Auslöser für Tastatur und Screenreader */}
-            <button type="button" className={styles.nameButton} disabled={!openable} onClick={() => onOpen()} aria-label={`${file.name} anzeigen`}>
-              <TruncatedText text={file.name} className={`${styles.name} body3-medium`} />
-            </button>
+            <TruncatedText text={file.name} className={`${styles.name} body3-medium`} />
           </div>
           <div className={styles.actions}>
             {file.url ? (
@@ -54,6 +44,7 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
             ) : (
               <Button icon={downloadIcon} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
             )}
+            <Button icon={eyeIcon} aria-label={`${file.name} anzeigen`} tooltip="Anzeigen" disabled={!file.url} onClick={() => onOpen()} />
           </div>
         </div>
         <p className={`${styles.meta} body3-medium`}>

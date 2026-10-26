@@ -1,48 +1,10 @@
 /* Datei-Eintrag ohne eigenen Rahmen; Einträge werden im Abschnitt durch Linien getrennt.
    Seitlich 27px, weil der 1px-Rahmen des Abschnitts in Figma innen liegt (28px ab Aussenkante). */
 .item {
-  position: relative;
-  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px 27px;
-}
-
-/* Hover in der Farbe der Button-Hovers, seitlich eingerückt statt bis an den Rand */
-.item::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 4px 11px;
-  border-radius: var(--radius-4);
-  background: var(--color-primary-tint);
-  opacity: 0;
-  transition: opacity 200ms ease;
-}
-
-.openable {
-  cursor: pointer;
-}
-
-.openable:hover::before {
-  opacity: 1;
-}
-
-.nameButton {
-  display: flex;
-  min-width: 0;
-  text-align: left;
-  border-radius: 2px;
-}
-
-.nameButton:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.nameButton:disabled {
-  cursor: default;
 }
 
 .head {
