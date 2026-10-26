@@ -7,10 +7,12 @@ type Props = {
   /** Abstand unter dem Inhalt (Figma: meist 16px, bei «Verweise» 20px) */
   paddingBottom?: number
   gap?: number
+  /** Ohne seitlichen Innenabstand: Die Einträge (z.B. Dokumente) bringen ihren eigenen mit */
+  flush?: boolean
 }
 
 /** Aufklappbare Karte mit grauem Titelbalken («Boreholes Legende Drawer – Integrated») */
-export function Section({ title, children, paddingBottom = 16, gap }: Props) {
+export function Section({ title, children, paddingBottom = 16, gap, flush }: Props) {
   const [open, setOpen] = useState(true)
   const contentId = useId()
 
@@ -27,7 +29,7 @@ export function Section({ title, children, paddingBottom = 16, gap }: Props) {
       </button>
       <div id={contentId} className={styles.collapse}>
         <div className={styles.clip}>
-          <div className={styles.content} style={{ paddingBottom: paddingBottom - 1, gap }}>
+          <div className={`${styles.content} ${flush ? styles.flush : ''}`} style={flush ? undefined : { paddingBottom: paddingBottom - 1, gap }}>
             {children}
           </div>
         </div>

@@ -77,6 +77,14 @@
   background: var(--border-default);
 }
 
+/* Linie ohne eigene Höhe zwischen den Einträgen, wie in Figma */
+.itemDivider {
+  height: 0;
+  margin: 0 0 -1px;
+  border: 0;
+  border-top: 1px solid var(--border-default);
+}
+
 .rule {
   height: 1px;
   margin: 0;

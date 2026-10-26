@@ -61,29 +61,6 @@ export function PreviewPanel({ open, onClose, onOpenDocument, openTocs, onToggle
 
       <div ref={scrollRef} className={styles.scroll}>
         <div className={styles.content}>
-          <div className={styles.group} style={{ gap: 16 }}>
-            <Section title="Dokumente" gap={6}>
-              {documents.map((file) => (
-                <DocumentCard
-                  key={file.id}
-                  file={file}
-                  tocOpen={openTocs.includes(file.id)}
-                  onToggleToc={() => onToggleToc(file.id)}
-                  onOpen={(page) => onOpenDocument(file.id, page)}
-                />
-              ))}
-            </Section>
-            {legal.length > 0 && (
-              <Section title="Rechtliche Einwilligungen">
-                {legal.map((file) => (
-                  <DocumentCard key={file.id} file={file} showToc={false} onOpen={(page) => onOpenDocument(file.id, page)} />
-                ))}
-              </Section>
-            )}
-          </div>
-
-          <hr className={styles.divider} />
-
           <div className={styles.statusRow}>
             <div className={styles.statusCard}>
               <span className="body3-medium">Status</span>
@@ -93,6 +70,34 @@ export function PreviewPanel({ open, onClose, onOpenDocument, openTocs, onToggle
               <span className="body3-medium">Beschränkung</span>
               <Chip tone="neutral">{asset.restriction}</Chip>
             </div>
+          </div>
+
+          <hr className={styles.divider} />
+
+          <div className={styles.group} style={{ gap: 16 }}>
+            <Section title="Dokumente" flush>
+              {documents.map((file, index) => (
+                <Fragment key={file.id}>
+                  {index > 0 && <hr className={styles.itemDivider} />}
+                  <DocumentCard
+                    file={file}
+                    tocOpen={openTocs.includes(file.id)}
+                    onToggleToc={() => onToggleToc(file.id)}
+                    onOpen={(page) => onOpenDocument(file.id, page)}
+                  />
+                </Fragment>
+              ))}
+            </Section>
+            {legal.length > 0 && (
+              <Section title="Rechtliche Einwilligungen" flush>
+                {legal.map((file, index) => (
+                  <Fragment key={file.id}>
+                    {index > 0 && <hr className={styles.itemDivider} />}
+                    <DocumentCard file={file} showToc={false} onOpen={(page) => onOpenDocument(file.id, page)} />
+                  </Fragment>
+                ))}
+              </Section>
+            )}
           </div>
 
           <hr className={styles.divider} />

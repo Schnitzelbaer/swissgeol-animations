@@ -1,49 +1,59 @@
-.card {
+/* Datei-Eintrag ohne eigenen Rahmen; Einträge werden im Abschnitt durch Linien getrennt.
+   Seitlich 27px, weil der 1px-Rahmen des Abschnitts in Figma innen liegt (28px ab Aussenkante). */
+.item {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px 0;
-  border: 1px solid var(--border-high-emphasis);
-  border-radius: var(--radius-4);
-  overflow: hidden;
-  transition: box-shadow 200ms ease;
+  gap: 12px;
+  padding: 16px 27px;
+  transition: background-color 200ms ease;
 }
 
-.card:hover {
-  box-shadow: var(--shadow-bottom);
+.item:hover {
+  background: var(--color-textfield-grey);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 16px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .file {
   display: flex;
-  flex: 1 0 0;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   min-width: 0;
 }
 
-.fileIcon {
+/* Dateityp-Badge: PDF rot, übrige Formate blau */
+.badge {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
+  border-radius: var(--radius-4);
+}
+
+.pdf {
+  background: #fae1e2;
+}
+
+.csv {
+  background: #dbeafe;
 }
 
 .name {
   min-width: 0;
-}
-
-.nameGrow {
-  flex: 1 0 0;
-  min-width: 0;
+  color: var(--text-high-emphasis);
 }
 
 .actions {
@@ -52,47 +62,23 @@
   flex-shrink: 0;
 }
 
-/* Trennlinie liegt in Figma ohne eigene Höhe zwischen den Zeilen */
-.divider {
-  height: 0;
-  margin: -1px 0 0;
-  border: 0;
-  border-top: 1px solid var(--border-default);
+.meta {
+  padding-left: 48px;
+  color: var(--text-medium-emphasis);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.bottom {
-  display: flex;
-  flex-direction: column;
+.dot {
+  margin: 0 5px;
 }
 
+/* Pfeil und Klassen-Chips; bei mehrzeiligen Chips bleibt der Pfeil oben */
 .contentRow {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-}
-
-.plain {
-  gap: 4px;
-}
-
-.multiline {
   align-items: flex-start;
-}
-
-.contentLabel {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 36px;
-  flex-shrink: 0;
-  color: var(--color-primary);
-  white-space: nowrap;
-}
-
-/* Bei mehrzeiligen Chips ragt der Pfeil-Button über die 28px-Zeile hinaus */
-.multiline .contentLabel {
-  height: 28px;
+  gap: 8px;
 }
 
 .chevron {
@@ -101,8 +87,17 @@
   justify-content: center;
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
   border-radius: var(--radius-4);
   transition: background-color 150ms ease;
+}
+
+.chevron:hover {
+  background: var(--color-primary-tint);
+}
+
+.chevron:focus-visible {
+  outline: 2px solid var(--color-primary);
 }
 
 .chevron img {
@@ -113,17 +108,18 @@
   transform: rotate(90deg);
 }
 
-.contentLabel:hover .chevron {
-  background: var(--color-primary-tint);
+.chevronHidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .chips {
   display: flex;
   flex: 1 0 0;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 4px;
+  gap: 4px;
   min-width: 0;
+  padding-top: 4px;
   transition: opacity 200ms ease;
 }
 
@@ -131,13 +127,6 @@
 .tocOpen .chips {
   opacity: 0;
   pointer-events: none;
-}
-
-.chipUnit {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  align-self: stretch;
 }
 
 .overflowChip {
@@ -154,11 +143,15 @@
 .tocCollapse {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 400ms var(--ease-out);
+  margin-top: -12px;
+  transition:
+    grid-template-rows 400ms var(--ease-out),
+    margin-top 400ms var(--ease-out);
 }
 
 .tocOpen .tocCollapse {
   grid-template-rows: 1fr;
+  margin-top: 0;
 }
 
 .tocClip {
@@ -170,7 +163,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 28px 0 56px;
+  padding: 0 8px 0 44px;
   opacity: 0;
   transform: translateY(-6px);
   transition:
@@ -249,28 +242,13 @@
 }
 
 @media (max-width: 600px) {
-  .row {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-
-  .file {
-    flex-basis: 100%;
-  }
-
-  .name,
-  .nameGrow {
-    flex: 1 1 auto;
-    min-width: 64px;
-  }
-
-  .actions {
-    margin-left: 40px;
+  .item {
+    padding: 16px;
   }
 
   .toc {
     padding-left: 24px;
-    padding-right: 16px;
+    padding-right: 0;
   }
 
   .entries {

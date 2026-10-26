@@ -1,10 +1,10 @@
-import { useLayoutEffect, useRef, useState } from 'react'
 import { Button, ButtonLink } from '../Button'
-import { Chip, ChipSeparator } from '../Chip'
+import { Chip } from '../Chip'
 import { TruncatedText, useTooltip } from '../Tooltip'
 import { CLASSES_WITHOUT_LANGUAGE, fileLanguages, groupSections, pageRange, sectionTitle, type AssetFile } from '../../data/files'
 import styles from './DocumentCard.module.css'
-import fileIcon from '../../assets/icons/file.svg'
+import pdfIcon from '../../assets/icons/filetype-pdf.svg'
+import csvIcon from '../../assets/icons/filetype-csv.svg'
 import downloadIcon from '../../assets/icons/download.svg'
 import eyeIcon from '../../assets/icons/eye.svg'
 import chevronRightIcon from '../../assets/icons/chevron-right.svg'
@@ -24,122 +24,106 @@ function OverflowChip({ hidden }: { hidden: string[] }) {
 
 type Props = {
   file: AssetFile
-  /** Rechtliche Einwilligungen zeigen die Chips ohne «Inhalt»-Aufklapper */
+  /** Rechtliche Einwilligungen zeigen die Klassen ohne aufklappbares Inhaltsverzeichnis */
   showToc?: boolean
   tocOpen?: boolean
   onToggleToc?: () => void
   onOpen: (page?: number) => void
 }
 
-/** Datei-Karte («Content – Assets Preview») mit Download, Vorschau und Inhaltsverzeichnis */
+/** Datei-Eintrag im Abschnitt «Dokumente» (Figma «Content – Assets Preview», Überarbeitung 20858:11963) */
 export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleToc, onOpen }: Props) {
   const groups = groupSections(file.sections ?? [])
   const classLabels = groups.map((group) => group.label)
   const visibleClasses = classLabels.slice(0, MAX_CLASS_CHIPS)
   const hiddenClasses = classLabels.slice(MAX_CLASS_CHIPS)
-  const meta = [file.pages ? `${file.pages} Seiten` : null, ...fileLanguages(file)].filter(Boolean) as string[]
-  const hasContent = file.format === 'PDF' && (meta.length > 0 || classLabels.length > 0)
+  const languages = fileLanguages(file)
+  const meta = [file.size, file.pages ? `${file.pages} Seiten` : null, languages.length ? languages.join(', ') : null].filter(Boolean) as string[]
   const withToc = showToc && groups.length > 0
-
-  // Mehrzeilige Chips: «Inhalt»-Zeile richtet sich oben aus (wie in Figma)
-  const chipsRef = useRef<HTMLDivElement>(null)
-  const [multiline, setMultiline] = useState(false)
-  useLayoutEffect(() => {
-    const element = chipsRef.current
-    if (!element) return
-    const update = () => setMultiline(element.offsetHeight > 30)
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
+  const isPdf = file.format === 'PDF'
 
   return (
-    <article className={`${styles.card} ${tocOpen ? styles.tocOpen : ''}`}>
-      <div className={styles.row}>
-        <div className={styles.file}>
-          <span className={styles.fileIcon}>
-            <img src={fileIcon} alt="" />
-          </span>
-          <TruncatedText text={file.name} className={`body3-medium ${withToc ? styles.nameGrow : styles.name}`} />
-          <Chip>{file.format}</Chip>
-          <Chip>{file.size}</Chip>
+    <article className={`${styles.item} ${tocOpen ? styles.tocOpen : ''}`}>
+      <div className={styles.head}>
+        <div className={styles.row}>
+          <div className={styles.file}>
+            <span className={`${styles.badge} ${isPdf ? styles.pdf : styles.csv}`}>
+              <img src={isPdf ? pdfIcon : csvIcon} alt={file.format === 'PDF' ? 'PDF' : 'CSV'} />
+            </span>
+            <TruncatedText text={file.name} className={`${styles.name} body3-medium`} />
+          </div>
+          <div className={styles.actions}>
+            {file.url ? (
+              <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
+            ) : (
+              <Button icon={downloadIcon} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
+            )}
+            <Button icon={eyeIcon} aria-label={`${file.name} anzeigen`} tooltip="Anzeigen" disabled={!file.url} onClick={() => onOpen()} />
+          </div>
         </div>
-        <div className={styles.actions}>
-          {file.url ? (
-            <ButtonLink variant="secondary-solid" icon={downloadIcon} href={file.url} download={file.name} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
-          ) : (
-            <Button variant="secondary-solid" icon={downloadIcon} aria-label={`${file.name} herunterladen`} />
-          )}
-          <Button
-            variant="secondary-solid"
-            icon={eyeIcon}
-            aria-label={`${file.name} anzeigen`}
-            tooltip="Anzeigen"
-            disabled={!file.url}
-            onClick={() => onOpen()}
-          />
-        </div>
+        <p className={`${styles.meta} body3-medium`}>
+          {meta.map((part, index) => (
+            <span key={index}>
+              {index > 0 && <span className={styles.dot}>•</span>}
+              {part}
+            </span>
+          ))}
+        </p>
       </div>
 
-      {hasContent && (
+      {classLabels.length > 0 && (
         <>
-          <hr className={styles.divider} />
-          <div className={styles.bottom}>
-            <div className={`${styles.contentRow} ${multiline ? styles.multiline : ''} ${withToc ? '' : styles.plain}`}>
-              {withToc && (
-                <button type="button" className={styles.contentLabel} aria-expanded={tocOpen} onClick={onToggleToc}>
-                  <span className={styles.chevron}>
-                    <img src={chevronRightIcon} alt="" />
-                  </span>
-                  <span className="body3-medium">Inhalt:</span>
-                </button>
-              )}
-              <div ref={chipsRef} className={styles.chips} aria-hidden={tocOpen}>
-                {meta.map((chip) => (
-                  <Chip key={chip}>{chip}</Chip>
-                ))}
-                {visibleClasses.map((chip, index) => (
-                  <span key={chip} className={styles.chipUnit}>
-                    {index === 0 && meta.length > 0 && <ChipSeparator />}
-                    <Chip>{chip}</Chip>
-                  </span>
-                ))}
-                {hiddenClasses.length > 0 && <OverflowChip hidden={hiddenClasses} />}
+          <div className={styles.contentRow}>
+            {/* Ohne Inhaltsverzeichnis bleibt der Platz des Pfeils frei, damit die Chips gleich eingerückt sind */}
+            <button
+              type="button"
+              className={`${styles.chevron} ${withToc ? '' : styles.chevronHidden}`}
+              aria-label={tocOpen ? 'Inhaltsverzeichnis schliessen' : 'Inhaltsverzeichnis öffnen'}
+              aria-expanded={withToc ? tocOpen : undefined}
+              disabled={!withToc}
+              tabIndex={withToc ? 0 : -1}
+              onClick={onToggleToc}
+            >
+              <img src={chevronRightIcon} alt="" />
+            </button>
+            <div className={styles.chips} aria-hidden={tocOpen}>
+              {visibleClasses.map((chip) => (
+                <Chip key={chip}>{chip}</Chip>
+              ))}
+              {hiddenClasses.length > 0 && <OverflowChip hidden={hiddenClasses} />}
+            </div>
+          </div>
+
+          {withToc && (
+            <div className={styles.tocCollapse}>
+              <div className={styles.tocClip}>
+                <nav className={styles.toc} aria-label={`Inhalt von ${file.name}`}>
+                  {groups.map((group) => (
+                    <div key={group.type} className={styles.group}>
+                      <span className={`${styles.groupTitle} body3-medium`}>{group.label}</span>
+                      <ul className={styles.entries}>
+                        {group.sections.map((section) => {
+                          const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
+                          return (
+                            <li key={section.id}>
+                              <button type="button" className={styles.entry} onClick={() => onOpen(section.from)}>
+                                <TruncatedText text={sectionTitle(section)} className={`${styles.entryTitle} body3`} />
+                                <span className={styles.leader} />
+                                <span className={styles.entryMeta}>
+                                  {showLanguage && <Chip size="small">{section.language}</Chip>}
+                                  <span className={`${styles.pages} body3`}>{pageRange(section)}</span>
+                                </span>
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+                </nav>
               </div>
             </div>
-
-            {withToc && (
-              <div className={styles.tocCollapse}>
-                <div className={styles.tocClip}>
-                  <nav className={styles.toc} aria-label={`Inhalt von ${file.name}`}>
-                    {groups.map((group) => (
-                      <div key={group.type} className={styles.group}>
-                        <span className={`${styles.groupTitle} body3-medium`}>{group.label}</span>
-                        <ul className={styles.entries}>
-                          {group.sections.map((section) => {
-                            const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
-                            return (
-                              <li key={section.id}>
-                                <button type="button" className={styles.entry} onClick={() => onOpen(section.from)}>
-                                  <TruncatedText text={sectionTitle(section)} className={`${styles.entryTitle} body3`} />
-                                  <span className={styles.leader} />
-                                  <span className={styles.entryMeta}>
-                                    {showLanguage && <Chip size="small">{section.language}</Chip>}
-                                    <span className={`${styles.pages} body3`}>{pageRange(section)}</span>
-                                  </span>
-                                </button>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      </div>
-                    ))}
-                  </nav>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </>
       )}
     </article>

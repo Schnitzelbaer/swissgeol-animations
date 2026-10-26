@@ -56,3 +56,9 @@
   opacity: 1;
   transform: none;
 }
+
+/* Dokumente: 12px oben und unten, Einträge mit eigenem Innenabstand, getrennt durch Linien */
+.flush {
+  gap: 12px;
+  padding: 12px 0 11px;
+}
