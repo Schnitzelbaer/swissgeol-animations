@@ -2,13 +2,13 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { MapPage } from './pages/MapPage'
 import { EditPage } from './pages/EditPage'
 import { DocumentViewerHost } from './components/viewer/DocumentViewerHost'
-import { asset } from './data/asset'
+import { DEFAULT_ASSET_ID } from './data/assets'
 
 export default function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Navigate to={`/asset/${asset.id}`} replace />} />
+        <Route path="/" element={<Navigate to={`/asset/${DEFAULT_ASSET_ID}`} replace />} />
         {/* Gemeinsames Layout, damit die Karte beim Öffnen und Schliessen des Panels erhalten bleibt */}
         <Route element={<MapPage />}>
           <Route path="/map" element={null} />

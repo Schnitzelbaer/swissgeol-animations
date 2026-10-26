@@ -63,6 +63,18 @@
   flex-direction: column;
   gap: 24px;
   padding: 24px;
+  animation: content-in 350ms var(--ease-out);
+}
+
+.assetTitle {
+  animation: content-in 350ms var(--ease-out);
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 .group {

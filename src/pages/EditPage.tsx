@@ -10,7 +10,7 @@ import { ClassificationEditor } from '../components/edit/ClassificationEditor'
 import { SaveBar } from '../components/edit/SaveBar'
 import { useDocumentViewer } from '../components/viewer/useDocumentViewer'
 import { useStore } from '../data/store'
-import { asset } from '../data/asset'
+import { DEFAULT_ASSET_ID, getAsset } from '../data/assets'
 import type { AssetFile } from '../data/files'
 import styles from './EditPage.module.css'
 import backIcon from '../assets/icons/back.svg'
@@ -42,11 +42,12 @@ function formatSize(bytes: number) {
 }
 
 let uploadCounter = 0
-function toAssetFile(file: File, legal: boolean): AssetFile {
+function toAssetFile(file: File, assetId: string, legal: boolean): AssetFile {
   uploadCounter += 1
   const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
   return {
     id: `upload-${uploadCounter}`,
+    assetId,
     name: file.name,
     format: isPdf ? 'PDF' : 'DB',
     size: formatSize(file.size),
@@ -73,12 +74,21 @@ function SidepanelToggle({ onClick }: { onClick: () => void }) {
  */
 export function EditPage() {
   const navigate = useNavigate()
-  const { section = 'files' } = useParams()
+  const { assetId, section = 'files' } = useParams()
+  const asset = getAsset(assetId) ?? getAsset(DEFAULT_ASSET_ID)!
   const [searchParams, setSearchParams] = useSearchParams()
   const { files, saveFiles, analysing, startAnalysis, updateSections, getFile } = useStore()
+  const assetFiles = files.filter((file) => file.assetId === asset.id)
   const { openDocument } = useDocumentViewer()
-  const [draft, setDraft] = useState(files)
+  const [draft, setDraft] = useState(assetFiles)
   const [analysisRequest, setAnalysisRequest] = useState<string[] | null>(null)
+
+  // Anderes Asset: Entwurf neu beginnen
+  const [draftAssetId, setDraftAssetId] = useState(asset.id)
+  if (draftAssetId !== asset.id) {
+    setDraftAssetId(asset.id)
+    setDraft(assetFiles)
+  }
 
   // Gespeicherte Änderungen (z.B. aus der Klassifizierung) in den Entwurf übernehmen
   useEffect(() => {
@@ -93,7 +103,7 @@ export function EditPage() {
     if (classifyFile) setShownClassifyFile(classifyFile)
   }, [classifyFile])
 
-  const dirty = draft.length !== files.length || draft.some((file, index) => file.id !== files[index]?.id)
+  const dirty = draft.length !== assetFiles.length || draft.some((file, index) => file.id !== assetFiles[index]?.id)
   const tabFiles = draft.filter((file) => Boolean(file.legal) === (tab === 'legal'))
   const pdfFiles = draft.filter((file) => file.url && file.format === 'PDF')
 
@@ -161,7 +171,7 @@ export function EditPage() {
                     key={tab}
                     files={tabFiles}
                     analysing={analysing}
-                    onUpload={(uploads) => setDraft((current) => [...current, ...uploads.map((file) => toAssetFile(file, tab === 'legal'))])}
+                    onUpload={(uploads) => setDraft((current) => [...current, ...uploads.map((file) => toAssetFile(file, asset.id, tab === 'legal'))])}
                     onDelete={(ids) => setDraft((current) => current.filter((file) => !ids.includes(file.id)))}
                     onAnalyse={setAnalysisRequest}
                     onClassify={(id) => setParam('classify', id)}
@@ -174,8 +184,8 @@ export function EditPage() {
           </div>
 
           <SaveBar dirty={dirty}>
-            <Button variant="secondary-solid" label="Änderungen verwerfen" icon={discardIcon} iconPosition="right" disabled={!dirty} onClick={() => setDraft(files)} />
-            <Button variant="primary" label="Speichern" icon={saveIcon} iconPosition="right" disabled={!dirty} onClick={() => saveFiles(draft)} />
+            <Button variant="secondary-solid" label="Änderungen verwerfen" icon={discardIcon} iconPosition="right" disabled={!dirty} onClick={() => setDraft(assetFiles)} />
+            <Button variant="primary" label="Speichern" icon={saveIcon} iconPosition="right" disabled={!dirty} onClick={() => saveFiles(asset.id, draft)} />
           </SaveBar>
         </div>
 

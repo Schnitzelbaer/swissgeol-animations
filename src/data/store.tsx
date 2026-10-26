@@ -7,7 +7,8 @@ export const ANALYSIS_DURATION_MS = 7000
 type Store = {
   files: AssetFile[]
   getFile: (id: string | null | undefined) => AssetFile | undefined
-  saveFiles: (files: AssetFile[]) => void
+  /** Ersetzt die Dateien eines Assets (Bearbeiten-Seite «Speichern») */
+  saveFiles: (assetId: string, files: AssetFile[]) => void
   updateSections: (fileId: string, sections: Section[]) => void
   analysing: Set<string>
   startAnalysis: (fileIds: string[]) => void
@@ -22,6 +23,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const timers = useRef(new Map<string, number>())
 
   const getFile = useCallback((id: string | null | undefined) => files.find((file) => file.id === id), [files])
+
+  const saveFiles = useCallback((assetId: string, assetFiles: AssetFile[]) => {
+    setFiles((current) => [...current.filter((file) => file.assetId !== assetId), ...assetFiles])
+  }, [])
 
   const updateSections = useCallback((fileId: string, sections: Section[]) => {
     setFiles((current) => current.map((file) => (file.id === fileId ? { ...file, sections } : file)))
@@ -43,8 +48,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ files, getFile, saveFiles: setFiles, updateSections, analysing, startAnalysis }),
-    [files, getFile, updateSections, analysing, startAnalysis],
+    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis }),
+    [files, getFile, saveFiles, updateSections, analysing, startAnalysis],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

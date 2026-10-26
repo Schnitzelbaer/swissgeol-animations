@@ -32,6 +32,8 @@ export type Section = {
 
 export type AssetFile = {
   id: string
+  /** Asset, zu dem die Datei gehört (siehe assets.ts) */
+  assetId: string
   name: string
   format: 'PDF' | 'DB'
   size: string
@@ -81,6 +83,7 @@ const sondages = [
 export const initialFiles: AssetFile[] = [
   {
     id: '4841',
+    assetId: '4841',
     name: '4841_N12_Baugrunduntersuchungen_Thoerishaus.pdf',
     format: 'PDF',
     size: '4.2 MB',
@@ -97,6 +100,7 @@ export const initialFiles: AssetFile[] = [
   },
   {
     id: '8768',
+    assetId: '8768',
     name: '8768_N3_Sondierungen_SBB-Unterfuehrung_Lachen.pdf',
     format: 'PDF',
     size: '7.5 MB',
@@ -114,6 +118,7 @@ export const initialFiles: AssetFile[] = [
   },
   {
     id: '16623',
+    assetId: '16623',
     name: '16623_T20_Sondages_Tunnel_Vue-des-Alpes.pdf',
     format: 'PDF',
     size: '15 MB',
@@ -127,7 +132,25 @@ export const initialFiles: AssetFile[] = [
     ]),
   },
   {
+    id: '16622',
+    assetId: '16622',
+    name: '16622_T20_Sondages_Gare_des_Convers.pdf',
+    format: 'PDF',
+    size: '5.7 MB',
+    uploaded: '27.01.2023 09:16',
+    url: '/pdfs/16622.pdf',
+    pages: 7,
+    languages: ['FR'],
+    sections: sections('16622', [
+      { label: 'Page de garde AGS 16622', type: 'Titelblatt', from: 1, to: 1 },
+      { label: 'Tunnel de la Vue des Alpes – Situation des sondages N° 109 et 110', type: 'Karte', from: 2, to: 2 },
+      { label: 'Sondage N° 109', type: 'Bohrprofil', language: 'FR', from: 3, to: 4 },
+      { label: 'Sondage N° 110', type: 'Bohrprofil', language: 'FR', from: 5, to: 7 },
+    ]),
+  },
+  {
     id: 'a56-55-csv',
+    assetId: '4841',
     name: 'a56_55_LDoc.csv',
     format: 'DB',
     size: '112 kb',
@@ -135,6 +158,7 @@ export const initialFiles: AssetFile[] = [
   },
   {
     id: '12304',
+    assetId: '4841',
     name: '12304_Einwilligung_Schinznach.pdf',
     format: 'PDF',
     size: '2.7 MB',

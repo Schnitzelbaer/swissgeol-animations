@@ -15,7 +15,8 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 
 ## Routen (jeder Zustand per URL aufrufbar)
 
-- `/asset/4841` Karte mit Panel, `/map` nur Karte. `?toc=<Datei-IDs>` öffnet Inhaltsverzeichnisse im Panel.
+- `/asset/:id` Karte mit Panel, `/map` nur Karte. `?sel=<Geometrie-ID>` markiert die gewählte Geometrie (ohne Angabe die erste des Assets), `?toc=<Datei-IDs>` öffnet Inhaltsverzeichnisse im Panel.
+- Assets: `4841` (Inhalte wie im Figma-Screen), `8768`, `16623`, `16622`. Jede Geometrie auf der Karte gehört zu einem Asset (`src/components/map/geometries.ts`); ein Klick markiert sie pink und öffnet das Panel dieses Assets.
 - `?doc=<Datei-ID>&page=<n>` öffnet den PDF-Viewer (auf jeder Seite), z.B. `/asset/4841?doc=8768&page=7`.
 - `/asset/4841/edit/files` Bearbeiten-Seite; `?tab=legal` rechtliche Einwilligungen, `?classify=<Datei-ID>` Klassifizierungs-Editor.
 
@@ -27,6 +28,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - Karte: OpenLayers mit swisstopo-WMTS (`pixelkarte-grau`, umschaltbar auf `-farbe`). Die Kacheln werden mit `tileSize: 128` halb so gross gezeichnet, weil das Kartenbild in Figma ein Retina-Screenshot ist.
 - `src/components/map/geometries.ts`: Polygone, Linie und Punkte in Figma-Pixelkoordinaten, beim Start exakt wie im Design platziert.
 - Das Preview-Panel liegt über der Karte; `--panel-offset` und das View-Padding von OpenLayers halten Kartenmitte, Steuerung und Tabellenleiste links davon.
-- Daten: `src/data/asset.ts` (Panel-Inhalte), `src/data/files.ts` (Dateien mit Abschnitten/Seitenklassen, aus den echten PDFs abgeleitet), `src/data/store.tsx` (Zustand im Speicher; Neuladen setzt alles zurück, praktisch für Aufnahmen).
-- PDFs liegen in `public/pdfs/` (echte swisstopo-Dokumente 4841, 8768, 12304, 16623). Der Viewer (`src/components/viewer/`) nutzt pdf.js, lädt es erst beim ersten PDF und rendert nur Seiten nahe am sichtbaren Bereich.
+- Daten: `src/data/assets.ts` (Assets mit Panel-Inhalten), `src/data/files.ts` (Dateien mit `assetId` und Abschnitten/Seitenklassen, aus den echten PDFs abgeleitet), `src/data/store.tsx` (Zustand im Speicher; Neuladen setzt alles zurück, praktisch für Aufnahmen).
+- PDFs liegen in `public/pdfs/` (echte swisstopo-Dokumente 4841, 8768, 12304, 16622, 16623). Der Viewer (`src/components/viewer/`) nutzt pdf.js, lädt es erst beim ersten PDF und rendert nur Seiten nahe am sichtbaren Bereich.
 - Die AI-Analyse ist simuliert (`ANALYSIS_DURATION_MS` in `store.tsx`).
+- Gewählte Fläche: eigener Canvas-Renderer in `src/components/map/styles.ts` (6px pink aussen, 3px braun innen wie in Figma 20864:149622).

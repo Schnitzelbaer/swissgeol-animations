@@ -44,30 +44,32 @@ function tween(from: number, to: number, duration: number, onUpdate: (value: num
 type Props = {
   /** Breite des Preview-Panels, das rechts über der Karte liegt */
   panelOffset: number
-  onAssetClick: (assetId: string) => void
+  /** Gewählte Geometrie, pink hervorgehoben */
+  selectedGeometryId?: string
+  onGeometryClick: (geometryId: string, assetId: string) => void
 }
 
-export function MapView({ panelOffset, onAssetClick }: Props) {
+export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
+  const sourceRef = useRef<VectorSource | null>(null)
   const colorLayerRef = useRef<TileLayer | null>(null)
-  const onAssetClickRef = useRef(onAssetClick)
+  const onGeometryClickRef = useRef(onGeometryClick)
   const initialPaddingRef = useRef(panelOffset)
   const [basemap, setBasemap] = useState<Basemap>('grau')
 
   useEffect(() => {
-    onAssetClickRef.current = onAssetClick
-  }, [onAssetClick])
+    onGeometryClickRef.current = onGeometryClick
+  }, [onGeometryClick])
 
   useEffect(() => {
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
     const colorLayer = swisstopoLayer('ch.swisstopo.pixelkarte-farbe', 0)
     colorLayerRef.current = colorLayer
 
-    const assetLayer = new VectorLayer({
-      source: new VectorSource({ features: createAssetFeatures() }),
-      style: assetStyle,
-    })
+    const source = new VectorSource({ features: createAssetFeatures() })
+    sourceRef.current = source
+    const assetLayer = new VectorLayer({ source, style: assetStyle })
 
     const map = new OlMap({
       target: containerRef.current!,
@@ -101,7 +103,7 @@ export function MapView({ panelOffset, onAssetClick }: Props) {
 
     map.on('click', (event) => {
       const feature = featureAt(event.pixel)
-      if (feature) onAssetClickRef.current(feature.get('assetId'))
+      if (feature) onGeometryClickRef.current(String(feature.getId()), feature.get('assetId'))
     })
 
     const resizeObserver = new ResizeObserver(() => map.updateSize())
@@ -113,6 +115,13 @@ export function MapView({ panelOffset, onAssetClick }: Props) {
       mapRef.current = null
     }
   }, [])
+
+  // Gewählte Geometrie hervorheben
+  useEffect(() => {
+    for (const feature of sourceRef.current?.getFeatures() ?? []) {
+      feature.set('selected', feature.getId() === selectedGeometryId)
+    }
+  }, [selectedGeometryId])
 
   // Das Panel überdeckt die Karte: Padding hält den sichtbaren Kartenmittelpunkt links davon.
   useEffect(() => {

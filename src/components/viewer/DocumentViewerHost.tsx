@@ -19,7 +19,8 @@ export function DocumentViewerHost() {
     if (file?.url) setShown(file)
   }, [file])
 
-  const pdfFiles = files.filter((candidate) => candidate.url)
+  // Dateiwahl im Viewer: nur PDFs desselben Assets
+  const pdfFiles = files.filter((candidate) => candidate.url && candidate.assetId === shown?.assetId)
 
   return (
     <Modal open={open} onClose={closeDocument} label="Datei-Viewer">

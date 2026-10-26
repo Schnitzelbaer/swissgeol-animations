@@ -3,7 +3,7 @@ import { Button } from '../Button'
 import { Chip } from '../Chip'
 import { Section } from './Section'
 import { DocumentCard } from './DocumentCard'
-import { asset } from '../../data/asset'
+import type { Asset } from '../../data/assets'
 import { useStore } from '../../data/store'
 import styles from './PreviewPanel.module.css'
 import closeIcon from '../../assets/icons/close.svg'
@@ -33,34 +33,40 @@ function LabeledValue({ label, value }: { label: string; value: string }) {
 }
 
 type Props = {
+  asset: Asset
   open: boolean
   onClose: () => void
   onOpenDocument: (fileId: string, page?: number) => void
   openTocs: string[]
   onToggleToc: (fileId: string) => void
+  onOpenAsset: (assetId: string) => void
   onEdit: () => void
 }
 
-export function PreviewPanel({ open, onClose, onOpenDocument, openTocs, onToggleToc, onEdit }: Props) {
+export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, onToggleToc, onOpenAsset, onEdit }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { files } = useStore()
-  const documents = files.filter((file) => !file.legal)
-  const legal = files.filter((file) => file.legal)
+  const assetFiles = files.filter((file) => file.assetId === asset.id)
+  const documents = assetFiles.filter((file) => !file.legal)
+  const legal = assetFiles.filter((file) => file.legal)
 
-  // Beim erneuten Öffnen wieder oben beginnen
+  // Beim Öffnen und beim Wechsel des Assets wieder oben beginnen
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: 0 })
-  }, [open])
+  }, [open, asset.id])
 
   return (
     <aside className={`${styles.panel} ${open ? styles.open : ''}`} aria-label="Asset-Vorschau" inert={!open}>
       <header className={styles.title}>
-        <h2 className="body2-bold ellipsis">{asset.title}</h2>
+        <h2 key={asset.id} className={`${styles.assetTitle} body2-bold ellipsis`}>
+          {asset.title}
+        </h2>
         <Button icon={closeIcon} aria-label="Vorschau schliessen" onClick={onClose} />
       </header>
 
       <div ref={scrollRef} className={styles.scroll}>
-        <div className={styles.content}>
+        {/* key: Beim Wechsel des Assets blendet der Inhalt neu ein */}
+        <div key={asset.id} className={styles.content}>
           <div className={styles.statusRow}>
             <div className={styles.statusCard}>
               <span className="body3-medium">Status</span>
@@ -164,11 +170,18 @@ export function PreviewPanel({ open, onClose, onOpenDocument, openTocs, onToggle
 
           <Section title="Verweise" gap={16} paddingBottom={20}>
             {asset.references.map((reference, index) => (
-              <Fragment key={reference}>
+              <Fragment key={reference.label}>
                 {index > 0 && <hr className={styles.rule} />}
-                <a href="#" className={styles.reference} onClick={(event) => event.preventDefault()}>
+                <a
+                  href={reference.assetId ? `/asset/${reference.assetId}` : '#'}
+                  className={styles.reference}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    if (reference.assetId) onOpenAsset(reference.assetId)
+                  }}
+                >
                   <img src={linkIcon} alt="" />
-                  <span className="body3-medium">{reference}</span>
+                  <span className="body3-medium">{reference.label}</span>
                 </a>
               </Fragment>
             ))}

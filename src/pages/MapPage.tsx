@@ -6,7 +6,8 @@ import { MapView } from '../components/map/MapView'
 import { TableBar } from '../components/TableBar'
 import { PreviewPanel } from '../components/preview/PreviewPanel'
 import { useDocumentViewer } from '../components/viewer/useDocumentViewer'
-import { asset } from '../data/asset'
+import { DEFAULT_ASSET_ID, getAsset } from '../data/assets'
+import { defaultGeometryId } from '../components/map/geometries'
 import styles from './MapPage.module.css'
 
 const PANEL_WIDTH = 540
@@ -27,7 +28,8 @@ function useMediaQuery(query: string) {
 
 /**
  * Karte mit Preview-Panel. Routen: /map (nur Karte), /asset/:id (Panel offen).
- * Query-Parameter: toc=<Datei-IDs> öffnet Inhaltsverzeichnisse, doc/page öffnet den PDF-Viewer.
+ * Query-Parameter: sel=<Geometrie-ID> markiert die gewählte Geometrie (sonst die erste des Assets),
+ * toc=<Datei-IDs> öffnet Inhaltsverzeichnisse, doc/page öffnet den PDF-Viewer.
  */
 export function MapPage() {
   const navigate = useNavigate()
@@ -35,6 +37,14 @@ export function MapPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { openDocument, isOpen: viewerOpen } = useDocumentViewer()
   const panelOpen = Boolean(assetMatch)
+  // Beim Schliessen bleibt das letzte Asset im ausfahrenden Panel sichtbar
+  const [lastAssetId, setLastAssetId] = useState(assetMatch?.params.assetId ?? DEFAULT_ASSET_ID)
+  const routeAssetId = assetMatch?.params.assetId
+  useEffect(() => {
+    if (routeAssetId) setLastAssetId(routeAssetId)
+  }, [routeAssetId])
+  const asset = getAsset(routeAssetId ?? lastAssetId) ?? getAsset(DEFAULT_ASSET_ID)!
+  const selectedGeometryId = panelOpen ? (searchParams.get('sel') ?? defaultGeometryId(asset.id)) : undefined
   const wide = useMediaQuery(WIDE_QUERY)
   const panelOffset = panelOpen && wide ? PANEL_WIDTH : 0
 
@@ -51,7 +61,12 @@ export function MapPage() {
     )
   }
 
-  const openPanel = useCallback(() => navigate(`/asset/${asset.id}`), [navigate])
+  // Klick auf eine Geometrie: markieren und das Panel ihres Assets öffnen
+  const selectGeometry = useCallback(
+    (geometryId: string, assetId: string) => navigate(`/asset/${assetId}?sel=${geometryId}`),
+    [navigate],
+  )
+  const openAsset = useCallback((assetId: string) => navigate(`/asset/${assetId}`), [navigate])
   const closePanel = useCallback(() => navigate('/map'), [navigate])
 
   useEffect(() => {
@@ -73,14 +88,16 @@ export function MapPage() {
       <div className={styles.body}>
         <Sidebar />
         <main className={styles.main} style={mainStyle}>
-          <MapView panelOffset={panelOffset} onAssetClick={openPanel} />
+          <MapView panelOffset={panelOffset} selectedGeometryId={selectedGeometryId} onGeometryClick={selectGeometry} />
           <TableBar />
           <PreviewPanel
+            asset={asset}
             open={panelOpen}
             onClose={closePanel}
             onOpenDocument={openDocument}
             openTocs={openTocs}
             onToggleToc={toggleToc}
+            onOpenAsset={openAsset}
             onEdit={() => navigate(`/asset/${asset.id}/edit/files`)}
           />
         </main>
