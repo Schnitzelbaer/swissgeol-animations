@@ -58,58 +58,59 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
       </div>
 
       {classLabels.length > 0 && (
-        <>
-          <div className={styles.contentRow}>
-            {/* Ohne Inhaltsverzeichnis bleibt der Platz des Pfeils frei, damit die Chips gleich eingerückt sind */}
-            <button
-              type="button"
-              className={`${styles.chevron} ${withToc ? '' : styles.chevronHidden}`}
-              aria-label={tocOpen ? 'Inhaltsverzeichnis schliessen' : 'Inhaltsverzeichnis öffnen'}
-              aria-expanded={withToc ? tocOpen : undefined}
-              disabled={!withToc}
-              tabIndex={withToc ? 0 : -1}
-              onClick={onToggleToc}
-            >
-              <img src={chevronRightIcon} alt="" />
-            </button>
+        <div className={styles.contentRow}>
+          {/* Ohne Inhaltsverzeichnis bleibt der Platz des Pfeils frei, damit die Chips gleich eingerückt sind */}
+          <button
+            type="button"
+            className={`${styles.chevron} ${withToc ? '' : styles.chevronHidden}`}
+            aria-label={tocOpen ? 'Inhaltsverzeichnis schliessen' : 'Inhaltsverzeichnis öffnen'}
+            aria-expanded={withToc ? tocOpen : undefined}
+            disabled={!withToc}
+            tabIndex={withToc ? 0 : -1}
+            onClick={onToggleToc}
+          >
+            <img src={chevronRightIcon} alt="" />
+          </button>
+          {/* Das Inhaltsverzeichnis öffnet rechts neben dem Pfeil an der Stelle der Chips */}
+          <div className={styles.contentBody}>
             <div className={styles.chips} aria-hidden={tocOpen}>
               {classLabels.map((chip) => (
                 <Chip key={chip}>{chip}</Chip>
               ))}
             </div>
-          </div>
 
-          {withToc && (
-            <div className={styles.tocCollapse}>
-              <div className={styles.tocClip}>
-                <nav className={styles.toc} aria-label={`Inhalt von ${file.name}`}>
-                  {groups.map((group) => (
-                    <div key={group.type} className={styles.group}>
-                      <span className={`${styles.groupTitle} body3-medium`}>{group.label}</span>
-                      <ul className={styles.entries}>
-                        {group.sections.map((section) => {
-                          const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
-                          return (
-                            <li key={section.id}>
-                              <button type="button" className={styles.entry} onClick={() => onOpen(section.from)}>
-                                <TruncatedText text={sectionTitle(section)} className={`${styles.entryTitle} body3`} />
-                                <span className={styles.leader} />
-                                <span className={styles.entryMeta}>
-                                  {showLanguage && <Chip size="small">{section.language}</Chip>}
-                                  <span className={`${styles.pages} body3`}>{pageRange(section)}</span>
-                                </span>
-                              </button>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </nav>
+            {withToc && (
+              <div className={styles.tocCollapse}>
+                <div className={styles.tocClip}>
+                  <nav className={styles.toc} aria-label={`Inhalt von ${file.name}`}>
+                    {groups.map((group) => (
+                      <div key={group.type} className={styles.group}>
+                        <span className={`${styles.groupTitle} body3-medium`}>{group.label}</span>
+                        <ul className={styles.entries}>
+                          {group.sections.map((section) => {
+                            const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
+                            return (
+                              <li key={section.id}>
+                                <button type="button" className={styles.entry} onClick={() => onOpen(section.from)}>
+                                  <TruncatedText text={sectionTitle(section)} className={`${styles.entryTitle} body3`} />
+                                  <span className={styles.leader} />
+                                  <span className={styles.entryMeta}>
+                                    {showLanguage && <Chip size="small">{section.language}</Chip>}
+                                    <span className={`${styles.pages} body3`}>{pageRange(section)}</span>
+                                  </span>
+                                </button>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </div>
+                    ))}
+                  </nav>
+                </div>
               </div>
-            </div>
-          )}
-        </>
+            )}
+          </div>
+        </div>
       )}
     </article>
   )
