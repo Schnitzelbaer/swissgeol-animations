@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../Button'
+import { useI18n } from '../../i18n'
 import styles from './Legend.module.css'
 import changeIcon from '../../assets/icons/change.svg'
 import chevronUpIcon from '../../assets/icons/chevron-up-legend.svg'
@@ -8,25 +9,26 @@ import legendLine from '../../assets/map/legend-line.svg'
 import legendArea from '../../assets/map/legend-area.svg'
 
 const items = [
-  { icon: legendPoint, label: 'Asset Punkt' },
-  { icon: legendLine, label: 'Asset Linie' },
-  { icon: legendArea, label: 'Asset Fläche' },
-]
+  { icon: legendPoint, key: 'point' },
+  { icon: legendLine, key: 'line' },
+  { icon: legendArea, key: 'polygon' },
+] as const
 
 export function Legend() {
+  const { t } = useI18n()
   const [open, setOpen] = useState(true)
 
   return (
     <section className={`${styles.legend} ${open ? styles.open : ''}`}>
       <header className={styles.header}>
         <div className={styles.title}>
-          <Button icon={changeIcon} aria-label="Legende wechseln" />
-          <span className="body3-bold">Geometrie</span>
+          <Button icon={changeIcon} aria-label={t.legend.switch} />
+          <span className="body3-bold">{t.legend.title}</span>
         </div>
         <Button
           icon={chevronUpIcon}
           className={styles.toggle}
-          aria-label={open ? 'Legende zuklappen' : 'Legende aufklappen'}
+          aria-label={open ? t.legend.collapse : t.legend.expand}
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         />
@@ -34,9 +36,9 @@ export function Legend() {
       <div className={styles.collapse}>
         <ul className={styles.items}>
           {items.map((item) => (
-            <li key={item.label} className={styles.item}>
+            <li key={item.key} className={styles.item}>
               <img src={item.icon} alt="" />
-              <span className="body3">{item.label}</span>
+              <span className="body3">{t.legend[item.key]}</span>
             </li>
           ))}
         </ul>

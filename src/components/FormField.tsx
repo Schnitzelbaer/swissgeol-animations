@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import { useTooltip } from './Tooltip'
+import { useI18n } from '../i18n'
 import styles from './FormField.module.css'
 import requiredIcon from '../assets/icons/required.svg'
 import helpIcon from '../assets/icons/help.svg'
@@ -25,13 +26,14 @@ type FieldProps = {
 
 /** Feld mit Label («form / input / text v2»): Pflichtfelder mit rotem «!», Hinweise mit orangem «?» */
 function Field({ label, required, help, className, children }: FieldProps) {
+  const { t } = useI18n()
   const id = useId()
   return (
     <div className={`${styles.field} ${className ?? ''}`}>
       <label htmlFor={id} className={styles.label}>
         <span className="body3-medium ellipsis">{label}</span>
         {help && <LabelIcon kind="help" hint={help} />}
-        {required && <LabelIcon kind="required" hint="Pflichtfeld" />}
+        {required && <LabelIcon kind="required" hint={t.form.required} />}
       </label>
       {children(id)}
     </div>

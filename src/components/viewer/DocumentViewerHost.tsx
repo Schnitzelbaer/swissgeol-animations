@@ -5,9 +5,11 @@ import { ViewerHeader } from './ViewerHeader'
 import { useDocumentViewer } from './useDocumentViewer'
 import { useStore } from '../../data/store'
 import type { AssetFile } from '../../data/files'
+import { useI18n } from '../../i18n'
 
 /** PDF-Viewer als Modal über jeder Seite; gesteuert über ?doc=<Datei-ID>&page=<Seite> */
 export function DocumentViewerHost() {
+  const { t } = useI18n()
   const { files, getFile } = useStore()
   const { docId, page, openDocument, setPage, closeDocument } = useDocumentViewer()
   const file = getFile(docId)
@@ -23,7 +25,7 @@ export function DocumentViewerHost() {
   const pdfFiles = files.filter((candidate) => candidate.url && candidate.assetId === shown?.assetId)
 
   return (
-    <Modal open={open} onClose={closeDocument} label="Datei-Viewer">
+    <Modal open={open} onClose={closeDocument} label={t.viewer.label}>
       {shown && (
         <>
           <ViewerHeader

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, ButtonLink } from '../Button'
 import { TruncatedText } from '../Tooltip'
 import type { AssetFile } from '../../data/files'
+import { useI18n } from '../../i18n'
 import styles from './FilesTable.module.css'
 import uploadIcon from '../../assets/icons/upload.svg'
 import toolbarTrashIcon from '../../assets/icons/toolbar-trash.svg'
@@ -27,6 +28,7 @@ function Checkbox({ checked, indeterminate, onChange, label }: { checked: boolea
 }
 
 function UploadField({ onFiles }: { onFiles: (files: File[]) => void }) {
+  const { t } = useI18n()
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   return (
@@ -53,9 +55,9 @@ function UploadField({ onFiles }: { onFiles: (files: File[]) => void }) {
       </svg>
       <span className={styles.uploadTitle}>
         <img src={uploadIcon} alt="" />
-        <span className="button-text">Datei hochladen</span>
+        <span className="button-text">{t.files.upload}</span>
       </span>
-      <span className={`${styles.uploadHint} button-text`}>Click to browse, or drag &amp; drop a file here</span>
+      <span className={`${styles.uploadHint} button-text`}>{t.files.uploadHint}</span>
       <input
         ref={inputRef}
         type="file"
@@ -81,6 +83,7 @@ type Props = {
 
 /** Dateitabelle der Bearbeiten-Seite: Upload, Auswahl, Suche, Sortierung und Aktionen pro Zeile */
 export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, onClassify }: Props) {
+  const { t } = useI18n()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState('')
   const [descending, setDescending] = useState(false)
@@ -120,7 +123,7 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
             <Button
               variant={selectedFiles.length ? 'secondary' : 'disabled'}
               icon={selectedFiles.length ? trashIcon : toolbarTrashIcon}
-              label="Löschen"
+              label={t.files.delete}
               disabled={!selectedFiles.length}
               onClick={() => {
                 onDelete([...selected])
@@ -130,42 +133,42 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
             <Button
               variant={selectedFiles.length ? 'secondary' : 'disabled'}
               icon={selectedFiles.length ? downloadIcon : toolbarDownloadIcon}
-              label="Export"
+              label={t.files.export}
               disabled={!selectedFiles.length}
               onClick={exportSelected}
             />
             <Button
               variant={analysable.length ? 'secondary' : 'disabled'}
               icon={analysable.length ? rowAnalyseIcon : analyseGreyIcon}
-              label="Neu analysieren"
+              label={t.files.reanalyse}
               disabled={!analysable.length}
               onClick={() => onAnalyse(analysable.map((file) => file.id))}
             />
           </div>
           <label className={styles.search}>
             <img src={searchIcon} alt="" />
-            <input value={query} placeholder="Suche..." aria-label="Dateien durchsuchen" onChange={(event) => setQuery(event.target.value)} />
+            <input value={query} placeholder={t.files.search} aria-label={t.files.searchLabel} onChange={(event) => setQuery(event.target.value)} />
           </label>
         </div>
 
-        <div className={styles.grid} role="table" aria-label="Dateien">
+        <div className={styles.grid} role="table" aria-label={t.files.tableLabel}>
           <div className={`${styles.row} ${styles.head}`} role="row">
             <div className={styles.checkCell} role="columnheader">
               <Checkbox
                 checked={allSelected}
                 indeterminate={!allSelected && visible.some((file) => selected.has(file.id))}
-                label="Alle auswählen"
+                label={t.files.selectAll}
                 onChange={() => setSelected(allSelected ? new Set() : new Set(visible.map((file) => file.id)))}
               />
             </div>
             <button type="button" className={`${styles.nameHead} ${descending ? styles.descending : ''}`} role="columnheader" onClick={() => setDescending(!descending)}>
               <img src={sortIcon} alt="" />
-              <span className="body3-bold">Name</span>
+              <span className="body3-bold">{t.files.name}</span>
             </button>
             <div className={`${styles.dateCell} body3-bold`} role="columnheader">
-              Hochgeladen
+              {t.files.uploaded}
             </div>
-            <div className={styles.actionsCell} role="columnheader" aria-label="Aktionen" />
+            <div className={styles.actionsCell} role="columnheader" aria-label={t.files.actions} />
           </div>
 
           {visible.map((file) => {
@@ -174,7 +177,7 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
             return (
               <div key={file.id} className={`${styles.row} ${selected.has(file.id) ? styles.selectedRow : ''}`} role="row">
                 <div className={styles.checkCell} role="cell">
-                  <Checkbox checked={selected.has(file.id)} label={`${file.name} auswählen`} onChange={() => toggle(file.id)} />
+                  <Checkbox checked={selected.has(file.id)} label={t.files.select(file.name)} onChange={() => toggle(file.id)} />
                 </div>
                 {/* Ohne laufende Analyse nutzt der Name auch die OCR-Spalte */}
                 <div className={`${styles.nameCell} ${running ? '' : styles.nameWide}`} role="cell">
@@ -183,7 +186,7 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
                 {running && (
                   <div className={styles.ocrCell} role="cell">
                     <span className={styles.analysing}>
-                      <span className={styles.cellText}>analyse</span>
+                      <span className={styles.cellText}>{t.files.analysing}</span>
                       <img src={spinnerIcon} alt="" className={styles.spinner} />
                     </span>
                   </div>
@@ -192,18 +195,18 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
                   {file.uploaded}
                 </div>
                 <div className={styles.actionsCell} role="cell">
-                  <Button variant="secondary" small icon={rowTrashIcon} aria-label={`${file.name} löschen`} tooltip="Löschen" onClick={() => onDelete([file.id])} />
+                  <Button variant="secondary" small icon={rowTrashIcon} aria-label={t.files.deleteFile(file.name)} tooltip={t.files.delete} onClick={() => onDelete([file.id])} />
                   {file.url ? (
-                    <ButtonLink variant="secondary" small icon={rowDownloadIcon} href={file.url} download={file.name} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
+                    <ButtonLink variant="secondary" small icon={rowDownloadIcon} href={file.url} download={file.name} aria-label={t.files.downloadFile(file.name)} tooltip={t.files.download} />
                   ) : (
-                    <Button variant="disabled" small icon={toolbarDownloadIcon} aria-label={`${file.name} herunterladen`} disabled />
+                    <Button variant="disabled" small icon={toolbarDownloadIcon} aria-label={t.files.downloadFile(file.name)} disabled />
                   )}
                   <Button
                     variant={isPdf && !running ? 'secondary' : 'disabled'}
                     small
                     icon={isPdf && !running ? rowAnalyseIcon : analyseGreyIcon}
-                    aria-label={`${file.name} neu analysieren`}
-                    tooltip={isPdf ? 'Neu analysieren' : 'Nur PDFs werden analysiert'}
+                    aria-label={t.files.reanalyseFile(file.name)}
+                    tooltip={isPdf ? t.files.reanalyse : t.files.onlyPdfAnalysed}
                     disabled={!isPdf || running}
                     onClick={() => onAnalyse([file.id])}
                   />
@@ -211,8 +214,8 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
                     variant={isPdf ? 'secondary' : 'disabled'}
                     small
                     icon={isPdf ? rowClassifyIcon : rowClassifyGreyIcon}
-                    aria-label={`${file.name} klassifizieren`}
-                    tooltip={isPdf ? 'Klassifizieren' : 'Nur PDFs werden klassifiziert'}
+                    aria-label={t.files.classifyFile(file.name)}
+                    tooltip={isPdf ? t.files.classify : t.files.onlyPdfClassified}
                     disabled={!isPdf}
                     onClick={() => onClassify(file.id)}
                   />
@@ -220,7 +223,7 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
               </div>
             )
           })}
-          {visible.length === 0 && <p className={styles.empty}>Keine Dateien gefunden.</p>}
+          {visible.length === 0 && <p className={styles.empty}>{t.files.empty}</p>}
         </div>
       </div>
     </div>

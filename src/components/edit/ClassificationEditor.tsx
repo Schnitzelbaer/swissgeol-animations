@@ -7,6 +7,7 @@ import { ViewerHeader } from '../viewer/ViewerHeader'
 import { loadPdf } from '../viewer/pdf'
 import { SaveBar } from './SaveBar'
 import { CLASSES_WITHOUT_LANGUAGE, LANGUAGES, PAGE_CLASSES, newSectionId, pageRange, sectionTitle, type AssetFile, type Section } from '../../data/files'
+import { useI18n } from '../../i18n'
 import styles from './ClassificationEditor.module.css'
 import resetIcon from '../../assets/icons/reset.svg'
 import trashIcon from '../../assets/icons/trash.svg'
@@ -26,6 +27,7 @@ type SectionCardProps = {
 }
 
 function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelete, cardRef }: SectionCardProps) {
+  const { t } = useI18n()
   const pages = Array.from({ length: pageCount }, (_, index) => ({ value: index + 1, label: String(index + 1) }))
   const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
 
@@ -33,39 +35,39 @@ function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelet
     <div ref={cardRef} className={`${styles.card} ${expanded ? styles.expanded : ''}`}>
       <div className={styles.cardHeader}>
         <button type="button" className={styles.cardToggle} aria-expanded={expanded} onClick={onToggle}>
-          <span className={`${styles.cardTitle} body3-bold`}>{sectionTitle(section)}</span>
+          <span className={`${styles.cardTitle} body3-bold`}>{sectionTitle(section, t.pageClass)}</span>
           <span className={styles.cardChips}>
-            <Chip tone="white">{section.type}</Chip>
+            <Chip tone="white">{t.pageClass[section.type]}</Chip>
             {showLanguage && <Chip tone="white">{section.language}</Chip>}
-            <Chip tone="white">S. {pageRange(section)}</Chip>
+            <Chip tone="white">{t.classification.pages(pageRange(section))}</Chip>
           </span>
         </button>
         <div className={styles.cardActions}>
-          <Button icon={trashIcon} aria-label="Abschnitt löschen" tooltip="Abschnitt löschen" onClick={onDelete} />
-          <Button icon={chevronUpIcon} className={styles.chevron} aria-label={expanded ? 'Zuklappen' : 'Aufklappen'} onClick={onToggle} />
+          <Button icon={trashIcon} aria-label={t.classification.deleteSection} tooltip={t.classification.deleteSection} onClick={onDelete} />
+          <Button icon={chevronUpIcon} className={styles.chevron} aria-label={expanded ? t.classification.collapse : t.classification.expand} onClick={onToggle} />
         </div>
       </div>
       <div className={styles.cardCollapse}>
         <div className={styles.cardClip}>
           <div className={styles.cardBody}>
             <TextField
-              label="Label"
-              help="Wenn kein Label angegeben ist, wird der Typ als Titel verwendet"
+              label={t.classification.label}
+              help={t.classification.labelHelp}
               value={section.label}
-              placeholder={section.type}
+              placeholder={t.pageClass[section.type]}
               onChange={(label) => onChange({ ...section, label })}
             />
             <div className={styles.fieldRow}>
               <SelectField
-                label="Typ"
+                label={t.classification.type}
                 required
                 className={styles.typeField}
                 value={section.type}
-                options={PAGE_CLASSES.map((type) => ({ value: type, label: type }))}
+                options={PAGE_CLASSES.map((type) => ({ value: type, label: t.pageClass[type] }))}
                 onChange={(type) => onChange({ ...section, type })}
               />
               <SelectField
-                label="Sprache"
+                label={t.classification.language}
                 required
                 className={styles.smallField}
                 value={section.language ?? NO_LANGUAGE}
@@ -73,7 +75,7 @@ function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelet
                 onChange={(language) => onChange({ ...section, language: language === NO_LANGUAGE ? undefined : (language as Section['language']) })}
               />
               <SelectField
-                label="Seite von"
+                label={t.classification.pageFrom}
                 required
                 className={styles.smallField}
                 value={section.from}
@@ -81,7 +83,7 @@ function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelet
                 onChange={(from) => onChange({ ...section, from, to: Math.max(from, section.to) })}
               />
               <SelectField
-                label="Seite bis"
+                label={t.classification.pageTo}
                 required
                 className={styles.smallField}
                 value={section.to}
@@ -106,6 +108,7 @@ type Props = {
 
 /** Klassifizierungs-Editor: Abschnitte links, Datei-Viewer rechts (Figma «Modal» 20844:27516) */
 export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFile }: Props) {
+  const { t } = useI18n()
   const [sections, setSections] = useState<Section[]>(file.sections ?? [])
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(file.sections?.[0] ? [file.sections[0].id] : []))
   const [dirty, setDirty] = useState(false)
@@ -190,10 +193,10 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
   return (
     <div className={styles.layout}>
       <div className={styles.columns}>
-        <section className={styles.editor} aria-label="Klassifizierung">
+        <section className={styles.editor} aria-label={t.classification.title}>
           <header className={styles.editorHeader}>
-            <h2 className="body2-bold">Klassifizierung</h2>
-            <Button variant="secondary" label="Reihenfolge aktualisieren" icon={resetIcon} iconPosition="right" onClick={reorder} />
+            <h2 className="body2-bold">{t.classification.title}</h2>
+            <Button variant="secondary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
           </header>
           <div ref={listRef} className={styles.editorContent}>
             <div className={styles.list}>
@@ -215,7 +218,7 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
             </div>
             <button type="button" className={styles.add} onClick={add}>
               <img src={plusIcon} alt="" />
-              <span className="button-text">Abschnitt hinzufügen</span>
+              <span className="button-text">{t.classification.addSection}</span>
             </button>
           </div>
         </section>
@@ -227,8 +230,8 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
       </div>
 
       <SaveBar dirty={dirty}>
-        <Button variant="secondary-solid" label="Abbrechen" onClick={onCancel} />
-        <Button variant="primary" label="Bearbeitung beenden" onClick={() => onSave(sections)} />
+        <Button variant="secondary-solid" label={t.classification.cancel} onClick={onCancel} />
+        <Button variant="primary" label={t.classification.finish} onClick={() => onSave(sections)} />
       </SaveBar>
     </div>
   )

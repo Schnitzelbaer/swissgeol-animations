@@ -2,6 +2,7 @@ import { Button, ButtonLink } from '../Button'
 import { Chip } from '../Chip'
 import { TruncatedText } from '../Tooltip'
 import { CLASSES_WITHOUT_LANGUAGE, fileLanguages, groupSections, pageRange, sectionTitle, type AssetFile } from '../../data/files'
+import { useI18n } from '../../i18n'
 import styles from './DocumentCard.module.css'
 import pdfIcon from '../../assets/icons/filetype-pdf.svg'
 import csvIcon from '../../assets/icons/filetype-csv.svg'
@@ -20,10 +21,11 @@ type Props = {
 
 /** Datei-Eintrag im Abschnitt «Dokumente» (Figma «Content – Assets Preview», Überarbeitung 20858:11963) */
 export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleToc, onOpen }: Props) {
+  const { t } = useI18n()
   const groups = groupSections(file.sections ?? [])
-  const classLabels = groups.map((group) => group.label)
+  const classLabels = groups.map((group) => t.pageClassGroup[group.type])
   const languages = fileLanguages(file)
-  const meta = [file.size, file.pages ? `${file.pages} Seiten` : null, languages.length ? languages.join(', ') : null].filter(Boolean) as string[]
+  const meta = [file.size, file.pages ? t.document.pages(file.pages) : null, languages.length ? languages.join(', ') : null].filter(Boolean) as string[]
   const withToc = showToc && groups.length > 0
   const isPdf = file.format === 'PDF'
 
@@ -40,11 +42,11 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
           </div>
           <div className={styles.actions}>
             {file.url ? (
-              <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
+              <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={t.document.downloadFile(file.name)} tooltip={t.document.download} />
             ) : (
-              <Button icon={downloadIcon} aria-label={`${file.name} herunterladen`} tooltip="Herunterladen" />
+              <Button icon={downloadIcon} aria-label={t.document.downloadFile(file.name)} tooltip={t.document.download} />
             )}
-            <Button icon={eyeIcon} aria-label={`${file.name} anzeigen`} tooltip="Anzeigen" disabled={!file.url} onClick={() => onOpen()} />
+            <Button icon={eyeIcon} aria-label={t.document.viewFile(file.name)} tooltip={t.document.view} disabled={!file.url} onClick={() => onOpen()} />
           </div>
         </div>
         <p className={`${styles.meta} body3-medium`}>
@@ -63,7 +65,7 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
           <button
             type="button"
             className={`${styles.chevron} ${withToc ? '' : styles.chevronHidden}`}
-            aria-label={tocOpen ? 'Inhaltsverzeichnis schliessen' : 'Inhaltsverzeichnis öffnen'}
+            aria-label={tocOpen ? t.document.closeToc : t.document.openToc}
             aria-expanded={withToc ? tocOpen : undefined}
             disabled={!withToc}
             tabIndex={withToc ? 0 : -1}
@@ -82,17 +84,17 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
             {withToc && (
               <div className={styles.tocCollapse}>
                 <div className={styles.tocClip}>
-                  <nav className={styles.toc} aria-label={`Inhalt von ${file.name}`}>
+                  <nav className={styles.toc} aria-label={t.document.contentsOf(file.name)}>
                     {groups.map((group) => (
                       <div key={group.type} className={styles.group}>
-                        <span className={`${styles.groupTitle} body3-medium`}>{group.label}</span>
+                        <span className={`${styles.groupTitle} body3-medium`}>{t.pageClassGroup[group.type]}</span>
                         <ul className={styles.entries}>
                           {group.sections.map((section) => {
                             const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
                             return (
                               <li key={section.id}>
                                 <button type="button" className={styles.entry} onClick={() => onOpen(section.from)}>
-                                  <TruncatedText text={sectionTitle(section)} className={`${styles.entryTitle} body3`} />
+                                  <TruncatedText text={sectionTitle(section, t.pageClass)} className={`${styles.entryTitle} body3`} />
                                   <span className={styles.leader} />
                                   <span className={styles.entryMeta}>
                                     {showLanguage && <Chip size="small">{section.language}</Chip>}

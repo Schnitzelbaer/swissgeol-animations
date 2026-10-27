@@ -5,7 +5,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - `npm run dev` startet den Dev-Server, `npm run build` muss vor jedem Commit fehlerfrei durchlaufen.
 - Push auf `main` deployed automatisch auf Vercel (Production); Branches/PRs bekommen Preview-URLs. `vercel.json` leitet alle Routen auf `index.html` (SPA).
 - Abmachung: Immer direkt auf `main` arbeiten, committen und pushen, auch in Cloud-Sessions, die einen eigenen Branch vorgeben. Keine Feature-Branches oder PRs, ausser der Nutzer verlangt es ausdrücklich.
-- UI-Texte auf Deutsch mit Schweizer Rechtschreibung (kein ß).
+- Oberfläche zweisprachig, Standard Englisch. Alle UI-Texte stehen in `src/i18n/messages.ts` (`en` und `de`), Komponenten holen sie mit `useI18n()`. Englische Begriffe wie in der Live-App (Repo `swisstopo/swissgeol-assets-suite`, `apps/client-asset-sg/src/app/i18n/en.ts` und Codelisten in den Prisma-Migrationen). Deutsch wie in Figma, mit Schweizer Rechtschreibung (kein ß).
 
 ## Design-Vorlage
 
@@ -19,6 +19,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 
 - `/asset/:id` Karte mit Panel, `/map` nur Karte. `?sel=<Geometrie-ID>` markiert die gewählte Geometrie (ohne Angabe die erste des Assets), `?toc=<Datei-IDs>` öffnet Inhaltsverzeichnisse im Panel.
 - Assets: `4841` (Inhalte wie im Figma-Screen), `8768`, `16623`, `16622`. Jede Geometrie auf der Karte gehört zu einem Asset (`src/components/map/geometries.ts`); ein Klick markiert sie pink und öffnet das Panel dieses Assets.
+- `?lang=de` schaltet auf Deutsch; ohne Parameter ist alles Englisch. Der Parameter bleibt bei jeder Navigation erhalten (`src/i18n/index.tsx` trägt ihn nach), die Sprachwahl im Header setzt ihn.
 - `?doc=<Datei-ID>&page=<n>` öffnet den PDF-Viewer (auf jeder Seite), z.B. `/asset/4841?doc=8768&page=7`.
 - `/asset/4841/edit/files` Bearbeiten-Seite; `?tab=legal` rechtliche Einwilligungen, `?classify=<Datei-ID>` Klassifizierungs-Editor.
 
@@ -30,7 +31,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - Karte: OpenLayers mit swisstopo-WMTS (`pixelkarte-grau`, umschaltbar auf `-farbe`). Die Kacheln werden mit `tileSize: 128` halb so gross gezeichnet, weil das Kartenbild in Figma ein Retina-Screenshot ist.
 - `src/components/map/geometries.ts`: Polygone, Linie und Punkte in Figma-Pixelkoordinaten, beim Start exakt wie im Design platziert.
 - Das Preview-Panel liegt über der Karte; `--panel-offset` und das View-Padding von OpenLayers halten Kartenmitte, Steuerung und Tabellenleiste links davon.
-- Daten: `src/data/assets.ts` (Assets mit Panel-Inhalten), `src/data/files.ts` (Dateien mit `assetId` und Abschnitten/Seitenklassen, aus den echten PDFs abgeleitet), `src/data/store.tsx` (Zustand im Speicher; Neuladen setzt alles zurück, praktisch für Aufnahmen).
+- Daten: `src/data/assets.ts` (Assets mit Panel-Inhalten; Codelisten wie Thema, Typ, Sprache, Rollen als Codes, Texte dazu in `messages.ts`; Titel, Namen und Dokumentinhalte bleiben in der Originalsprache), `src/data/files.ts` (Dateien mit `assetId` und Abschnitten/Seitenklassen, aus den echten PDFs abgeleitet), `src/data/store.tsx` (Zustand im Speicher; Neuladen setzt alles zurück, praktisch für Aufnahmen).
 - PDFs liegen in `public/pdfs/` (echte swisstopo-Dokumente 4841, 8768, 12304, 16622, 16623). Der Viewer (`src/components/viewer/`) nutzt pdf.js, lädt es erst beim ersten PDF und rendert nur Seiten nahe am sichtbaren Bereich.
 - Die AI-Analyse ist simuliert (`ANALYSIS_DURATION_MS` in `store.tsx`).
 - Gewählte Fläche: eigener Canvas-Renderer in `src/components/map/styles.ts` (6px pink aussen, 3px braun innen wie in Figma 20864:149622).

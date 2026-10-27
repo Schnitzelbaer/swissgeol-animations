@@ -11,6 +11,9 @@
   --color-bg-grey: #f1f3f5;
   --color-textfield-grey: #f8f9fa;
   --color-white: #ffffff;
+  /* Zustände: gedrückter Tertiär-Button (states/boreholes/rest-pressed), Hover in Menüs (default-states/hovered) */
+  --color-pressed: #adc6cd;
+  --color-hovered: #f0f4f7;
 
   --border-default: #dfe4e9;
   --border-high-emphasis: #acb4bd;

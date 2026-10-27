@@ -162,8 +162,10 @@
   flex: 1;
 }
 
+/* 100px wie in Figma; längere Labels (z.B. englisch «Page from») machen das Feld breiter statt abgeschnitten */
 .smallField {
-  width: 100px;
+  width: max-content;
+  min-width: 100px;
   flex-shrink: 0;
 }
 

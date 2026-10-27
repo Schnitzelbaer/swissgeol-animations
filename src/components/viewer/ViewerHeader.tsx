@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Button, ButtonLink } from '../Button'
 import type { AssetFile } from '../../data/files'
 import { loadPageTexts } from './pdf'
+import { useI18n } from '../../i18n'
 import styles from './ViewerHeader.module.css'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg'
 import downloadIcon from '../../assets/icons/download.svg'
@@ -9,6 +10,7 @@ import searchIcon from '../../assets/icons/search-viewer.svg'
 import closeIcon from '../../assets/icons/close.svg'
 
 function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; current: AssetFile; onSelect: (fileId: string) => void }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -29,7 +31,7 @@ function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; curren
           <img src={chevronDownIcon} alt="" className={styles.dropdownChevron} />
         </button>
       </div>
-      <ul className={styles.menu} role="listbox" aria-label="Datei wählen">
+      <ul className={styles.menu} role="listbox" aria-label={t.viewer.chooseFile}>
         {files.map((file) => (
           <li key={file.id}>
             <button
@@ -43,7 +45,7 @@ function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; curren
               }}
             >
               <span className="ellipsis">{file.name}</span>
-              <span className={styles.optionMeta}>{file.pages} S.</span>
+              <span className={styles.optionMeta}>{file.pages && t.viewer.pages(file.pages)}</span>
             </button>
           </li>
         ))}
@@ -54,6 +56,7 @@ function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; curren
 
 /** Suche in der Textebene (OCR) der Scans; Enter springt zur nächsten Seite mit Treffer */
 function Search({ file, page, onGoToPage }: { file: AssetFile; page: number; onGoToPage: (page: number) => void }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [matches, setMatches] = useState<number[] | null>(null)
@@ -92,18 +95,18 @@ function Search({ file, page, onGoToPage }: { file: AssetFile; page: number; onG
 
   return (
     <div className={`${styles.card} ${styles.search} ${open ? styles.searchOpen : ''}`}>
-      <Button icon={searchIcon} aria-label="Im Dokument suchen" aria-expanded={open} onClick={() => setOpen(!open)} />
+      <Button icon={searchIcon} aria-label={t.viewer.search} aria-expanded={open} onClick={() => setOpen(!open)} />
       <div className={styles.searchField}>
         <input
           ref={inputRef}
           value={query}
-          placeholder="Suche im Dokument"
-          aria-label="Suchbegriff"
+          placeholder={t.viewer.searchPlaceholder}
+          aria-label={t.viewer.searchTerm}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={onKeyDown}
           tabIndex={open ? 0 : -1}
         />
-        {matches && <span className={styles.matches}>{matches.length === 1 ? '1 Seite' : `${matches.length} Seiten`}</span>}
+        {matches && <span className={styles.matches}>{t.viewer.matches(matches.length)}</span>}
       </div>
     </div>
   )
@@ -120,18 +123,19 @@ type Props = {
 
 /** Kopfzeile des Datei-Viewers: Dateiwahl, Download, Suche und Schliessen */
 export function ViewerHeader({ files, file, page, onSelectFile, onGoToPage, onClose }: Props) {
+  const { t } = useI18n()
   return (
     <header className={styles.header}>
       <div className={styles.group}>
         <FileDropdown files={files} current={file} onSelect={onSelectFile} />
         <div className={styles.card}>
-          <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label="Herunterladen" tooltip="Herunterladen" />
+          <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={t.viewer.download} tooltip={t.viewer.download} />
         </div>
         <Search key={file.id} file={file} page={page} onGoToPage={onGoToPage} />
       </div>
       {onClose && (
         <div className={styles.card}>
-          <Button icon={closeIcon} aria-label="Viewer schliessen" onClick={onClose} />
+          <Button icon={closeIcon} aria-label={t.viewer.close} onClick={onClose} />
         </div>
       )}
     </header>

@@ -2,21 +2,11 @@
 
 export type Language = 'DE' | 'FR' | 'IT' | 'EN' | 'RM'
 
+/** Seitenklassen; die Schlüssel sind interne Codes, die Texte stehen in i18n/messages.ts (pageClass, pageClassGroup) */
 export type PageClass = 'Titelblatt' | 'Text' | 'Karte' | 'Diagramm' | 'Bohrprofil' | 'Geotechnisches Profil' | 'Vertrag'
 
 export const PAGE_CLASSES: PageClass[] = ['Titelblatt', 'Text', 'Karte', 'Diagramm', 'Bohrprofil', 'Geotechnisches Profil', 'Vertrag']
 export const LANGUAGES: Language[] = ['DE', 'FR', 'IT', 'EN', 'RM']
-
-/** Gruppentitel im Inhaltsverzeichnis */
-export const CLASS_GROUP_LABEL: Record<PageClass, string> = {
-  Titelblatt: 'Titelblatt',
-  Text: 'Texte',
-  Karte: 'Karten',
-  Diagramm: 'Diagramme',
-  Bohrprofil: 'Bohrprofile',
-  'Geotechnisches Profil': 'Geotechnische Profile',
-  Vertrag: 'Vertrag',
-}
 
 /** Klassen ohne Sprachangabe (z.B. Karten), siehe Figma-Notiz */
 export const CLASSES_WITHOUT_LANGUAGE: PageClass[] = ['Titelblatt', 'Karte']
@@ -171,7 +161,7 @@ export const initialFiles: AssetFile[] = [
   },
 ]
 
-export type SectionGroup = { type: PageClass; label: string; sections: Section[] }
+export type SectionGroup = { type: PageClass; sections: Section[] }
 
 /** Gruppiert Abschnitte nach Klasse; Gruppen und Einträge sind nach der ersten Seite geordnet */
 export function groupSections(list: Section[]): SectionGroup[] {
@@ -180,15 +170,16 @@ export function groupSections(list: Section[]): SectionGroup[] {
   for (const section of sorted) {
     groups.set(section.type, [...(groups.get(section.type) ?? []), section])
   }
-  return [...groups.entries()].map(([type, items]) => ({ type, label: CLASS_GROUP_LABEL[type], sections: items }))
+  return [...groups.entries()].map(([type, items]) => ({ type, sections: items }))
 }
 
 export function pageRange(section: Pick<Section, 'from' | 'to'>) {
   return section.from === section.to ? `${section.from}` : `${section.from} – ${section.to}`
 }
 
-export function sectionTitle(section: Pick<Section, 'label' | 'type'>) {
-  return section.label.trim() || section.type
+/** Titel eines Abschnitts; ohne Label der Name seiner Seitenklasse */
+export function sectionTitle(section: Pick<Section, 'label' | 'type'>, classLabels: Record<PageClass, string>) {
+  return section.label.trim() || classLabels[section.type]
 }
 
 /** Sprachen eines Dokuments: alle in den Abschnitten vorkommenden Sprachen */

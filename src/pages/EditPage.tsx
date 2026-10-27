@@ -12,6 +12,7 @@ import { useDocumentViewer } from '../components/viewer/useDocumentViewer'
 import { useStore } from '../data/store'
 import { DEFAULT_ASSET_ID, getAsset } from '../data/assets'
 import type { AssetFile } from '../data/files'
+import { useI18n } from '../i18n'
 import styles from './EditPage.module.css'
 import backIcon from '../assets/icons/back.svg'
 import duplicateIcon from '../assets/icons/header-duplicate.svg'
@@ -21,15 +22,7 @@ import discardIcon from '../assets/icons/trash-discard.svg'
 import saveIcon from '../assets/icons/save.svg'
 import sidebarIcon from '../assets/icons/sidebar-toggle.svg'
 
-const SECTIONS = [
-  { id: 'general', label: 'General' },
-  { id: 'files', label: 'Files' },
-  { id: 'contacts', label: 'Contacts' },
-  { id: 'references', label: 'References' },
-  { id: 'geometries', label: 'Geometries' },
-  { id: 'altdaten', label: 'Altdaten' },
-  { id: 'status', label: 'Status' },
-]
+const SECTIONS = ['general', 'files', 'contacts', 'references', 'geometries', 'altdaten', 'status'] as const
 
 function formatDate(date: Date) {
   const pad = (value: number) => String(value).padStart(2, '0')
@@ -59,9 +52,10 @@ function toAssetFile(file: File, assetId: string, legal: boolean): AssetFile {
 }
 
 function SidepanelToggle({ onClick }: { onClick: () => void }) {
-  const { handlers, tooltip } = useTooltip('Datei-Viewer öffnen')
+  const { t } = useI18n()
+  const { handlers, tooltip } = useTooltip(t.edit.openViewer)
   return (
-    <button type="button" className={styles.sidepanelToggle} aria-label="Datei-Viewer öffnen" onClick={onClick} {...handlers}>
+    <button type="button" className={styles.sidepanelToggle} aria-label={t.edit.openViewer} onClick={onClick} {...handlers}>
       <img src={sidebarIcon} alt="" />
       {tooltip}
     </button>
@@ -74,6 +68,7 @@ function SidepanelToggle({ onClick }: { onClick: () => void }) {
  */
 export function EditPage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { assetId, section = 'files' } = useParams()
   const asset = getAsset(assetId) ?? getAsset(DEFAULT_ASSET_ID)!
   const [searchParams, setSearchParams] = useSearchParams()
@@ -126,30 +121,30 @@ export function EditPage() {
 
       <div className={styles.detailHeader}>
         <div className={styles.detailTitle}>
-          <Button variant="primary" icon={backIcon} aria-label="Zurück zur Karte" tooltip="Zurück" onClick={() => navigate(`/asset/${asset.id}`)} />
+          <Button variant="primary" icon={backIcon} aria-label={t.edit.backToMap} tooltip={t.edit.back} onClick={() => navigate(`/asset/${asset.id}`)} />
           <h1 className={`${styles.title} body2-bold`}>{asset.title}</h1>
           <span className={styles.statusChips}>
-            <span className={`${styles.statusChip} ${styles.reviewed}`}>{asset.status}</span>
+            <span className={`${styles.statusChip} ${styles.reviewed}`}>{t.codes.status[asset.status]}</span>
             <span className={`${styles.statusChip} ${styles.assignee}`}>Matthias Walder</span>
           </span>
         </div>
         <div className={styles.detailActions}>
-          <Button variant="secondary" label="Duplizieren" icon={duplicateIcon} iconPosition="right" />
-          <Button variant="secondary" label="Export" icon={exportIcon} iconPosition="right" />
-          <Button variant="secondary" label="Asset Löschen" icon={trashIcon} iconPosition="right" />
+          <Button variant="secondary" label={t.edit.duplicate} icon={duplicateIcon} iconPosition="right" />
+          <Button variant="secondary" label={t.edit.export} icon={exportIcon} iconPosition="right" />
+          <Button variant="secondary" label={t.edit.deleteAsset} icon={trashIcon} iconPosition="right" />
         </div>
       </div>
 
       <div className={styles.body}>
-        <nav className={styles.nav} aria-label="Bereiche">
-          {SECTIONS.map((item) => (
+        <nav className={styles.nav} aria-label={t.edit.sectionsLabel}>
+          {SECTIONS.map((id) => (
             <Link
-              key={item.id}
-              to={`/asset/${asset.id}/edit/${item.id}`}
-              className={`${styles.navItem} ${item.id === section ? styles.navActive : ''}`}
-              aria-current={item.id === section ? 'page' : undefined}
+              key={id}
+              to={`/asset/${asset.id}/edit/${id}`}
+              className={`${styles.navItem} ${id === section ? styles.navActive : ''}`}
+              aria-current={id === section ? 'page' : undefined}
             >
-              <span className="ellipsis">{item.label}</span>
+              <span className="ellipsis">{t.edit.sections[id]}</span>
             </Link>
           ))}
         </nav>
@@ -160,10 +155,10 @@ export function EditPage() {
               <div className={styles.content}>
                 <div className={styles.tabs} role="tablist">
                   <button type="button" role="tab" aria-selected={tab === 'normal'} className={`${styles.tab} ${tab === 'normal' ? styles.tabActive : ''}`} onClick={() => setParam('tab', null)}>
-                    Normale Dateien
+                    {t.edit.normalFiles}
                   </button>
                   <button type="button" role="tab" aria-selected={tab === 'legal'} className={`${styles.tab} ${tab === 'legal' ? styles.tabActive : ''}`} onClick={() => setParam('tab', 'legal')}>
-                    Rechtliche Einwilligungen
+                    {t.edit.legalFiles}
                   </button>
                 </div>
                 <div className={`${styles.tabPanel} ${tab === 'legal' ? styles.tabPanelLegal : ''}`} role="tabpanel">
@@ -179,13 +174,13 @@ export function EditPage() {
                 </div>
               </div>
             ) : (
-              <p className={styles.placeholder}>Dieser Bereich ist im Prototyp nicht nachgebaut.</p>
+              <p className={styles.placeholder}>{t.edit.notBuilt}</p>
             )}
           </div>
 
           <SaveBar dirty={dirty}>
-            <Button variant="secondary-solid" label="Änderungen verwerfen" icon={discardIcon} iconPosition="right" disabled={!dirty} onClick={() => setDraft(assetFiles)} />
-            <Button variant="primary" label="Speichern" icon={saveIcon} iconPosition="right" disabled={!dirty} onClick={() => saveFiles(asset.id, draft)} />
+            <Button variant="secondary-solid" label={t.edit.discard} icon={discardIcon} iconPosition="right" disabled={!dirty} onClick={() => setDraft(assetFiles)} />
+            <Button variant="primary" label={t.edit.save} icon={saveIcon} iconPosition="right" disabled={!dirty} onClick={() => saveFiles(asset.id, draft)} />
           </SaveBar>
         </div>
 
@@ -201,7 +196,7 @@ export function EditPage() {
         }}
       />
 
-      <Modal open={Boolean(classifyFile)} onClose={() => setParam('classify', null)} label="Klassifizierung">
+      <Modal open={Boolean(classifyFile)} onClose={() => setParam('classify', null)} label={t.classification.title}>
         {shownClassifyFile && (
           <ClassificationEditor
             key={shownClassifyFile.id}
