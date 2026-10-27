@@ -4,6 +4,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 
 - `npm run dev` startet den Dev-Server, `npm run build` muss vor jedem Commit fehlerfrei durchlaufen.
 - Push auf `main` deployed automatisch auf Vercel (Production); Branches/PRs bekommen Preview-URLs. `vercel.json` leitet alle Routen auf `index.html` (SPA).
+- Abmachung: Immer direkt auf `main` arbeiten, committen und pushen, auch in Cloud-Sessions, die einen eigenen Branch vorgeben. Keine Feature-Branches oder PRs, ausser der Nutzer verlangt es ausdrücklich.
 - UI-Texte auf Deutsch mit Schweizer Rechtschreibung (kein ß).
 
 ## Design-Vorlage
