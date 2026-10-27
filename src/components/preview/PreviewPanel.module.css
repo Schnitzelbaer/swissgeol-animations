@@ -8,7 +8,8 @@
   flex-direction: column;
   width: var(--panel-width);
   max-width: 100%;
-  background: var(--color-white);
+  /* Hellgrauer Grund hinter den weissen Kacheln (Figma «Preview – Assets») */
+  background: var(--color-textfield-grey);
   border-left: 1px solid var(--border-default);
   transform: translateX(100%);
   transition:
@@ -28,6 +29,7 @@
   height: 68px;
   flex-shrink: 0;
   padding: 0 16px 0 28px;
+  background: var(--color-white);
   border-bottom: 1px solid var(--border-default);
 }
 
@@ -50,7 +52,7 @@
 
 .scroll::-webkit-scrollbar-thumb {
   background: var(--border-default);
-  border: 3px solid var(--color-white);
+  border: 3px solid var(--color-textfield-grey);
   border-radius: 6px;
 }
 
