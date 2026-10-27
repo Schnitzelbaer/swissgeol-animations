@@ -1,9 +1,7 @@
 import type { FeatureLike } from 'ol/Feature'
 import type { Coordinate } from 'ol/coordinate'
 import type { State } from 'ol/render'
-import { Circle, Fill, Icon, Stroke, Style } from 'ol/style'
-import markerPoint from '../../assets/map/marker-point.svg'
-import markerPin from '../../assets/map/marker-pin.svg'
+import { Circle, Fill, Stroke, Style } from 'ol/style'
 
 // Farben aus den Figma-Vektoren «Vector 5», «Linie» und «Punkt»
 const AREA_FILL = 'rgba(245, 158, 11, 0.3)'
@@ -11,6 +9,18 @@ const AREA_FILL_HOVER = 'rgba(245, 158, 11, 0.5)'
 const AREA_STROKE = '#78350f'
 const LINE_OUTER = '#1e3a8a'
 const LINE_INNER = '#3b82f6'
+const POINT_FILL = '#14afb8'
+const POINT_STROKE = '#13474e'
+const POINT_RADIUS = 8
+
+type Shadow = { offsetY: number; blur: number; opacity: number }
+
+// Schlagschatten in der Punktfarbe aus Figma (Versatz, stdDeviation, Deckkraft; Spread −1)
+const POINT_SHADOWS: Shadow[] = [{ offsetY: 2, blur: 3, opacity: 0.4 }]
+const PIN_SHADOWS: Shadow[] = [
+  { offsetY: 2, blur: 2, opacity: 0.16 },
+  { offsetY: 4, blur: 5, opacity: 0.18 },
+]
 
 // Gewählte Geometrie (Figma 20864:149622): pinker Rand aussen, brauner Rand innen, doppelte Füllung
 const SELECTED = '#ec4899'
@@ -107,17 +117,67 @@ const lineSelectedStyle = [
   }),
 ]
 
-const pointStyle = new Style({ image: new Icon({ src: markerPoint, anchor: [0.5, 0.5] }), zIndex: 3 })
-const pointHoverStyle = new Style({ image: new Icon({ src: markerPoint, anchor: [0.5, 0.5], scale: 1.25 }), zIndex: 4 })
+function circlePath(context: CanvasRenderingContext2D, [x, y]: Coordinate, radius: number) {
+  context.beginPath()
+  context.arc(x, y, radius, 0, 2 * Math.PI)
+}
 
-// «Punkt»: 34×34-SVG, Kreismittelpunkt bei (17, 13)
-const pinStyle = new Style({ image: new Icon({ src: markerPin, anchor: [0.5, 13 / 34] }), zIndex: 3 })
-const pinHoverStyle = new Style({ image: new Icon({ src: markerPin, anchor: [0.5, 13 / 34], scale: 1.25 }), zIndex: 4 })
+/*
+ * Punkte werden als Vektoren gezeichnet statt als SVG-Icon: Safari rastert Bilder mit SVG-Filtern auf der Karte
+ * nur in einfacher Auflösung, auf Retina-Displays wurden die Punkte dadurch unscharf.
+ * 16px-Kreis mit 2px-Innenrand wie «Legende Objekte – Assets» und «Punkt» in Figma.
+ */
+function pointRenderer(shadows: Shadow[], scale = 1) {
+  return (coordinates: unknown, state: State) => {
+    const context = state.context
+    const center = coordinates as Coordinate
+    const ratio = state.pixelRatio * scale
+
+    // Canvas-Schatten gelten in Gerätepixeln; shadowBlur ist die doppelte Standardabweichung
+    context.save()
+    context.fillStyle = POINT_FILL
+    for (const shadow of shadows) {
+      context.shadowColor = `rgba(20, 175, 184, ${shadow.opacity})`
+      context.shadowOffsetY = shadow.offsetY * ratio
+      context.shadowBlur = shadow.blur * 2 * ratio
+      // Spread −1: Der Schatten geht vom 1px kleineren Kreis aus, der Punkt deckt ihn danach ab
+      circlePath(context, center, (POINT_RADIUS - 1) * ratio)
+      context.fill()
+    }
+    context.restore()
+
+    circlePath(context, center, POINT_RADIUS * ratio)
+    context.fillStyle = POINT_FILL
+    context.fill()
+    circlePath(context, center, (POINT_RADIUS - 1) * ratio)
+    context.lineWidth = 2 * ratio
+    context.strokeStyle = POINT_STROKE
+    context.stroke()
+  }
+}
+
+function pointHitRenderer(scale = 1) {
+  return (coordinates: unknown, state: State) => {
+    circlePath(state.context, coordinates as Coordinate, POINT_RADIUS * state.pixelRatio * scale)
+    state.context.fill()
+  }
+}
+
+function pointStyle(shadows: Shadow[], zIndex: number, scale = 1) {
+  return new Style({ renderer: pointRenderer(shadows, scale), hitDetectionRenderer: pointHitRenderer(scale), zIndex })
+}
+
+const assetPointStyle = pointStyle(POINT_SHADOWS, 3)
+const assetPointHoverStyle = pointStyle(POINT_SHADOWS, 4, 1.25)
+
+// «Punkt»: gleicher Kreis mit zwei weicheren Schatten
+const pinStyle = pointStyle(PIN_SHADOWS, 3)
+const pinHoverStyle = pointStyle(PIN_SHADOWS, 4, 1.25)
 
 // Gewählter Punkt: pinker Ring um den 16px-Kreis, analog zum Rand der Fläche
 const selectedRing = new Style({ image: new Circle({ radius: 11, stroke: new Stroke({ color: SELECTED, width: 6 }) }), zIndex: 5 })
-const pointSelectedStyle = [selectedRing, new Style({ image: new Icon({ src: markerPoint, anchor: [0.5, 0.5] }), zIndex: 5 })]
-const pinSelectedStyle = [selectedRing, new Style({ image: new Icon({ src: markerPin, anchor: [0.5, 13 / 34] }), zIndex: 5 })]
+const pointSelectedStyle = [selectedRing, pointStyle(POINT_SHADOWS, 5)]
+const pinSelectedStyle = [selectedRing, pointStyle(PIN_SHADOWS, 5)]
 
 export function assetStyle(feature: FeatureLike) {
   const hover = feature.get('hover') === true
@@ -130,6 +190,6 @@ export function assetStyle(feature: FeatureLike) {
     case 'pin':
       return selected ? pinSelectedStyle : hover ? pinHoverStyle : pinStyle
     default:
-      return selected ? pointSelectedStyle : hover ? pointHoverStyle : pointStyle
+      return selected ? pointSelectedStyle : hover ? assetPointHoverStyle : assetPointStyle
   }
 }

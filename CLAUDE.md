@@ -13,6 +13,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - Asset-Vorschau: Node `20842:123706` («Desktop - 1», 1440×1024).
 - Weitere Screens / Funktionalitäten (Inhaltsverzeichnis, PDF-Viewer, Bearbeiten, Klassifizierung): Section `20844:32515`. Die Post-its dort beschreiben das Verhalten.
 - Icons und Grafiken stammen aus Figma (`src/assets/`). Achtung: Der Figma-Export liefert Icons in der Grundfarbe der Komponente und ignoriert Farb-Overrides der Instanzen. Farben deshalb mit dem Figma-Screenshot abgleichen und im SVG anpassen.
+- Safari rastert SVG-Filter (Figma-Schatten) mit einfacher Auflösung, auf Retina wird alles darin unscharf. In exportierten SVGs die Form deshalb ausserhalb des Filters zeichnen (Filter liefert nur den Schatten) und Masken vorsichtshalber durch Clip oder Kontur unter der Füllung ersetzen, siehe `src/assets/map/legend-*.svg`. Auf der Karte keine SVG-Icons verwenden, sondern Vektor-Renderer in `styles.ts`.
 
 ## Routen (jeder Zustand per URL aufrufbar)
 
@@ -33,3 +34,4 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - PDFs liegen in `public/pdfs/` (echte swisstopo-Dokumente 4841, 8768, 12304, 16622, 16623). Der Viewer (`src/components/viewer/`) nutzt pdf.js, lädt es erst beim ersten PDF und rendert nur Seiten nahe am sichtbaren Bereich.
 - Die AI-Analyse ist simuliert (`ANALYSIS_DURATION_MS` in `store.tsx`).
 - Gewählte Fläche: eigener Canvas-Renderer in `src/components/map/styles.ts` (6px pink aussen, 3px braun innen wie in Figma 20864:149622).
+- Punkte auf der Karte: ebenfalls Canvas-Renderer in `styles.ts` (16px-Kreis, 2px-Innenrand, Figma-Schatten), nicht als SVG-Icon, damit sie auf Retina scharf bleiben.
