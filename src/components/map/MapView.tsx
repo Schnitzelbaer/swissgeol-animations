@@ -56,7 +56,9 @@ export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Pr
   const colorLayerRef = useRef<TileLayer | null>(null)
   const onGeometryClickRef = useRef(onGeometryClick)
   const initialPaddingRef = useRef(panelOffset)
-  const [basemap, setBasemap] = useState<Basemap>('grau')
+  // Standard ist die farbige Landeskarte; die graue liegt darunter und erscheint beim Umschalten
+  const [basemap, setBasemap] = useState<Basemap>('farbe')
+  const initialBasemapRef = useRef(basemap)
 
   useEffect(() => {
     onGeometryClickRef.current = onGeometryClick
@@ -64,7 +66,7 @@ export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Pr
 
   useEffect(() => {
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
-    const colorLayer = swisstopoLayer('ch.swisstopo.pixelkarte-farbe', 0)
+    const colorLayer = swisstopoLayer('ch.swisstopo.pixelkarte-farbe', initialBasemapRef.current === 'farbe' ? 1 : 0)
     colorLayerRef.current = colorLayer
 
     const source = new VectorSource({ features: createAssetFeatures() })

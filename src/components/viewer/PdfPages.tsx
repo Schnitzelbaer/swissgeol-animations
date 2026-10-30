@@ -66,14 +66,19 @@ type Props = {
   rotation: number
   scrollRequest: ScrollRequest
   onPageChange: (page: number) => void
+  /** Pinch-Zoom auf dem Trackpad: relativer Faktor, der Viewer begrenzt den Zoom */
+  onZoom: (factor: number) => void
 }
 
+/** Stelle, die beim Zoomen an derselben Position im sichtbaren Bereich bleibt (Standard: die Mitte); x relativ zur Seite */
+type Anchor = { page: number; fraction: number; offsetY?: number; fractionX?: number; offsetX?: number }
+
 /** Alle Seiten untereinander, wie in der Live-Version; Seiten werden erst nahe am sichtbaren Bereich gerendert */
-export function PdfPages({ pdf, zoom, rotation, scrollRequest, onPageChange }: Props) {
+export function PdfPages({ pdf, zoom, rotation, scrollRequest, onPageChange, onZoom }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
   const [activePages, setActivePages] = useState<Set<number>>(new Set())
-  const anchorRef = useRef({ page: scrollRequest.page, fraction: 0 })
+  const anchorRef = useRef<Anchor>({ page: scrollRequest.page, fraction: 0 })
   const currentPageRef = useRef(scrollRequest.page)
   const onPageChangeRef = useRef(onPageChange)
   useEffect(() => {
@@ -108,6 +113,11 @@ export function PdfPages({ pdf, zoom, rotation, scrollRequest, onPageChange }: P
     return element ? element.offsetTop : 0
   }
 
+  const pageLeft = (page: number) => {
+    const element = scrollRef.current?.querySelector<HTMLElement>(`[data-page="${page}"]`)
+    return element ? element.offsetLeft : 0
+  }
+
   // Aktuelle Seite = Seite auf Höhe des oberen Drittels; der Zoom-Anker bleibt die Mitte
   const handleScroll = () => {
     const element = scrollRef.current
@@ -128,6 +138,62 @@ export function PdfPages({ pdf, zoom, rotation, scrollRequest, onPageChange }: P
       onPageChangeRef.current(current)
     }
   }
+
+  // Pinch-Zoom: Chrome, Firefox und Edge melden die Trackpad-Geste als wheel mit ctrlKey, Safari als gesture-Events.
+  // Die Stelle unter den Fingern bleibt stehen; preventDefault verhindert, dass der Browser die ganze Seite zoomt.
+  const boxesRef = useRef(boxes)
+  boxesRef.current = boxes
+  const onZoomRef = useRef(onZoom)
+  onZoomRef.current = onZoom
+  useEffect(() => {
+    const element = scrollRef.current
+    if (!element) return
+    const zoomAt = (clientX: number, clientY: number, factor: number) => {
+      const rect = element.getBoundingClientRect()
+      const offsetX = clientX - rect.left
+      const offsetY = clientY - rect.top
+      const y = element.scrollTop + offsetY
+      let page = 1
+      for (let index = 0; index < boxesRef.current.length; index++) {
+        if (pageTop(index + 1) - GAP / 2 <= y) page = index + 1
+      }
+      anchorRef.current = {
+        page,
+        fraction: (y - pageTop(page)) / Math.max(boxesRef.current[page - 1]?.height ?? 1, 1),
+        offsetY,
+        fractionX: (element.scrollLeft + offsetX - pageLeft(page)) / Math.max(boxesRef.current[page - 1]?.width ?? 1, 1),
+        offsetX,
+      }
+      onZoomRef.current(factor)
+    }
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) return
+      event.preventDefault()
+      const delta = Math.min(Math.max(event.deltaY, -50), 50)
+      zoomAt(event.clientX, event.clientY, Math.exp(-delta * 0.01))
+    }
+    type GestureEvent = UIEvent & { scale: number; clientX: number; clientY: number }
+    let lastScale = 1
+    const onGestureStart = (event: Event) => {
+      event.preventDefault()
+      lastScale = 1
+    }
+    const onGestureChange = (event: Event) => {
+      event.preventDefault()
+      const gesture = event as GestureEvent
+      zoomAt(gesture.clientX, gesture.clientY, gesture.scale / lastScale)
+      lastScale = gesture.scale
+    }
+    element.addEventListener('wheel', onWheel, { passive: false })
+    element.addEventListener('gesturestart', onGestureStart)
+    element.addEventListener('gesturechange', onGestureChange)
+    return () => {
+      element.removeEventListener('wheel', onWheel)
+      element.removeEventListener('gesturestart', onGestureStart)
+      element.removeEventListener('gesturechange', onGestureChange)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Nur Seiten nahe am sichtbaren Bereich rendern
   useEffect(() => {
@@ -155,9 +221,10 @@ export function PdfPages({ pdf, zoom, rotation, scrollRequest, onPageChange }: P
   useLayoutEffect(() => {
     const element = scrollRef.current
     if (!element || !viewport.height) return
-    const { page, fraction } = anchorRef.current
-    element.scrollTop = pageTop(page) + fraction * (boxes[page - 1]?.height ?? 0) - element.clientHeight / 2
-    element.scrollLeft = (element.scrollWidth - element.clientWidth) / 2
+    const { page, fraction, offsetY = element.clientHeight / 2, fractionX, offsetX = 0 } = anchorRef.current
+    element.scrollTop = pageTop(page) + fraction * (boxes[page - 1]?.height ?? 0) - offsetY
+    element.scrollLeft =
+      fractionX === undefined ? (element.scrollWidth - element.clientWidth) / 2 : pageLeft(page) + fractionX * (boxes[page - 1]?.width ?? 0) - offsetX
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boxes])
 

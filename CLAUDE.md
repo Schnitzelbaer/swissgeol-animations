@@ -28,7 +28,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - `src/styles/global.css`: Design-Tokens (Farben, Radien, Schatten) und Typografie-Klassen (`body3-medium` usw.) aus den Figma-Variablen. Schrift: Inter via `@fontsource/inter`.
 - Styling mit CSS Modules pro Komponente, kein Tailwind. Animationen mit CSS-Transitions (Auf-/Zuklappen über `grid-template-rows`) und FLIP beim Umsortieren.
 - Figma zeichnet Rahmen innen: Paddings sind deshalb um die Rahmenbreite reduziert, damit die Masse aufgehen.
-- Karte: OpenLayers mit swisstopo-WMTS (`pixelkarte-grau`, umschaltbar auf `-farbe`). Die Kacheln werden mit `tileSize: 128` halb so gross gezeichnet, weil das Kartenbild in Figma ein Retina-Screenshot ist.
+- Karte: OpenLayers mit swisstopo-WMTS (Standard `pixelkarte-farbe`, umschaltbar auf `-grau`). Die Kacheln werden mit `tileSize: 128` halb so gross gezeichnet, weil das Kartenbild in Figma ein Retina-Screenshot ist.
 - `src/components/map/geometries.ts`: Polygone, Linie und Punkte in Figma-Pixelkoordinaten, beim Start exakt wie im Design platziert.
 - Das Preview-Panel liegt über der Karte; `--panel-offset` und das View-Padding von OpenLayers halten Kartenmitte, Steuerung und Tabellenleiste links davon.
 - Daten: `src/data/assets.ts` (Assets mit Panel-Inhalten; Codelisten wie Thema, Typ, Sprache, Rollen als Codes, Texte dazu in `messages.ts`; Titel, Namen und Dokumentinhalte bleiben in der Originalsprache), `src/data/files.ts` (Dateien mit `assetId` und Abschnitten/Seitenklassen, aus den echten PDFs abgeleitet), `src/data/store.tsx` (Zustand im Speicher; Neuladen setzt alles zurück, praktisch für Aufnahmen).

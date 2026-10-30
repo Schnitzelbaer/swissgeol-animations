@@ -19,6 +19,14 @@ import sidebarIcon from '../../assets/icons/sidebar-toggle.svg'
 import chevronIcon from '../../assets/icons/chevron-down-small.svg'
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4]
+const MIN_ZOOM = ZOOM_STEPS[0]
+const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1]
+
+const clampZoom = (zoom: number) => Math.min(Math.max(zoom, MIN_ZOOM), MAX_ZOOM)
+
+// Die Buttons springen zur nächsten Stufe, auch wenn per Pinch ein Zwischenwert eingestellt ist
+const nextStep = (zoom: number) => ZOOM_STEPS.find((step) => step > zoom * 1.001) ?? MAX_ZOOM
+const previousStep = (zoom: number) => [...ZOOM_STEPS].reverse().find((step) => step < zoom / 1.001) ?? MIN_ZOOM
 
 function isActive(section: Section, page: number) {
   return section.from <= page && page <= section.to
@@ -136,7 +144,7 @@ export function PdfViewer({ file, page, onPageChange, sections = file.sections ?
   const { t } = useI18n()
   const [pdf, setPdf] = useState<LoadedPdf | null>(null)
   const [error, setError] = useState(false)
-  const [zoomIndex, setZoomIndex] = useState(ZOOM_STEPS.indexOf(1))
+  const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
   const [currentPage, setCurrentPage] = useState(page)
   const [scrollRequest, setScrollRequest] = useState<ScrollRequest>({ page, id: 0 })
@@ -150,7 +158,7 @@ export function PdfViewer({ file, page, onPageChange, sections = file.sections ?
     let cancelled = false
     setPdf(null)
     setError(false)
-    setZoomIndex(ZOOM_STEPS.indexOf(1))
+    setZoom(1)
     setRotation(0)
     loadPdf(file.url)
       .then((loaded) => !cancelled && setPdf(loaded))
@@ -198,7 +206,8 @@ export function PdfViewer({ file, page, onPageChange, sections = file.sections ?
           <PdfPages
             key={file.url}
             pdf={pdf}
-            zoom={ZOOM_STEPS[zoomIndex]}
+            zoom={zoom}
+            onZoom={(factor) => setZoom((current) => clampZoom(current * factor))}
             rotation={rotation}
             scrollRequest={scrollRequest}
             onPageChange={handleScrollPage}
@@ -223,9 +232,9 @@ export function PdfViewer({ file, page, onPageChange, sections = file.sections ?
 
         <div className={styles.topControls}>
           <div className={`${styles.card} ${styles.zoomCard}`}>
-            <Button icon={zoomInIcon} aria-label={t.viewer.zoomIn} disabled={zoomIndex >= ZOOM_STEPS.length - 1} onClick={() => setZoomIndex(zoomIndex + 1)} />
-            <Button icon={circleIcon} aria-label={t.viewer.fitPage} onClick={() => setZoomIndex(ZOOM_STEPS.indexOf(1))} />
-            <Button icon={zoomOutIcon} aria-label={t.viewer.zoomOut} disabled={zoomIndex <= 0} onClick={() => setZoomIndex(zoomIndex - 1)} />
+            <Button icon={zoomInIcon} aria-label={t.viewer.zoomIn} disabled={zoom >= MAX_ZOOM} onClick={() => setZoom(nextStep(zoom))} />
+            <Button icon={circleIcon} aria-label={t.viewer.fitPage} onClick={() => setZoom(1)} />
+            <Button icon={zoomOutIcon} aria-label={t.viewer.zoomOut} disabled={zoom <= MIN_ZOOM} onClick={() => setZoom(previousStep(zoom))} />
           </div>
           <div className={styles.card}>
             <Button icon={rotateIcon} aria-label={t.viewer.rotate} onClick={() => setRotation((rotation + 90) % 360)} />
