@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import OlMap from 'ol/Map'
 import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
@@ -7,6 +8,8 @@ import VectorSource from 'ol/source/Vector'
 import XYZ from 'ol/source/XYZ'
 import { Attribution } from 'ol/control'
 import Feature from 'ol/Feature'
+import Overlay from 'ol/Overlay'
+import Point from 'ol/geom/Point'
 import type { Coordinate } from 'ol/coordinate'
 import type { StyleFunction } from 'ol/style/Style'
 import { MapControls, type Basemap } from './MapControls'
@@ -40,9 +43,16 @@ function tween(from: number, to: number, duration: number, onUpdate: (value: num
   requestAnimationFrame(step)
 }
 
+export type StackedControls = {
+  close: () => void
+  /** Hebt eine Bohrung aus dem Popover hervor; ohne ID wieder alle */
+  highlight: (id: string | null) => void
+}
+
 type Props = {
   /** Objekte der Karte; wird einmal beim Aufbau aufgerufen */
   createFeatures: () => Feature[]
+  /** Stil; ein neuer Stil (z.B. andere Legende) zeichnet die Objekte neu */
   style: StyleFunction
   center: Coordinate
   resolution: number
@@ -53,24 +63,66 @@ type Props = {
   /** Gewähltes Objekt, pink hervorgehoben */
   selectedId?: string
   onFeatureClick?: (id: string, feature: Feature) => void
+  /**
+   * Dicht liegende Objekte (Boreholes): Hover hebt alle getroffenen Objekte hervor und zeigt einen Tooltip;
+   * ein Klick auf mehrere öffnet ein Popover, ein Klick auf eines ruft onFeatureClick auf.
+   */
+  stacked?: {
+    tooltip: (ids: string[]) => ReactNode
+    popover: (ids: string[], controls: StackedControls) => ReactNode
+  }
   /** Eingebettete Karte (Detailseite): ohne Tabellenleiste darunter */
   embedded?: boolean
 }
 
-export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, embedded }: Props) {
+/** Anker über den getroffenen Objekten: mittig, auf Höhe des obersten */
+function anchorOf(features: Feature[]): Coordinate {
+  const points = features.map((feature) => (feature.getGeometry() as Point).getCoordinates())
+  const x = points.reduce((sum, point) => sum + point[0], 0) / points.length
+  const y = Math.max(...points.map((point) => point[1]))
+  return [x, y]
+}
+
+export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, stacked, embedded }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
   const sourceRef = useRef<VectorSource | null>(null)
+  const objectLayerRef = useRef<VectorLayer | null>(null)
   const colorLayerRef = useRef<TileLayer | null>(null)
   const onFeatureClickRef = useRef(onFeatureClick)
+  const stackedRef = useRef(stacked)
   const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset })
   // Standard ist die farbige Landeskarte; die graue liegt darunter und erscheint beim Umschalten
   const [basemap, setBasemap] = useState<Basemap>('farbe')
   const initialBasemapRef = useRef(basemap)
 
+  // Tooltip und Popover liegen als OpenLayers-Overlays auf der Karte und wandern beim Verschieben mit
+  const [tooltipElement] = useState(() => document.createElement('div'))
+  const [popoverElement] = useState(() => document.createElement('div'))
+  const [tooltipIds, setTooltipIds] = useState<string[]>([])
+  const [popoverIds, setPopoverIds] = useState<string[]>([])
+  const popoverIdsRef = useRef<string[]>([])
+  const hoveredRef = useRef<Feature[]>([])
+  const tooltipOverlayRef = useRef<Overlay | null>(null)
+  const popoverOverlayRef = useRef<Overlay | null>(null)
+
   useEffect(() => {
     onFeatureClickRef.current = onFeatureClick
-  }, [onFeatureClick])
+    stackedRef.current = stacked
+  }, [onFeatureClick, stacked])
+
+  const setHovered = useCallback((features: Feature[]) => {
+    for (const feature of hoveredRef.current) if (!features.includes(feature)) feature.set('hover', false)
+    for (const feature of features) feature.set('hover', true)
+    hoveredRef.current = features
+  }, [])
+
+  const closePopover = useCallback(() => {
+    popoverIdsRef.current = []
+    setPopoverIds([])
+    popoverOverlayRef.current?.setPosition(undefined)
+    setHovered([])
+  }, [setHovered])
 
   useEffect(() => {
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
@@ -81,10 +133,17 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     const source = new VectorSource({ features: initial.createFeatures() })
     sourceRef.current = source
     const objectLayer = new VectorLayer({ source, style: initial.style })
+    objectLayerRef.current = objectLayer
+
+    const tooltipOverlay = new Overlay({ element: tooltipElement, positioning: 'bottom-center', offset: [0, -16], stopEvent: false })
+    const popoverOverlay = new Overlay({ element: popoverElement, positioning: 'bottom-center', offset: [0, -18], autoPan: { animation: { duration: 250 }, margin: 24 } })
+    tooltipOverlayRef.current = tooltipOverlay
+    popoverOverlayRef.current = popoverOverlay
 
     const map = new OlMap({
       target: containerRef.current!,
       layers: [greyLayer, colorLayer, objectLayer],
+      overlays: [tooltipOverlay, popoverOverlay],
       controls: [new Attribution({ collapsible: false, className: `ol-attribution ${styles.attribution}` })],
       view: new View({
         center: initial.center,
@@ -96,25 +155,61 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     })
     mapRef.current = map
 
-    const featureAt = (pixel: number[]) => {
-      const hit = map.forEachFeatureAtPixel(pixel, (f) => f, { hitTolerance: 4 })
-      return hit instanceof Feature ? hit : null
+    // Alle Objekte unter dem Zeiger (oberstes zuerst); ohne stacked nur das oberste
+    const featuresAt = (pixel: number[]) => {
+      const hits: Feature[] = []
+      map.forEachFeatureAtPixel(
+        pixel,
+        (feature) => {
+          if (feature instanceof Feature && !hits.includes(feature)) hits.push(feature)
+          return stackedRef.current ? undefined : true
+        },
+        { hitTolerance: 4 },
+      )
+      return hits
     }
 
-    let hovered: Feature | null = null
+    const showTooltip = (features: Feature[]) => {
+      if (!stackedRef.current || features.length === 0) {
+        tooltipOverlay.setPosition(undefined)
+        setTooltipIds([])
+        return
+      }
+      setTooltipIds(features.map((feature) => String(feature.getId())))
+      tooltipOverlay.setPosition(anchorOf(features))
+    }
+
     map.on('pointermove', (event) => {
       if (event.dragging) return
-      const feature = featureAt(event.pixel)
-      if (feature === hovered) return
-      hovered?.set('hover', false)
-      feature?.set('hover', true)
-      hovered = feature
-      containerRef.current!.style.cursor = feature && onFeatureClickRef.current ? 'pointer' : ''
+      const hits = featuresAt(event.pixel)
+      containerRef.current!.style.cursor = hits.length && onFeatureClickRef.current ? 'pointer' : ''
+      // Offenes Popover: seine Bohrungen bleiben hervorgehoben, kein Tooltip
+      if (popoverIdsRef.current.length) return
+      const same = hits.length === hoveredRef.current.length && hits.every((feature) => hoveredRef.current.includes(feature))
+      if (same) return
+      setHovered(hits)
+      showTooltip(hits)
+    })
+
+    containerRef.current!.addEventListener('mouseleave', () => {
+      if (popoverIdsRef.current.length) return
+      setHovered([])
+      showTooltip([])
     })
 
     map.on('click', (event) => {
-      const feature = featureAt(event.pixel)
-      if (feature) onFeatureClickRef.current?.(String(feature.getId()), feature)
+      const hits = featuresAt(event.pixel)
+      if (hits.length > 1 && stackedRef.current) {
+        const ids = hits.map((feature) => String(feature.getId()))
+        popoverIdsRef.current = ids
+        setPopoverIds(ids)
+        setHovered(hits)
+        showTooltip([])
+        popoverOverlay.setPosition(anchorOf(hits))
+        return
+      }
+      if (popoverIdsRef.current.length) closePopover()
+      if (hits.length) onFeatureClickRef.current?.(String(hits[0].getId()), hits[0])
     })
 
     const resizeObserver = new ResizeObserver(() => map.updateSize())
@@ -125,7 +220,32 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       map.setTarget(undefined)
       mapRef.current = null
     }
-  }, [])
+  }, [tooltipElement, popoverElement, setHovered, closePopover])
+
+  // Anderer Stil, z.B. nach dem Wechsel der Legende
+  useEffect(() => {
+    objectLayerRef.current?.setStyle(style)
+  }, [style])
+
+  // Escape schliesst das Popover
+  useEffect(() => {
+    if (!popoverIds.length) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      event.preventDefault()
+      closePopover()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [popoverIds, closePopover])
+
+  const highlight = useCallback(
+    (id: string | null) => {
+      const features = (sourceRef.current?.getFeatures() ?? []).filter((feature) => (id ? feature.getId() === id : popoverIdsRef.current.includes(String(feature.getId()))))
+      setHovered(features)
+    },
+    [setHovered],
+  )
 
   // Gewähltes Objekt hervorheben
   useEffect(() => {
@@ -168,6 +288,15 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
         onReset={resetView}
         onToggleBasemap={toggleBasemap}
       />
+      {stacked &&
+        tooltipIds.length > 0 &&
+        createPortal(
+          <div className={styles.tooltip} role="tooltip">
+            {stacked.tooltip(tooltipIds)}
+          </div>,
+          tooltipElement,
+        )}
+      {stacked && popoverIds.length > 0 && createPortal(stacked.popover(popoverIds, { close: closePopover, highlight }), popoverElement)}
     </div>
   )
 }

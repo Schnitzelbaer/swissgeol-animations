@@ -79,3 +79,75 @@
   gap: 5px;
   white-space: nowrap;
 }
+
+/* Boreholes: Legende wird so breit wie nötig und höchstens so hoch wie die Karte über der Tabellenleiste */
+.scrollable {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-height: calc(100% - 32px - 68px);
+}
+
+.scrollable .header {
+  flex-shrink: 0;
+}
+
+.scrollable .collapse {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+/* Scrollbalken 12px, 12px vom Rand wie in Figma («form – building blocks / scrollbar») */
+.scrollable .items {
+  margin-right: 12px;
+  padding-right: 12px;
+}
+
+.scrollable.open .items {
+  overflow-y: auto;
+}
+
+.scrollable .items::-webkit-scrollbar {
+  width: 12px;
+}
+
+.scrollable .items::-webkit-scrollbar-track {
+  background: var(--border-default);
+  margin: 10px 0 9px;
+}
+
+.scrollable .items::-webkit-scrollbar-thumb {
+  background: var(--border-high-emphasis);
+  border: 2px solid var(--border-default);
+}
+
+.titleText {
+  animation: legend-in 250ms var(--ease-out);
+}
+
+.scrollable .items {
+  animation: legend-in 300ms var(--ease-out);
+}
+
+@keyframes legend-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Trennlinie zwischen Gruppen: liegt im 6px-Abstand, ohne eigene Höhe */
+.separator {
+  position: relative;
+  margin-top: 6px;
+}
+
+.separator::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6.5px;
+  height: 1px;
+  background: var(--border-default);
+}

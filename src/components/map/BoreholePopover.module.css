@@ -1,0 +1,70 @@
+/* Weisse Karte im Stil der Menüs (Rahmen innen, Schatten «Bottom Shadow») */
+.popover {
+  position: relative;
+  width: max-content;
+  min-width: 220px;
+  max-width: 300px;
+  background: var(--color-white);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-bottom);
+  overflow: hidden;
+  animation: popover-in 200ms var(--ease-out);
+}
+
+.popover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--border-default);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 4px 4px 12px;
+  background: var(--color-bg-grey);
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-high-emphasis);
+}
+
+.list {
+  max-height: 264px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px 0 8px;
+  text-align: left;
+  color: var(--text-high-emphasis);
+  transition: background-color 150ms ease;
+}
+
+.row:hover,
+.row:focus-visible {
+  background: var(--color-hovered);
+  outline: none;
+}
+
+.more {
+  opacity: 0.8;
+}

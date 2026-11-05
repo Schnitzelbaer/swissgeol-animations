@@ -36,3 +36,25 @@
   bottom: 8px;
   left: 8px;
 }
+
+/* Tooltip über Objekten auf der Karte, im Stil von «Tooltip – Top» */
+.tooltip {
+  padding: 5px 8px;
+  background: var(--text-high-emphasis);
+  color: var(--color-white);
+  border-radius: var(--radius-4);
+  filter: drop-shadow(4px 4px 1px rgba(0, 0, 0, 0.12));
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0.048px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tooltip-in 150ms ease;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}

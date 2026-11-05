@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useCallback, type ReactNode } from 'react'
 import { Navigate, Link, useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Button } from '../components/Button'
@@ -6,6 +6,8 @@ import { MapView } from '../components/map/MapView'
 import { boreholeStyle } from '../components/map/boreholeStyles'
 import { BOREHOLES_RESOLUTION, boreholeCoordinate, boreholeLonLat, createBoreholeFeatures } from '../components/map/boreholeGeometries'
 import { formatSwissNumber, getBorehole, nearestPlace, stableOffset, wgs84ToLv95, type Borehole } from '../data/boreholes'
+import { useStore } from '../data/store'
+import { useBoreholeStack } from '../components/map/boreholeStack'
 import { useI18n } from '../i18n'
 import styles from './BoreholePage.module.css'
 import backIcon from '../assets/icons/back.svg'
@@ -38,6 +40,9 @@ function Card({ title, spacious, children }: { title: string; spacious?: boolean
 function Location({ borehole }: { borehole: Borehole }) {
   const { t } = useI18n()
   const navigate = useNavigate()
+  const { boreholeLegend } = useStore()
+  const openBorehole = useCallback((id: string) => navigate(`/boreholes/${id}/location`), [navigate])
+  const stacked = useBoreholeStack(boreholeLegend, openBorehole)
   const [lon, lat] = boreholeLonLat(borehole.id)
   const { east, north } = wgs84ToLv95(lon, lat)
   const place = nearestPlace(lon, lat)
@@ -77,18 +82,19 @@ function Location({ borehole }: { borehole: Borehole }) {
           <MapView
             key={borehole.id}
             createFeatures={createBoreholeFeatures}
-            style={boreholeStyle}
+            style={boreholeStyle(boreholeLegend)}
             center={boreholeCoordinate(borehole.id)}
             resolution={BOREHOLES_RESOLUTION}
             selectedId={borehole.id}
-            onFeatureClick={(id) => navigate(`/boreholes/${id}/location`)}
+            onFeatureClick={openBorehole}
+            stacked={stacked}
             embedded
           />
         </div>
       </div>
       <div className={`${styles.panel} ${styles.row}`}>
         <Field label={t.boreholes.country} value={t.boreholes.countryValue} />
-        <Field label={t.boreholes.canton} value={t.boreholes.cantonValue} />
+        <Field label={t.boreholes.canton} value={t.boreholes.cantons[place.canton]} />
         <Field label={t.boreholes.municipality} value={place.name} />
       </div>
     </div>

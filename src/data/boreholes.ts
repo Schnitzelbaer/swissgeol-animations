@@ -1,9 +1,27 @@
-// Bohrungen der Applikation «Boreholes». Position und Template-Typ wie im Figma-Screen 7558:31771,
-// Namen und Werte sind erfunden, aber plausibel; Koordinaten und Gemeinde folgen aus der Lage auf der Karte.
+// Bohrungen der Applikation «Boreholes». Die ersten 24 stehen wie im Figma-Screen 7558:31771 (Position und Werte
+// aller fünf Legenden aus Figma), die übrigen werden über die ganze Schweiz verteilt erzeugt. Namen und Werte sind
+// erfunden, aber plausibel; Koordinaten, Gemeinde, Kanton und Höhe folgen aus der Lage auf der Karte.
 
 import type { Lang } from '../i18n/messages'
+import { LAKES, PLACES, START_VIEW, type Canton } from './swissPlaces'
 
 export type TemplateType = 'general' | 'geothermal' | 'geotechnics' | 'hydrogeology'
+
+// Codes = Variantennamen der Figma-Komponente «Legende Objekte – Boreholes», Reihenfolge wie in den Legenden
+export const PURPOSES = [
+  'Belastete Standorte', 'Naturgefahren', 'Geotechnik', 'Tunnel Exploration', 'Hydrogeologie', 'Grundwasser', 'Trinkwasser',
+  'Mineralwasser', 'Thermalwasser', 'Geothermie Exploration', 'Geothermie Produktion', 'Geothermie Injektion', 'Erdwärmesonde',
+  'CCS Exploration', 'CCS Produktion', 'CCS Injektion', 'Mineralische Rohstoffe', 'Kohlenwasserstoff Exploration',
+  'Kohlenwasserstoff Produktion', 'Kohlenwasserstoff Injektion', 'Wissenschaftliche Exploration', 'Forschung', 'Anderer', 'Keine Angabe',
+] as const
+export const ACCESS = ['Öffentlich', 'Gesperrt'] as const
+export const BOREHOLE_TYPES = ['Bohrung', 'Virtuelle Bohrung', 'Rammsondierung', 'Baggerschlitz', 'Aufschluss', 'Anderer', 'Keine Angabe'] as const
+export const WORKFLOW_STATES = ['In Bearbeitung', 'In Überprüfung', 'In Validierung', 'Publikation', 'Änderung angefordert'] as const
+
+export type Purpose = (typeof PURPOSES)[number]
+export type Access = (typeof ACCESS)[number]
+export type BoreholeType = (typeof BOREHOLE_TYPES)[number]
+export type WorkflowState = (typeof WORKFLOW_STATES)[number]
 
 export type BoreholeIdentifier = {
   type: string
@@ -15,14 +33,22 @@ export type Borehole = {
   id: string
   name: string
   type: TemplateType
-  /** Mittelpunkt des Symbols im Figma-Screen «Desktop - 1» (Frame-Pixel) */
-  figma: [number, number]
+  purpose: Purpose
+  access: Access
+  boreholeType: BoreholeType
+  workflow: WorkflowState
+  /** Figma-Bohrungen: Mittelpunkt des Symbols im Screen «Desktop - 1» (Frame-Pixel) */
+  figma?: [number, number]
+  /** Erzeugte Bohrungen: Lage in WGS84 [Länge, Breite] */
+  lonLat?: [number, number]
   /** Lagegenauigkeit in m */
   locationPrecision: number
   /** Ansatzhöhe über bzw. unter Terrain in m (Referenzhöhe = Terrainhöhe + Wert) */
   referenceOffset: number
   identifiers: BoreholeIdentifier[]
 }
+
+type FigmaBorehole = Omit<Borehole, 'purpose' | 'access' | 'boreholeType' | 'workflow'>
 
 /** Positionen aus Figma: Instanz «BG» liegt bei (-239, -13), die Symbole sind 30×30 */
 const at = (x: number, y: number): [number, number] => [-239 + x + 15, -13 + y + 15]
@@ -34,7 +60,7 @@ function ids(id: string, extra: BoreholeIdentifier[] = []): BoreholeIdentifier[]
 }
 
 // Reihenfolge wie in Figma: spätere Symbole liegen oben
-export const boreholes: Borehole[] = [
+const figmaBoreholes: FigmaBorehole[] = [
   // Allgemein
   {
     id: '16754',
@@ -83,28 +109,156 @@ export const boreholes: Borehole[] = [
   { id: '17309', name: 'RB 5', type: 'geotechnics', figma: at(863, 542), locationPrecision: 2, referenceOffset: 0, identifiers: ids('17309', [{ type: 'ID GeODin-Shortname', codes: [{ code: '6KNU21R005' }] }]) },
 ]
 
-export function getBorehole(id: string | undefined) {
-  return boreholes.find((borehole) => borehole.id === id)
-}
-
-/** Ortschaften im Kartenausschnitt (WGS84) mit typischer Terrainhöhe; die nächste bestimmt Gemeinde und Höhe */
-const PLACES: { name: string; lat: number; lon: number; elevation: number }[] = [
-  { name: 'Sursee', lat: 47.1713, lon: 8.1108, elevation: 506 },
-  { name: 'Geuensee', lat: 47.1985, lon: 8.105, elevation: 512 },
-  { name: 'Büron', lat: 47.2122, lon: 8.092, elevation: 514 },
-  { name: 'Knutwil', lat: 47.1993, lon: 8.0735, elevation: 548 },
-  { name: 'Schenkon', lat: 47.1744, lon: 8.133, elevation: 521 },
-  { name: 'Oberkirch', lat: 47.1567, lon: 8.115, elevation: 518 },
-  { name: 'Rickenbach (LU)', lat: 47.219, lon: 8.153, elevation: 664 },
-  { name: 'Mauensee', lat: 47.169, lon: 8.067, elevation: 515 },
-  { name: 'Triengen', lat: 47.235, lon: 8.078, elevation: 509 },
-  { name: 'Beromünster', lat: 47.206, lon: 8.193, elevation: 646 },
+// Werte der übrigen Legenden für die Figma-Bohrungen (Frames 7558:31782, 8269:20137, 8269:20520, 8269:20953)
+const FIGMA_VALUES: [Purpose, Access, BoreholeType, WorkflowState][] = [
+  ['Belastete Standorte', 'Öffentlich', 'Virtuelle Bohrung', 'Publikation'],
+  ['Geothermie Produktion', 'Gesperrt', 'Bohrung', 'Publikation'],
+  ['Erdwärmesonde', 'Öffentlich', 'Rammsondierung', 'Publikation'],
+  ['Thermalwasser', 'Öffentlich', 'Bohrung', 'Publikation'],
+  ['Belastete Standorte', 'Öffentlich', 'Keine Angabe', 'In Validierung'],
+  ['Trinkwasser', 'Gesperrt', 'Virtuelle Bohrung', 'Publikation'],
+  ['CCS Exploration', 'Öffentlich', 'Bohrung', 'In Validierung'],
+  ['Naturgefahren', 'Öffentlich', 'Bohrung', 'Änderung angefordert'],
+  ['Geotechnik', 'Öffentlich', 'Bohrung', 'In Überprüfung'],
+  ['CCS Injektion', 'Öffentlich', 'Keine Angabe', 'Publikation'],
+  ['CCS Injektion', 'Gesperrt', 'Anderer', 'Publikation'],
+  ['Geothermie Injektion', 'Gesperrt', 'Baggerschlitz', 'Publikation'],
+  ['Geothermie Produktion', 'Gesperrt', 'Virtuelle Bohrung', 'Publikation'],
+  ['Naturgefahren', 'Gesperrt', 'Baggerschlitz', 'In Überprüfung'],
+  ['Tunnel Exploration', 'Öffentlich', 'Rammsondierung', 'Publikation'],
+  ['Wissenschaftliche Exploration', 'Öffentlich', 'Bohrung', 'Publikation'],
+  ['Belastete Standorte', 'Öffentlich', 'Bohrung', 'Publikation'],
+  ['Mineralische Rohstoffe', 'Öffentlich', 'Aufschluss', 'Publikation'],
+  ['Keine Angabe', 'Öffentlich', 'Keine Angabe', 'Publikation'],
+  ['Wissenschaftliche Exploration', 'Öffentlich', 'Bohrung', 'In Bearbeitung'],
+  ['Kohlenwasserstoff Produktion', 'Öffentlich', 'Bohrung', 'Änderung angefordert'],
+  ['Naturgefahren', 'Öffentlich', 'Aufschluss', 'In Bearbeitung'],
+  ['Grundwasser', 'Öffentlich', 'Aufschluss', 'In Bearbeitung'],
+  ['Anderer', 'Gesperrt', 'Bohrung', 'In Bearbeitung'],
 ]
 
+/** Deterministischer Zufall (mulberry32), damit die erzeugten Bohrungen bei jedem Laden gleich sind */
+function random(seed: number) {
+  let state = seed >>> 0
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0
+    let t = state
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const rand = random(20251105)
+const pick = <T,>(items: readonly T[]) => items[Math.floor(rand() * items.length)]
+function weighted<T>(entries: [T, number][]): T {
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0)
+  let value = rand() * total
+  for (const [entry, weight] of entries) {
+    value -= weight
+    if (value <= 0) return entry
+  }
+  return entries[entries.length - 1][0]
+}
+/** Normalverteilt (Box-Muller) */
+const gaussian = () => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand())
+
+const KM_PER_DEGREE_LAT = 111.32
+const inLake = (lat: number, lon: number) =>
+  LAKES.some(([lakeLat, lakeLon, radius]) => Math.hypot((lat - lakeLat) * KM_PER_DEGREE_LAT, (lon - lakeLon) * KM_PER_DEGREE_LAT * Math.cos((lat * Math.PI) / 180)) < radius)
+
+const PURPOSE_BY_TYPE: Record<TemplateType, [Purpose, number][]> = {
+  geothermal: [['Erdwärmesonde', 70], ['Geothermie Exploration', 10], ['Geothermie Produktion', 10], ['Geothermie Injektion', 10]],
+  geotechnics: [['Geotechnik', 60], ['Tunnel Exploration', 12], ['Belastete Standorte', 18], ['Naturgefahren', 10]],
+  hydrogeology: [['Hydrogeologie', 30], ['Grundwasser', 35], ['Trinkwasser', 20], ['Mineralwasser', 8], ['Thermalwasser', 7]],
+  general: [
+    ['Wissenschaftliche Exploration', 20], ['Forschung', 15], ['Mineralische Rohstoffe', 15], ['Kohlenwasserstoff Exploration', 10],
+    ['Kohlenwasserstoff Produktion', 5], ['Kohlenwasserstoff Injektion', 3], ['CCS Exploration', 7], ['CCS Produktion', 3], ['CCS Injektion', 2],
+    ['Anderer', 10], ['Keine Angabe', 10],
+  ],
+}
+
+/** Namen nach den üblichen Kürzeln: Kernbohrung, Rammbohrung, Erdwärmesonde, Piezometer, Grundwasserbohrung … */
+function boreholeName(type: TemplateType, place: string, index: number) {
+  const year = String(60 + Math.floor(rand() * 64)).slice(-2).padStart(2, '0')
+  const n = 1 + Math.floor(rand() * 24)
+  const town = place.replace(/ \(.*\)$/, '').split(/[-/ ]/)[0]
+  switch (type) {
+    case 'geothermal':
+      return pick([`EWS ${n} ${town}`, `EWS-${town}-${n}`, `Erdsonde ${town} ${n}`])
+    case 'geotechnics':
+      return pick([`RB ${n}`, `KB ${year}/${n}`, `SB ${n}`, `BS ${index % 40 + 1}`, `RKS ${town} ${n}`])
+    case 'hydrogeology':
+      return pick([`PZ ${n}`, `GWB ${year}/${n}`, `GW ${n} ${town}`, `Piezometer ${town} ${n}`])
+    default:
+      return pick([`B ${n}/${year}`, `Kb ${year}/${n}`, `TB ${town} ${n}`, `Sondierbohrung ${town} ${n}`])
+  }
+}
+
+function generateBoreholes(): Borehole[] {
+  const result: Borehole[] = []
+  let id = 20001
+  for (const place of PLACES) {
+    for (let i = 0; i < place.count; i++) {
+      let lat = 0
+      let lon = 0
+      // Position um die Ortschaft, nicht in einem See und nicht im Figma-Startausschnitt
+      for (let attempt = 0; attempt < 20; attempt++) {
+        lat = place.lat + (gaussian() * place.spread) / KM_PER_DEGREE_LAT
+        lon = place.lon + (gaussian() * place.spread) / (KM_PER_DEGREE_LAT * Math.cos((place.lat * Math.PI) / 180))
+        const inStartView = lon > START_VIEW.west && lon < START_VIEW.east && lat > START_VIEW.south && lat < START_VIEW.north
+        if (!inLake(lat, lon) && !inStartView) break
+      }
+      const type = weighted<TemplateType>([['geothermal', 35], ['geotechnics', 30], ['general', 20], ['hydrogeology', 15]])
+      const boreholeId = String(id++)
+      const extra: BoreholeIdentifier[] = rand() < 0.4 ? [{ type: 'ID GeODin-Shortname', codes: [{ code: `6${place.name.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')}${year2()}${pick(['E', 'K', 'R', 'P'])}${String(100 + Math.floor(rand() * 900))}` }] }] : []
+      result.push({
+        id: boreholeId,
+        name: boreholeName(type, place.name, i),
+        type,
+        purpose: weighted(PURPOSE_BY_TYPE[type]),
+        access: weighted<Access>([['Öffentlich', 85], ['Gesperrt', 15]]),
+        boreholeType: weighted<BoreholeType>(
+          type === 'geotechnics'
+            ? [['Bohrung', 45], ['Rammsondierung', 25], ['Baggerschlitz', 12], ['Aufschluss', 6], ['Virtuelle Bohrung', 2], ['Anderer', 5], ['Keine Angabe', 5]]
+            : [['Bohrung', 70], ['Rammsondierung', 4], ['Baggerschlitz', 4], ['Aufschluss', 6], ['Virtuelle Bohrung', 5], ['Anderer', 5], ['Keine Angabe', 6]],
+        ),
+        workflow: weighted<WorkflowState>([['Publikation', 50], ['In Bearbeitung', 20], ['In Überprüfung', 12], ['In Validierung', 12], ['Änderung angefordert', 6]]),
+        lonLat: [lon, lat],
+        locationPrecision: pick([0.5, 1, 1, 2, 5, 10]),
+        referenceOffset: pick([0, 0, 0.2, 0.5, 0.8]),
+        identifiers: ids(boreholeId, extra),
+      })
+    }
+  }
+  return result
+}
+
+function year2() {
+  return String(Math.floor(rand() * 26)).padStart(2, '0')
+}
+
+export const boreholes: Borehole[] = [
+  ...figmaBoreholes.map((borehole, index) => {
+    const [purpose, access, boreholeType, workflow] = FIGMA_VALUES[index]
+    return { ...borehole, purpose, access, boreholeType, workflow }
+  }),
+  ...generateBoreholes(),
+]
+
+const byId = new Map(boreholes.map((borehole) => [borehole.id, borehole]))
+
+export function getBorehole(id: string | undefined) {
+  return id ? byId.get(id) : undefined
+}
+
+/** Nächste Ortschaft bestimmt Gemeinde, Kanton und Terrainhöhe */
 export function nearestPlace(lon: number, lat: number) {
   const distance = (place: (typeof PLACES)[number]) => Math.hypot((place.lon - lon) * Math.cos((lat * Math.PI) / 180), place.lat - lat)
   return PLACES.reduce((best, place) => (distance(place) < distance(best) ? place : best))
 }
+
+export type { Canton }
 
 /** WGS84 → LV95 nach den Näherungsformeln von swisstopo (Genauigkeit rund 1 m) */
 export function wgs84ToLv95(lon: number, lat: number) {

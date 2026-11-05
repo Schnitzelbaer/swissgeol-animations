@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { initialFiles, type AssetFile, type Section } from './files'
+import type { LegendTopic } from '../components/map/boreholeLegends'
 
 /** Dauer der simulierten AI-Analyse (in der echten Anwendung teils über 20 Minuten) */
 export const ANALYSIS_DURATION_MS = 7000
@@ -12,6 +13,9 @@ type Store = {
   updateSections: (fileId: string, sections: Section[]) => void
   analysing: Set<string>
   startAnalysis: (fileIds: string[]) => void
+  /** Legende der Boreholes-Karte; bleibt beim Wechsel zur Detailseite und zurück erhalten */
+  boreholeLegend: LegendTopic
+  setBoreholeLegend: (topic: LegendTopic) => void
 }
 
 const StoreContext = createContext<Store | null>(null)
@@ -20,6 +24,7 @@ const StoreContext = createContext<Store | null>(null)
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [files, setFiles] = useState(initialFiles)
   const [analysing, setAnalysing] = useState<Set<string>>(new Set())
+  const [boreholeLegend, setBoreholeLegend] = useState<LegendTopic>('templateType')
   const timers = useRef(new Map<string, number>())
 
   const getFile = useCallback((id: string | null | undefined) => files.find((file) => file.id === id), [files])
@@ -48,8 +53,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis }),
-    [files, getFile, saveFiles, updateSections, analysing, startAnalysis],
+    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend, setBoreholeLegend }),
+    [files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

@@ -1,8 +1,8 @@
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
-import { toLonLat } from 'ol/proj'
+import { fromLonLat, toLonLat } from 'ol/proj'
 import type { Coordinate } from 'ol/coordinate'
-import { boreholes, getBorehole } from '../../data/boreholes'
+import { boreholes, getBorehole, type Borehole } from '../../data/boreholes'
 import { FIGMA_MAP_CENTER_PX, INITIAL_CENTER, INITIAL_RESOLUTION } from './geometries'
 
 /*
@@ -22,9 +22,14 @@ function px([x, y]: Coordinate): Coordinate {
 /** Kartenmitte beim Start: Mitte des Kartenbereichs rechts der Sidebar (x 80–1440, y 88–1024) */
 export const BOREHOLES_CENTER = px([760, 556])
 
+/** Figma-Bohrungen über ihre Pixelposition, erzeugte Bohrungen über ihre WGS84-Lage */
+function location(borehole: Borehole) {
+  return borehole.figma ? px(borehole.figma) : fromLonLat(borehole.lonLat!)
+}
+
 export function createBoreholeFeatures() {
   return boreholes.map((borehole) => {
-    const feature = new Feature({ geometry: new Point(px(borehole.figma)), kind: borehole.type })
+    const feature = new Feature({ geometry: new Point(location(borehole)) })
     feature.setId(borehole.id)
     return feature
   })
@@ -33,7 +38,7 @@ export function createBoreholeFeatures() {
 /** Lage einer Bohrung in Web-Mercator */
 export function boreholeCoordinate(id: string) {
   const borehole = getBorehole(id)
-  return borehole ? px(borehole.figma) : BOREHOLES_CENTER
+  return borehole ? location(borehole) : BOREHOLES_CENTER
 }
 
 /** Lage einer Bohrung in WGS84 [Länge, Breite] */
