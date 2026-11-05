@@ -4,26 +4,25 @@ import { useI18n } from '../../i18n'
 import styles from './Legend.module.css'
 import changeIcon from '../../assets/icons/change.svg'
 import chevronUpIcon from '../../assets/icons/chevron-up-legend.svg'
-import legendPoint from '../../assets/map/legend-point.svg'
-import legendLine from '../../assets/map/legend-line.svg'
-import legendArea from '../../assets/map/legend-area.svg'
 
-const items = [
-  { icon: legendPoint, key: 'point' },
-  { icon: legendLine, key: 'line' },
-  { icon: legendArea, key: 'polygon' },
-] as const
+type Props = {
+  title: string
+  items: { icon: string; label: string }[]
+  /** Breite aus Figma: Assets 179px, Boreholes 212px */
+  width: number
+}
 
-export function Legend() {
+/** Legende oben links auf der Karte («… Legende Drawer – Integrated») */
+export function Legend({ title, items, width }: Props) {
   const { t } = useI18n()
   const [open, setOpen] = useState(true)
 
   return (
-    <section className={`${styles.legend} ${open ? styles.open : ''}`}>
+    <section className={`${styles.legend} ${open ? styles.open : ''}`} style={{ width }}>
       <header className={styles.header}>
         <div className={styles.title}>
           <Button icon={changeIcon} aria-label={t.legend.switch} />
-          <span className="body3-bold">{t.legend.title}</span>
+          <span className="body3-bold">{title}</span>
         </div>
         <Button
           icon={chevronUpIcon}
@@ -36,9 +35,9 @@ export function Legend() {
       <div className={styles.collapse}>
         <ul className={styles.items}>
           {items.map((item) => (
-            <li key={item.key} className={styles.item}>
+            <li key={item.label} className={styles.item}>
               <img src={item.icon} alt="" />
-              <span className="body3">{t.legend[item.key]}</span>
+              <span className="body3">{item.label}</span>
             </li>
           ))}
         </ul>

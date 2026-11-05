@@ -26,3 +26,13 @@
   color: var(--text-medium-emphasis);
   padding: 1px 6px;
 }
+
+/* Eingebettete Karte (Detailseite): keine Tabellenleiste, Steuerung und Quellenangabe näher am Rand */
+.embedded {
+  --map-controls-bottom: 16px;
+}
+
+.embedded .attribution.attribution {
+  bottom: 8px;
+  left: 8px;
+}

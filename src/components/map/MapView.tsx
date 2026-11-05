@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import OlMap from 'ol/Map'
 import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
@@ -7,9 +7,8 @@ import VectorSource from 'ol/source/Vector'
 import XYZ from 'ol/source/XYZ'
 import { Attribution } from 'ol/control'
 import Feature from 'ol/Feature'
-import { createAssetFeatures, INITIAL_CENTER, INITIAL_RESOLUTION } from './geometries'
-import { assetStyle } from './styles'
-import { Legend } from './Legend'
+import type { Coordinate } from 'ol/coordinate'
+import type { StyleFunction } from 'ol/style/Style'
 import { MapControls, type Basemap } from './MapControls'
 import styles from './MapView.module.css'
 
@@ -42,45 +41,55 @@ function tween(from: number, to: number, duration: number, onUpdate: (value: num
 }
 
 type Props = {
+  /** Objekte der Karte; wird einmal beim Aufbau aufgerufen */
+  createFeatures: () => Feature[]
+  style: StyleFunction
+  center: Coordinate
+  resolution: number
+  /** Overlay oben links, z.B. die Legende */
+  legend?: ReactNode
   /** Breite des Preview-Panels, das rechts über der Karte liegt */
-  panelOffset: number
-  /** Gewählte Geometrie, pink hervorgehoben */
-  selectedGeometryId?: string
-  onGeometryClick: (geometryId: string, assetId: string) => void
+  panelOffset?: number
+  /** Gewähltes Objekt, pink hervorgehoben */
+  selectedId?: string
+  onFeatureClick?: (id: string, feature: Feature) => void
+  /** Eingebettete Karte (Detailseite): ohne Tabellenleiste darunter */
+  embedded?: boolean
 }
 
-export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Props) {
+export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, embedded }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
   const sourceRef = useRef<VectorSource | null>(null)
   const colorLayerRef = useRef<TileLayer | null>(null)
-  const onGeometryClickRef = useRef(onGeometryClick)
-  const initialPaddingRef = useRef(panelOffset)
+  const onFeatureClickRef = useRef(onFeatureClick)
+  const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset })
   // Standard ist die farbige Landeskarte; die graue liegt darunter und erscheint beim Umschalten
   const [basemap, setBasemap] = useState<Basemap>('farbe')
   const initialBasemapRef = useRef(basemap)
 
   useEffect(() => {
-    onGeometryClickRef.current = onGeometryClick
-  }, [onGeometryClick])
+    onFeatureClickRef.current = onFeatureClick
+  }, [onFeatureClick])
 
   useEffect(() => {
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
     const colorLayer = swisstopoLayer('ch.swisstopo.pixelkarte-farbe', initialBasemapRef.current === 'farbe' ? 1 : 0)
     colorLayerRef.current = colorLayer
 
-    const source = new VectorSource({ features: createAssetFeatures() })
+    const initial = initialRef.current
+    const source = new VectorSource({ features: initial.createFeatures() })
     sourceRef.current = source
-    const assetLayer = new VectorLayer({ source, style: assetStyle })
+    const objectLayer = new VectorLayer({ source, style: initial.style })
 
     const map = new OlMap({
       target: containerRef.current!,
-      layers: [greyLayer, colorLayer, assetLayer],
+      layers: [greyLayer, colorLayer, objectLayer],
       controls: [new Attribution({ collapsible: false, className: `ol-attribution ${styles.attribution}` })],
       view: new View({
-        center: INITIAL_CENTER,
-        resolution: INITIAL_RESOLUTION,
-        padding: [0, initialPaddingRef.current, 0, 0],
+        center: initial.center,
+        resolution: initial.resolution,
+        padding: [0, initial.panelOffset, 0, 0],
         maxZoom: 19,
         minZoom: 7,
       }),
@@ -100,12 +109,12 @@ export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Pr
       hovered?.set('hover', false)
       feature?.set('hover', true)
       hovered = feature
-      containerRef.current!.style.cursor = feature ? 'pointer' : ''
+      containerRef.current!.style.cursor = feature && onFeatureClickRef.current ? 'pointer' : ''
     })
 
     map.on('click', (event) => {
       const feature = featureAt(event.pixel)
-      if (feature) onGeometryClickRef.current(String(feature.getId()), feature.get('assetId'))
+      if (feature) onFeatureClickRef.current?.(String(feature.getId()), feature)
     })
 
     const resizeObserver = new ResizeObserver(() => map.updateSize())
@@ -118,12 +127,12 @@ export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Pr
     }
   }, [])
 
-  // Gewählte Geometrie hervorheben
+  // Gewähltes Objekt hervorheben
   useEffect(() => {
     for (const feature of sourceRef.current?.getFeatures() ?? []) {
-      feature.set('selected', feature.getId() === selectedGeometryId)
+      feature.set('selected', feature.getId() === selectedId)
     }
-  }, [selectedGeometryId])
+  }, [selectedId])
 
   // Das Panel überdeckt die Karte: Padding hält den sichtbaren Kartenmittelpunkt links davon.
   useEffect(() => {
@@ -138,7 +147,7 @@ export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Pr
   }
 
   const resetView = () => {
-    mapRef.current?.getView().animate({ center: INITIAL_CENTER, resolution: INITIAL_RESOLUTION, duration: 600 })
+    mapRef.current?.getView().animate({ center, resolution, duration: 600 })
   }
 
   const toggleBasemap = () => {
@@ -149,9 +158,9 @@ export function MapView({ panelOffset, selectedGeometryId, onGeometryClick }: Pr
   }
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${embedded ? styles.embedded : ''}`} style={embedded ? ({ '--panel-offset': '0px' } as CSSProperties) : undefined}>
       <div ref={containerRef} className={styles.map} />
-      <Legend />
+      {legend}
       <MapControls
         basemap={basemap}
         onZoomIn={() => zoomBy(1)}

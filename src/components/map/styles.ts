@@ -5,7 +5,6 @@ import { Circle, Fill, Stroke, Style } from 'ol/style'
 
 // Farben aus den Figma-Vektoren «Vector 5», «Linie» und «Punkt»
 const AREA_FILL = 'rgba(245, 158, 11, 0.3)'
-const AREA_FILL_HOVER = 'rgba(245, 158, 11, 0.5)'
 const AREA_STROKE = '#78350f'
 const LINE_OUTER = '#1e3a8a'
 const LINE_INNER = '#3b82f6'
@@ -23,18 +22,15 @@ const PIN_SHADOWS: Shadow[] = [
 ]
 
 // Gewählte Geometrie (Figma 20864:149622): pinker Rand aussen, brauner Rand innen, doppelte Füllung
-const SELECTED = '#ec4899'
+export const SELECTED = '#ec4899'
 const SELECTED_FILL = 'rgba(245, 158, 11, 0.51)'
+
+// Hover wie in den Figma-Komponenten «Map Interactions» (State=Hover): violetter Rand um die Geometrie
+export const HOVER = '#8b5cf6'
 
 const areaStyle = new Style({
   fill: new Fill({ color: AREA_FILL }),
   stroke: new Stroke({ color: AREA_STROKE, width: 3, lineJoin: 'round', lineCap: 'round' }),
-})
-
-const areaHoverStyle = new Style({
-  fill: new Fill({ color: AREA_FILL_HOVER }),
-  stroke: new Stroke({ color: AREA_STROKE, width: 3, lineJoin: 'round', lineCap: 'round' }),
-  zIndex: 1,
 })
 
 function tracePolygon(context: CanvasRenderingContext2D, rings: Coordinate[][]) {
@@ -42,6 +38,42 @@ function tracePolygon(context: CanvasRenderingContext2D, rings: Coordinate[][]) 
     ring.forEach(([x, y], index) => (index === 0 ? context.moveTo(x, y) : context.lineTo(x, y)))
     context.closePath()
   }
+}
+
+/** 6px breiter Rand nur ausserhalb der Fläche (pink für die Auswahl, violett für Hover) */
+function strokeOutside(context: CanvasRenderingContext2D, rings: Coordinate[][], color: string, ratio: number) {
+  context.save()
+  context.beginPath()
+  context.rect(-1e6, -1e6, 2e6, 2e6)
+  tracePolygon(context, rings)
+  context.clip('evenodd')
+  context.beginPath()
+  tracePolygon(context, rings)
+  context.lineWidth = 12 * ratio
+  context.strokeStyle = color
+  context.stroke()
+  context.restore()
+}
+
+/** Fläche unter dem Mauszeiger: normale Darstellung mit violettem Rand aussen */
+function renderHoverArea(coordinates: unknown, state: State) {
+  const context = state.context
+  const rings = coordinates as Coordinate[][]
+  const ratio = state.pixelRatio
+  context.save()
+  context.lineJoin = 'round'
+  context.lineCap = 'round'
+  context.beginPath()
+  tracePolygon(context, rings)
+  context.fillStyle = AREA_FILL
+  context.fill()
+  strokeOutside(context, rings, HOVER, ratio)
+  context.beginPath()
+  tracePolygon(context, rings)
+  context.lineWidth = 3 * ratio
+  context.strokeStyle = AREA_STROKE
+  context.stroke()
+  context.restore()
 }
 
 /** Zeichnet die gewählte Fläche wie in Figma: 6px pink ausserhalb, 3px braun innerhalb der Kante */
@@ -59,17 +91,7 @@ function renderSelectedArea(coordinates: unknown, state: State) {
   context.fill()
 
   // Aussenrand: nur ausserhalb der Fläche sichtbar
-  context.save()
-  context.beginPath()
-  context.rect(-1e6, -1e6, 2e6, 2e6)
-  tracePolygon(context, rings)
-  context.clip('evenodd')
-  context.beginPath()
-  tracePolygon(context, rings)
-  context.lineWidth = 12 * ratio
-  context.strokeStyle = SELECTED
-  context.stroke()
-  context.restore()
+  strokeOutside(context, rings, SELECTED, ratio)
 
   // Innenrand: nur innerhalb der Fläche sichtbar
   context.save()
@@ -96,6 +118,7 @@ function hitSelectedArea(coordinates: unknown, state: State) {
 }
 
 const areaSelectedStyle = new Style({ renderer: renderSelectedArea, hitDetectionRenderer: hitSelectedArea, zIndex: 2 })
+const areaHoverStyle = new Style({ renderer: renderHoverArea, hitDetectionRenderer: hitSelectedArea, zIndex: 1 })
 
 // Linien liegen immer über den Flächen, auch über einer gewählten Fläche
 const lineStyle = [
@@ -103,10 +126,7 @@ const lineStyle = [
   new Style({ stroke: new Stroke({ color: LINE_INNER, width: 4, lineJoin: 'round', lineCap: 'round' }), zIndex: 2.5 }),
 ]
 
-const lineHoverStyle = [
-  new Style({ stroke: new Stroke({ color: LINE_OUTER, width: 10, lineJoin: 'round', lineCap: 'round' }), zIndex: 2.5 }),
-  new Style({ stroke: new Stroke({ color: LINE_INNER, width: 6, lineJoin: 'round', lineCap: 'round' }), zIndex: 2.5 }),
-]
+const lineHoverStyle = [new Style({ stroke: new Stroke({ color: HOVER, width: 20, lineJoin: 'round', lineCap: 'round' }), zIndex: 2.5 }), ...lineStyle]
 
 const lineSelectedStyle = [
   new Style({ stroke: new Stroke({ color: SELECTED, width: 20, lineJoin: 'round', lineCap: 'round' }), zIndex: 3 }),
@@ -127,11 +147,11 @@ function circlePath(context: CanvasRenderingContext2D, [x, y]: Coordinate, radiu
  * nur in einfacher Auflösung, auf Retina-Displays wurden die Punkte dadurch unscharf.
  * 16px-Kreis mit 2px-Innenrand wie «Legende Objekte – Assets» und «Punkt» in Figma.
  */
-function pointRenderer(shadows: Shadow[], scale = 1) {
+function pointRenderer(shadows: Shadow[]) {
   return (coordinates: unknown, state: State) => {
     const context = state.context
     const center = coordinates as Coordinate
-    const ratio = state.pixelRatio * scale
+    const ratio = state.pixelRatio
 
     // Canvas-Schatten gelten in Gerätepixeln; shadowBlur ist die doppelte Standardabweichung
     context.save()
@@ -156,26 +176,26 @@ function pointRenderer(shadows: Shadow[], scale = 1) {
   }
 }
 
-function pointHitRenderer(scale = 1) {
-  return (coordinates: unknown, state: State) => {
-    circlePath(state.context, coordinates as Coordinate, POINT_RADIUS * state.pixelRatio * scale)
-    state.context.fill()
-  }
+function hitPoint(coordinates: unknown, state: State) {
+  circlePath(state.context, coordinates as Coordinate, POINT_RADIUS * state.pixelRatio)
+  state.context.fill()
 }
 
-function pointStyle(shadows: Shadow[], zIndex: number, scale = 1) {
-  return new Style({ renderer: pointRenderer(shadows, scale), hitDetectionRenderer: pointHitRenderer(scale), zIndex })
+function pointStyle(shadows: Shadow[], zIndex: number) {
+  return new Style({ renderer: pointRenderer(shadows), hitDetectionRenderer: hitPoint, zIndex })
 }
+
+// Ring um den 16px-Kreis, analog zum Rand der Fläche: pink für die Auswahl, violett für Hover
+const ring = (color: string, zIndex: number) => new Style({ image: new Circle({ radius: 11, stroke: new Stroke({ color, width: 6 }) }), zIndex })
+const selectedRing = ring(SELECTED, 5)
+const hoverRing = ring(HOVER, 4)
 
 const assetPointStyle = pointStyle(POINT_SHADOWS, 3)
-const assetPointHoverStyle = pointStyle(POINT_SHADOWS, 4, 1.25)
+const assetPointHoverStyle = [hoverRing, pointStyle(POINT_SHADOWS, 4)]
 
 // «Punkt»: gleicher Kreis mit zwei weicheren Schatten
 const pinStyle = pointStyle(PIN_SHADOWS, 3)
-const pinHoverStyle = pointStyle(PIN_SHADOWS, 4, 1.25)
-
-// Gewählter Punkt: pinker Ring um den 16px-Kreis, analog zum Rand der Fläche
-const selectedRing = new Style({ image: new Circle({ radius: 11, stroke: new Stroke({ color: SELECTED, width: 6 }) }), zIndex: 5 })
+const pinHoverStyle = [hoverRing, pointStyle(PIN_SHADOWS, 4)]
 const pointSelectedStyle = [selectedRing, pointStyle(POINT_SHADOWS, 5)]
 const pinSelectedStyle = [selectedRing, pointStyle(PIN_SHADOWS, 5)]
 

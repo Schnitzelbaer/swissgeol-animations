@@ -1,0 +1,304 @@
+/* Detailseite einer Bohrung (Figma «Detail-Pages»). Figma zeichnet Rahmen innen: Paddings sind um 1px reduziert. */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-textfield-grey);
+}
+
+/* «Detail Header Boreholes» */
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 80px;
+  min-height: 84px;
+  padding: 12px 16px;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.detailTitle {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 26px;
+  line-height: 28px;
+  font-weight: 700;
+  color: var(--text-high-emphasis);
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 27px;
+  padding: 0 10px;
+  border-radius: 22px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  white-space: nowrap;
+}
+
+.draft {
+  background: #46596b;
+  color: var(--color-white);
+}
+
+.assignee {
+  background: var(--border-default);
+  color: var(--text-high-emphasis);
+}
+
+.detailActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* «tab-navigation-Boreholes»: aktiver Bereich in der Boreholes-Farbe */
+.nav {
+  width: 360px;
+  flex-shrink: 0;
+  background: var(--color-white);
+  border-right: 1px solid var(--border-default);
+  overflow-y: auto;
+}
+
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px 0 38px;
+  border-bottom: 1px solid var(--border-default);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.035px;
+  color: var(--text-high-emphasis);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+.navItem:hover {
+  background: var(--color-textfield-grey);
+}
+
+.navItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-boreholes);
+  transform: scaleY(0);
+  transition: transform 250ms var(--ease-out);
+}
+
+.navActive {
+  background: var(--color-textfield-grey);
+  font-weight: 700;
+  color: var(--color-boreholes);
+}
+
+.navActive::before {
+  transform: none;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Inhalt 904px breit, mittig, 40px Abstand oben und unten */
+.content {
+  width: min(904px, 100% - 32px);
+  margin: 0 auto;
+  padding: 40px 0;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Weisse Karte mit grauem Rahmen («Frame 317») */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 23px;
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-8);
+}
+
+.panel.row {
+  flex-direction: row;
+  gap: 16px;
+}
+
+/* Abschnitt mit grauem Titelbalken («Koordinaten», «ID’s») */
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-8);
+  overflow: hidden;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  height: 83px;
+  margin: 0;
+  padding: 0 23px 0 34px;
+  background: var(--color-bg-grey);
+  border-bottom: 1px solid var(--border-high-emphasis);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.016px;
+  color: var(--text-high-emphasis);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 17px 23px 23px;
+}
+
+/* ID’s: Abstand zum Titel 24px statt 18px */
+.cardBodySpacious {
+  padding-top: 23px;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* «form / input / text v2» als reine Anzeige */
+.field {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  padding-left: 11px;
+  color: var(--text-high-emphasis);
+}
+
+.value {
+  display: block;
+  height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-4);
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.016px;
+  color: var(--text-high-emphasis);
+}
+
+/* Kartenausschnitt 856×428 */
+.map {
+  position: relative;
+  height: 428px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-8);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Eine ID pro Karte: Typ links (250px), daneben Code und Kommentar */
+.identifier {
+  display: flex;
+  gap: 16px;
+  padding: 23px;
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-8);
+}
+
+.idType {
+  flex: 0 0 250px;
+}
+
+.codes {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.idCode {
+  flex: 0 0 180px;
+}
+
+.placeholder {
+  margin-top: 0;
+  text-align: center;
+  color: var(--text-disabled);
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .nav {
+    width: 200px;
+  }
+
+  .detailHeader {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav {
+    display: none;
+  }
+
+  .detailActions {
+    display: none;
+  }
+
+  .row,
+  .panel.row,
+  .identifier {
+    flex-direction: column;
+  }
+
+  .idType,
+  .idCode {
+    flex-basis: auto;
+  }
+}

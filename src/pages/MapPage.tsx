@@ -3,12 +3,22 @@ import { useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import { MapView } from '../components/map/MapView'
+import { Legend } from '../components/map/Legend'
+import { assetStyle } from '../components/map/styles'
+import { createAssetFeatures, INITIAL_CENTER, INITIAL_RESOLUTION } from '../components/map/geometries'
 import { TableBar } from '../components/TableBar'
 import { PreviewPanel } from '../components/preview/PreviewPanel'
 import { useDocumentViewer } from '../components/viewer/useDocumentViewer'
 import { DEFAULT_ASSET_ID, getAsset } from '../data/assets'
 import { defaultGeometryId } from '../components/map/geometries'
+import { useI18n } from '../i18n'
 import styles from './MapPage.module.css'
+import legendPoint from '../assets/map/legend-point.svg'
+import legendLine from '../assets/map/legend-line.svg'
+import legendArea from '../assets/map/legend-area.svg'
+
+/** Anzahl Assets wie im Figma-Screen */
+const ASSET_COUNT = 23000
 
 const PANEL_WIDTH = 540
 
@@ -33,6 +43,7 @@ function useMediaQuery(query: string) {
  */
 export function MapPage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const assetMatch = useMatch('/asset/:assetId')
   const [searchParams, setSearchParams] = useSearchParams()
   const { openDocument, isOpen: viewerOpen } = useDocumentViewer()
@@ -63,7 +74,7 @@ export function MapPage() {
 
   // Klick auf eine Geometrie: markieren und das Panel ihres Assets öffnen
   const selectGeometry = useCallback(
-    (geometryId: string, assetId: string) => navigate(`/asset/${assetId}?sel=${geometryId}`),
+    (geometryId: string, feature: { get: (key: string) => unknown }) => navigate(`/asset/${feature.get('assetId')}?sel=${geometryId}`),
     [navigate],
   )
   const openAsset = useCallback((assetId: string) => navigate(`/asset/${assetId}`), [navigate])
@@ -84,12 +95,31 @@ export function MapPage() {
 
   return (
     <div className={styles.app}>
-      <Header />
+      <Header app="assets" />
       <div className={styles.body}>
-        <Sidebar />
+        <Sidebar app="assets" />
         <main className={styles.main} style={mainStyle}>
-          <MapView panelOffset={panelOffset} selectedGeometryId={selectedGeometryId} onGeometryClick={selectGeometry} />
-          <TableBar />
+          <MapView
+            createFeatures={createAssetFeatures}
+            style={assetStyle}
+            center={INITIAL_CENTER}
+            resolution={INITIAL_RESOLUTION}
+            legend={
+              <Legend
+                title={t.legend.title}
+                width={179}
+                items={[
+                  { icon: legendPoint, label: t.legend.point },
+                  { icon: legendLine, label: t.legend.line },
+                  { icon: legendArea, label: t.legend.polygon },
+                ]}
+              />
+            }
+            panelOffset={panelOffset}
+            selectedId={selectedGeometryId}
+            onFeatureClick={selectGeometry}
+          />
+          <TableBar count={t.table.count(ASSET_COUNT)} />
           <PreviewPanel
             asset={asset}
             open={panelOpen}
