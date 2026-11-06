@@ -160,12 +160,19 @@ export function AiAnalysisPage() {
                 <Segmented<EffectVariant>
                   label="Variante"
                   value={effect.variant}
-                  options={[['shimmer', 'Schimmer'], ['border', 'Rand'], ['aura', 'Aura']]}
+                  options={[['veil', 'Schleier'], ['shimmer', 'Schimmer'], ['border', 'Rand'], ['aura', 'Aura']]}
                   onChange={(v) => update((d) => void (d.effect.variant = v))}
                 />
                 <NumberField label="Intensität" value={effect.intensity} min={0} max={1} step={0.05} onChange={(v) => update((d) => void (d.effect.intensity = v))} />
                 <NumberField label="Inhalt dimmen" value={effect.dim} min={0} max={0.6} step={0.05} onChange={(v) => update((d) => void (d.effect.dim = v))} />
                 <NumberField label="Durchlauf" value={effect.period} min={300} max={6000} step={50} unit="ms" onChange={(v) => update((d) => void (d.effect.period = v))} />
+                {effect.variant === 'veil' && (
+                  <>
+                    <NumberField label="Grundschleier" value={effect.haze} min={0} max={0.6} step={0.01} onChange={(v) => update((d) => void (d.effect.haze = v))} />
+                    <NumberField label="Pulsbreite" value={effect.pulseWidth} min={100} max={3000} step={10} unit="ms" onChange={(v) => update((d) => void (d.effect.pulseWidth = v))} />
+                    <ColorField label="Schleierfarbe" value={effect.veilColor} onChange={(v) => update((d) => void (d.effect.veilColor = v))} />
+                  </>
+                )}
                 {effect.variant === 'shimmer' && (
                   <>
                     <NumberField label="Winkel" value={effect.angle} min={0} max={180} unit="°" onChange={(v) => update((d) => void (d.effect.angle = v))} />
@@ -222,6 +229,11 @@ export function AiAnalysisPage() {
                   onChange={(v) => update((d) => void (d.stage.aspect = v))}
                 />
                 <ColorField label="Hintergrund" value={stage.background} onChange={(v) => update((d) => void (d.stage.background = v))} />
+                <Toggle label="Verlauf" value={stage.gradient} onChange={(v) => update((d) => void (d.stage.gradient = v))} />
+                {stage.gradient &&
+                  stage.gradientColors.map((color, index) => (
+                    <ColorField key={index} label={`Verlauf ${index + 1}`} value={color} onChange={(v) => update((d) => void (d.stage.gradientColors[index] = v))} />
+                  ))}
                 <NumberField label="Zoom" value={stage.zoom} min={0.5} max={3} step={0.05} unit="×" onChange={(v) => update((d) => void (d.stage.zoom = v))} />
                 <NumberField label="Breite" value={stage.width} min={320} max={720} step={2} unit="px" onChange={(v) => update((d) => void (d.stage.width = v))} />
                 <NumberField label="Oben" value={stage.top} min={0} max={80} unit="%" onChange={(v) => update((d) => void (d.stage.top = v))} />
@@ -279,7 +291,17 @@ function Stage({ config, time }: { config: Config; time: number }) {
 
   return (
     <div className={styles.stageArea} ref={areaRef}>
-      <div className={styles.frame} style={{ width: frame.width, height: frame.height, background: stage.background } as CSSProperties}>
+      <div
+        className={styles.frame}
+        style={{
+          width: frame.width,
+          height: frame.height,
+          // Verlauf wie im Referenzvideo: Türkis links oben, Gelbgrün rechts unten
+          background: stage.gradient
+            ? `radial-gradient(90% 80% at 100% 75%, ${stage.gradientColors[1]} 0%, transparent 60%), linear-gradient(135deg, ${stage.gradientColors[0]} 0%, ${stage.gradientColors[0]} 45%, ${stage.gradientColors[1]} 120%)`
+            : stage.background,
+        } as CSSProperties}
+      >
         <div className={styles.cardAnchor} style={{ top: `${stage.top}%`, transform: `translateX(-50%) scale(${scale})` }}>
           <AnimatedDocumentCard file={FILE} config={config} time={time} />
         </div>

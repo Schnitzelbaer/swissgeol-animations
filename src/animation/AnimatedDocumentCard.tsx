@@ -3,7 +3,7 @@ import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { CLASSES_WITHOUT_LANGUAGE, fileLanguages, groupSections, pageRange, sectionTitle, type AssetFile } from '../data/files'
 import { useI18n } from '../i18n'
-import { alpha, clamp01, cubicBezier, eased, linear, rowStart, typingDuration, type Config, type TocRow } from './timeline'
+import { alpha, clamp01, cubicBezier, eased, linear, pulse, rowStart, typingDuration, type Config, type TocRow } from './timeline'
 import styles from './AnimatedDocumentCard.module.css'
 import pdfIcon from '../assets/icons/filetype-pdf.svg'
 import downloadIcon from '../assets/icons/download.svg'
@@ -117,8 +117,8 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
           style={{
             inset: -effect.spread,
             filter: `blur(${effect.spread * 0.8}px)`,
-            opacity: envelope * effect.intensity * (0.55 + 0.45 * Math.sin(phase * Math.PI * 2)),
-            transform: `scale(${1 + 0.03 * Math.sin(phase * Math.PI * 2)})`,
+            opacity: envelope * effect.intensity * 0.6 * (0.6 + 0.4 * Math.sin(phase * Math.PI * 2)),
+            transform: `scale(${1 + 0.015 * Math.sin(phase * Math.PI * 2)})`,
             background: `conic-gradient(from ${cycle * 360}deg, ${c1}, ${c2}, ${c3}, ${c1})`,
           }}
         />
@@ -128,7 +128,7 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
           className={styles.glow}
           style={{
             filter: `blur(${effect.glow}px)`,
-            opacity: envelope * effect.intensity * 0.8,
+            opacity: envelope * effect.intensity * 0.5,
             background: `conic-gradient(from ${cycle * 360}deg, ${c1}, ${c2}, ${c3}, ${c1})`,
           }}
         />
@@ -253,12 +253,21 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
             }}
           />
         )}
+        {effect.variant === 'veil' && envelope > 0 && (
+          <div
+            className={styles.overlay}
+            style={{
+              background: effect.veilColor,
+              opacity: envelope * (effect.haze + Math.max(0, effect.intensity - effect.haze) * pulse(time - effect.in.start, effect.period, effect.pulseWidth)),
+            }}
+          />
+        )}
         {effect.variant === 'aura' && envelope > 0 && (
           <div
             className={styles.overlay}
             style={{
-              opacity: envelope * effect.intensity * 0.35 * (0.6 + 0.4 * Math.sin(phase * Math.PI * 2)),
-              background: `radial-gradient(120% 140% at 50% 0%, ${alpha(c1, 0.25)}, ${alpha(c2, 0.12)} 50%, transparent 80%)`,
+              opacity: envelope * effect.intensity * 0.3 * (0.6 + 0.4 * Math.sin(phase * Math.PI * 2)),
+              background: `radial-gradient(120% 140% at 50% 0%, ${alpha(c1, 0.2)}, ${alpha(c3, 0.1)} 50%, transparent 80%)`,
             }}
           />
         )}
@@ -269,7 +278,7 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
           className={styles.ring}
           style={{
             padding: effect.borderWidth,
-            opacity: envelope * Math.min(1, effect.intensity * 1.3),
+            opacity: envelope * Math.min(1, effect.intensity * 1.1),
             background: `conic-gradient(from ${cycle * 360}deg, ${c1}, ${c2}, ${c3}, ${c1})`,
           }}
         />
@@ -282,5 +291,5 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
 function shimmerGradient(angle: number, band: number, cycle: number, [c1, c2, c3]: string[]) {
   const position = -band + cycle * (100 + 2 * band)
   const stop = (offset: number) => `${(position + offset).toFixed(2)}%`
-  return `linear-gradient(${angle}deg, transparent ${stop(-band)}, ${alpha(c1, 0.35)} ${stop(-band / 2)}, ${alpha(c2, 0.45)} ${stop(0)}, ${alpha(c3, 0.35)} ${stop(band / 2)}, transparent ${stop(band)})`
+  return `linear-gradient(${angle}deg, transparent ${stop(-band)}, ${alpha(c1, 0.14)} ${stop(-band / 2)}, ${alpha(c2, 0.22)} ${stop(0)}, ${alpha(c3, 0.14)} ${stop(band / 2)}, transparent ${stop(band)})`
 }

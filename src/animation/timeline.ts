@@ -80,7 +80,7 @@ export function eased(step: Step, time: number) {
   return cubicBezier(step.easing)(linear(step, time))
 }
 
-export type EffectVariant = 'shimmer' | 'border' | 'aura'
+export type EffectVariant = 'veil' | 'shimmer' | 'border' | 'aura'
 export type Aspect = 'frei' | '16:9' | '1:1' | '4:5' | '9:16'
 
 export type Config = {
@@ -102,6 +102,10 @@ export type Config = {
     glow: number
     /** Aura: Ausdehnung */
     spread: number
+    /** Schleier: Farbe, Grundschleier während der ganzen Analyse und Breite eines Pulses */
+    veilColor: string
+    haze: number
+    pulseWidth: number
   }
   flag: { in: Step; out: Step; twinkle: number }
   /** Sprache in der Meta-Zeile wird nach der Analyse hineingeschrieben */
@@ -123,25 +127,29 @@ export type Config = {
   }
   /** Pause am Ende, bevor die Schleife neu beginnt */
   hold: number
-  stage: { background: string; aspect: Aspect; zoom: number; width: number; top: number }
+  stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; zoom: number; width: number; top: number }
 }
 
 const step = (start: number, duration: number, easing: Bezier): Step => ({ start, duration, easing })
 
 export const DEFAULT_CONFIG: Config = {
   effect: {
-    variant: 'shimmer',
+    variant: 'veil',
     in: step(600, 600, EASING_PRESETS['ease-out']),
     out: step(4600, 600, EASING_PRESETS['ease-in-out']),
-    period: 1600,
-    intensity: 0.7,
-    dim: 0.15,
-    colors: ['#14afb8', '#6366f1', '#a855f7'],
+    period: 2000,
+    intensity: 0.4,
+    dim: 0,
+    // Türkis und Gelbgrün wie im Referenzvideo
+    colors: ['#14afb8', '#7cc6d6', '#cdbe4d'],
     angle: 110,
-    band: 35,
-    borderWidth: 2,
-    glow: 14,
-    spread: 28,
+    band: 45,
+    borderWidth: 1.5,
+    glow: 8,
+    spread: 16,
+    veilColor: '#e3f1f7',
+    haze: 0.12,
+    pulseWidth: 650,
   },
   flag: { in: step(700, 500, EASING_PRESETS['back-out']), out: step(4700, 350, EASING_PRESETS['ease-in']), twinkle: 1400 },
   language: step(4900, 300, EASING_PRESETS.linear),
@@ -149,7 +157,7 @@ export const DEFAULT_CONFIG: Config = {
   chevron: { in: step(5100, 300, EASING_PRESETS['ease-out']), rotate: step(6300, 400, EASING_PRESETS.swissgeol) },
   toc: { start: 6350, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, stagger: 260, cps: 70, cursor: true, metaFade: 220 },
   hold: 2000,
-  stage: { background: '#eef0f3', aspect: '16:9', zoom: 1.4, width: 496, top: 22 },
+  stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', zoom: 1.4, width: 496, top: 22 },
 }
 
 /** Zeilen des Inhaltsverzeichnisses in Lesereihenfolge */
@@ -234,4 +242,13 @@ export function alpha(hex: string, opacity: number) {
   const g = parseInt(full.slice(2, 4), 16)
   const b = parseInt(full.slice(4, 6), 16)
   return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, opacity))})`
+}
+
+/** Weicher Puls (angehobener Kosinus) einmal pro Durchlauf: 0 in Ruhe, 1 auf dem Höhepunkt */
+export function pulse(elapsed: number, period: number, width: number) {
+  if (elapsed < 0) return 0
+  const local = elapsed % Math.max(1, period)
+  const half = Math.max(1, width) / 2
+  const distance = Math.abs(local - half) / half
+  return distance >= 1 ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * distance)
 }
