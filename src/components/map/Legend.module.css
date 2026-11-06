@@ -97,28 +97,9 @@
   min-height: 0;
 }
 
-/* Scrollbalken 12px, 12px vom Rand wie in Figma («form – building blocks / scrollbar») */
-.scrollable .items {
-  margin-right: 12px;
-  padding-right: 12px;
-}
-
+/* Standard-Scrollbalken des Browsers */
 .scrollable.open .items {
   overflow-y: auto;
-}
-
-.scrollable .items::-webkit-scrollbar {
-  width: 12px;
-}
-
-.scrollable .items::-webkit-scrollbar-track {
-  background: var(--border-default);
-  margin: 10px 0 9px;
-}
-
-.scrollable .items::-webkit-scrollbar-thumb {
-  background: var(--border-high-emphasis);
-  border: 2px solid var(--border-default);
 }
 
 .titleText {
