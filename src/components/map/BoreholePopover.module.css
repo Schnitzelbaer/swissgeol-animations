@@ -1,23 +1,14 @@
-/* Weisse Karte im Stil der Menüs (Rahmen innen, Schatten «Bottom Shadow») */
+/* Weisse Karte mit Rahmen und Schlagschatten wie die Legende */
 .popover {
-  position: relative;
   width: max-content;
   min-width: 220px;
   max-width: 300px;
   background: var(--color-white);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-4);
-  box-shadow: var(--shadow-bottom);
+  box-shadow: var(--shadow-overlay);
   overflow: hidden;
   animation: popover-in 200ms var(--ease-out);
-}
-
-.popover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--border-default);
-  border-radius: inherit;
-  pointer-events: none;
 }
 
 @keyframes popover-in {
@@ -25,17 +16,6 @@
     opacity: 0;
     transform: translateY(6px) scale(0.98);
   }
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 4px 4px 4px 12px;
-  background: var(--color-bg-grey);
-  border-bottom: 1px solid var(--border-default);
-  color: var(--text-high-emphasis);
 }
 
 .list {

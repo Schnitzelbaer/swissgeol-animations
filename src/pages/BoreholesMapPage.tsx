@@ -9,7 +9,7 @@ import { SymbolIcon } from '../components/map/SymbolIcon'
 import { legendLabel, useBoreholeStack } from '../components/map/boreholeStack'
 import { boreholeStyle } from '../components/map/boreholeStyles'
 import { GROUP_STARTS, LEGEND_TOPICS, LEGEND_VALUES, LEGEND_WIDTH, symbolKey } from '../components/map/boreholeLegends'
-import { BOREHOLES_CENTER, BOREHOLES_RESOLUTION, createBoreholeFeatures } from '../components/map/boreholeGeometries'
+import { BOREHOLE_CLUSTERS, BOREHOLES_CENTER, BOREHOLES_RESOLUTION, createBoreholeFeatures } from '../components/map/boreholeGeometries'
 import { useStore } from '../data/store'
 import { useI18n } from '../i18n'
 import styles from './MapPage.module.css'
@@ -51,6 +51,7 @@ export function BoreholesMapPage() {
             legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable />}
             onFeatureClick={openBorehole}
             stacked={stacked}
+            clusters={BOREHOLE_CLUSTERS}
           />
           <TableBar count={t.boreholes.count(BOREHOLE_COUNT)} />
         </main>

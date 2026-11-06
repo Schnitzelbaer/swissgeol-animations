@@ -5,6 +5,8 @@ import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
+import Cluster from 'ol/source/Cluster'
+import { boundingExtent, getCenter } from 'ol/extent'
 import XYZ from 'ol/source/XYZ'
 import { Attribution } from 'ol/control'
 import Feature from 'ol/Feature'
@@ -71,6 +73,11 @@ type Props = {
     tooltip: (ids: string[]) => ReactNode
     popover: (ids: string[], controls: StackedControls) => ReactNode
   }
+  /**
+   * Ab dieser Auflösung (m/px, also weiter herausgezoomt) nur noch Badges: nahe Objekte werden zusammengefasst,
+   * damit die Karte performant bleibt. Ein Klick auf ein Badge zoomt hinein.
+   */
+  clusters?: { resolution: number; distance: number; style: StyleFunction; halfHeight: number }
   /** Eingebettete Karte (Detailseite): ohne Tabellenleiste darunter */
   embedded?: boolean
 }
@@ -83,7 +90,13 @@ function anchorOf(features: Feature[]): Coordinate {
   return [x, y]
 }
 
-export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, stacked, embedded }: Props) {
+/** Abstand von Tooltip und Popover zum Anker: halbe Höhe des grössten Objekts (Symbol 8px, Badge mehr) plus Luft */
+function offsetOf(features: Feature[], gap: number): [number, number] {
+  const halfHeight = Math.max(8, ...features.map((feature) => (feature.get('halfHeight') as number | undefined) ?? 8))
+  return [0, -(halfHeight + gap)]
+}
+
+export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, stacked, clusters, embedded }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
   const sourceRef = useRef<VectorSource | null>(null)
@@ -91,7 +104,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const colorLayerRef = useRef<TileLayer | null>(null)
   const onFeatureClickRef = useRef(onFeatureClick)
   const stackedRef = useRef(stacked)
-  const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset })
+  const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset, clusters })
   // Standard ist die farbige Landeskarte; die graue liegt darunter und erscheint beim Umschalten
   const [basemap, setBasemap] = useState<Basemap>('farbe')
   const initialBasemapRef = useRef(basemap)
@@ -135,14 +148,28 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     const objectLayer = new VectorLayer({ source, style: initial.style })
     objectLayerRef.current = objectLayer
 
-    const tooltipOverlay = new Overlay({ element: tooltipElement, positioning: 'bottom-center', offset: [0, -16], stopEvent: false })
-    const popoverOverlay = new Overlay({ element: popoverElement, positioning: 'bottom-center', offset: [0, -18], autoPan: { animation: { duration: 250 }, margin: 24 } })
+    // Herausgezoomt: Cluster-Layer mit Badges statt der einzelnen Objekte
+    const clusterOptions = initial.clusters
+    const clusterLayers: VectorLayer[] = []
+    if (clusterOptions) {
+      objectLayer.setMaxResolution(clusterOptions.resolution)
+      const clusterSource = new Cluster({
+        source,
+        distance: clusterOptions.distance,
+        minDistance: Math.min(clusterOptions.distance, 40),
+        createCluster: (point, features) => new Feature({ geometry: point, features, halfHeight: clusterOptions.halfHeight }),
+      })
+      clusterLayers.push(new VectorLayer({ source: clusterSource, style: clusterOptions.style, minResolution: clusterOptions.resolution }))
+    }
+
+    const tooltipOverlay = new Overlay({ element: tooltipElement, positioning: 'bottom-center', stopEvent: false })
+    const popoverOverlay = new Overlay({ element: popoverElement, positioning: 'bottom-center', autoPan: { animation: { duration: 250 }, margin: 24 } })
     tooltipOverlayRef.current = tooltipOverlay
     popoverOverlayRef.current = popoverOverlay
 
     const map = new OlMap({
       target: containerRef.current!,
-      layers: [greyLayer, colorLayer, objectLayer],
+      layers: [greyLayer, colorLayer, objectLayer, ...clusterLayers],
       overlays: [tooltipOverlay, popoverOverlay],
       controls: [new Attribution({ collapsible: false, className: `ol-attribution ${styles.attribution}` })],
       view: new View({
@@ -155,7 +182,8 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     })
     mapRef.current = map
 
-    // Alle Objekte unter dem Zeiger (oberstes zuerst); ohne stacked nur das oberste
+    // Alle Objekte unter dem Zeiger (oberstes zuerst); ohne stacked nur das oberste.
+    // Mit stacked ohne Toleranz: getroffen ist nur, was wirklich unter dem Zeiger liegt, nicht schon die Nachbarn.
     const featuresAt = (pixel: number[]) => {
       const hits: Feature[] = []
       map.forEachFeatureAtPixel(
@@ -164,9 +192,27 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
           if (feature instanceof Feature && !hits.includes(feature)) hits.push(feature)
           return stackedRef.current ? undefined : true
         },
-        { hitTolerance: 4 },
+        { hitTolerance: stackedRef.current ? 0 : 4 },
       )
       return hits
+    }
+
+    /** IDs der getroffenen Objekte; ein Cluster steht für alle seine Objekte */
+    const idsOf = (features: Feature[]) =>
+      features.flatMap((feature) => {
+        const members = feature.get('features') as Feature[] | undefined
+        return members ? members.map((member) => String(member.getId())) : [String(feature.getId())]
+      })
+
+    /** Klick auf ein Badge: auf seine Objekte zoomen, mindestens so weit, dass sie einzeln erscheinen */
+    const zoomInto = (members: Feature[]) => {
+      const view = map.getView()
+      const extent = boundingExtent(members.map((member) => (member.getGeometry() as Point).getCoordinates()))
+      const [width, height] = map.getSize() ?? [800, 600]
+      const fit = view.getResolutionForExtent(extent, [Math.max(200, width - 240), Math.max(200, height - 240)])
+      const limit = clusterOptions!.resolution
+      const target = Math.min(limit * 0.83, Math.max(limit / 8, fit || 0))
+      view.animate({ center: getCenter(extent), resolution: target, duration: 500 })
     }
 
     const showTooltip = (features: Feature[]) => {
@@ -175,7 +221,8 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
         setTooltipIds([])
         return
       }
-      setTooltipIds(features.map((feature) => String(feature.getId())))
+      setTooltipIds(idsOf(features))
+      tooltipOverlay.setOffset(offsetOf(features, 8))
       tooltipOverlay.setPosition(anchorOf(features))
     }
 
@@ -197,14 +244,33 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       showTooltip([])
     })
 
+    // Beim Zoomen bilden sich die Badges neu: Hover und Tooltip zurücksetzen, Popover schliessen, sobald nur noch Badges da sind
+    map.on('movestart', () => {
+      if (popoverIdsRef.current.length) return
+      setHovered([])
+      showTooltip([])
+    })
+    map.on('moveend', () => {
+      const resolution = map.getView().getResolution() ?? 0
+      if (clusterOptions && popoverIdsRef.current.length && resolution >= clusterOptions.resolution) closePopover()
+    })
+
     map.on('click', (event) => {
       const hits = featuresAt(event.pixel)
+      const cluster = hits.find((feature) => feature.get('features'))
+      if (cluster) {
+        if (popoverIdsRef.current.length) closePopover()
+        showTooltip([])
+        zoomInto(cluster.get('features') as Feature[])
+        return
+      }
       if (hits.length > 1 && stackedRef.current) {
         const ids = hits.map((feature) => String(feature.getId()))
         popoverIdsRef.current = ids
         setPopoverIds(ids)
         setHovered(hits)
         showTooltip([])
+        popoverOverlay.setOffset(offsetOf(hits, 10))
         popoverOverlay.setPosition(anchorOf(hits))
         return
       }
@@ -226,6 +292,13 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   useEffect(() => {
     objectLayerRef.current?.setStyle(style)
   }, [style])
+
+  // Das Popover hat erst nach dem Rendern seine Grösse: dann die Karte so verschieben, dass es ganz sichtbar ist
+  useEffect(() => {
+    if (!popoverIds.length) return
+    const frame = requestAnimationFrame(() => popoverOverlayRef.current?.panIntoView({ animation: { duration: 250 }, margin: 24 }))
+    return () => cancelAnimationFrame(frame)
+  }, [popoverIds])
 
   // Escape schliesst das Popover
   useEffect(() => {

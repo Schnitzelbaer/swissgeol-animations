@@ -4,7 +4,7 @@ import { Header } from '../components/Header'
 import { Button } from '../components/Button'
 import { MapView } from '../components/map/MapView'
 import { boreholeStyle } from '../components/map/boreholeStyles'
-import { BOREHOLES_RESOLUTION, boreholeCoordinate, boreholeLonLat, createBoreholeFeatures } from '../components/map/boreholeGeometries'
+import { BOREHOLE_CLUSTERS, BOREHOLES_RESOLUTION, boreholeCoordinate, boreholeLonLat, createBoreholeFeatures } from '../components/map/boreholeGeometries'
 import { formatSwissNumber, getBorehole, nearestPlace, stableOffset, wgs84ToLv95, type Borehole } from '../data/boreholes'
 import { useStore } from '../data/store'
 import { useBoreholeStack } from '../components/map/boreholeStack'
@@ -88,6 +88,7 @@ function Location({ borehole }: { borehole: Borehole }) {
             selectedId={borehole.id}
             onFeatureClick={openBorehole}
             stacked={stacked}
+            clusters={BOREHOLE_CLUSTERS}
             embedded
           />
         </div>

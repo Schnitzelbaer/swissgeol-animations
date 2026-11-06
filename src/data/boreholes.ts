@@ -3,7 +3,7 @@
 // erfunden, aber plausibel; Koordinaten, Gemeinde, Kanton und Höhe folgen aus der Lage auf der Karte.
 
 import type { Lang } from '../i18n/messages'
-import { LAKES, PLACES, START_VIEW, type Canton } from './swissPlaces'
+import { LAKES, PLACES, START_VIEW, type Canton, type Place } from './swissPlaces'
 
 export type TemplateType = 'general' | 'geothermal' | 'geotechnics' | 'hydrogeology'
 
@@ -198,6 +198,30 @@ function boreholeName(type: TemplateType, place: string, index: number) {
 function generateBoreholes(): Borehole[] {
   const result: Borehole[] = []
   let id = 20001
+
+  const create = (place: Place, index: number, lon: number, lat: number, type: TemplateType): Borehole => {
+    const boreholeId = String(id++)
+    const extra: BoreholeIdentifier[] = rand() < 0.4 ? [{ type: 'ID GeODin-Shortname', codes: [{ code: `6${place.name.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')}${year2()}${pick(['E', 'K', 'R', 'P'])}${String(100 + Math.floor(rand() * 900))}` }] }] : []
+    return {
+      id: boreholeId,
+      name: boreholeName(type, place.name, index),
+      type,
+      purpose: weighted(PURPOSE_BY_TYPE[type]),
+      access: weighted<Access>([['Öffentlich', 85], ['Gesperrt', 15]]),
+      boreholeType: weighted<BoreholeType>(
+        type === 'geotechnics'
+          ? [['Bohrung', 45], ['Rammsondierung', 25], ['Baggerschlitz', 12], ['Aufschluss', 6], ['Virtuelle Bohrung', 2], ['Anderer', 5], ['Keine Angabe', 5]]
+          : [['Bohrung', 70], ['Rammsondierung', 4], ['Baggerschlitz', 4], ['Aufschluss', 6], ['Virtuelle Bohrung', 5], ['Anderer', 5], ['Keine Angabe', 6]],
+      ),
+      workflow: weighted<WorkflowState>([['Publikation', 50], ['In Bearbeitung', 20], ['In Überprüfung', 12], ['In Validierung', 12], ['Änderung angefordert', 6]]),
+      lonLat: [lon, lat],
+      locationPrecision: pick([0.5, 1, 1, 2, 5, 10]),
+      referenceOffset: pick([0, 0, 0.2, 0.5, 0.8]),
+      identifiers: ids(boreholeId, extra),
+    }
+  }
+
+  const placeOf = new Map<Borehole, Place>()
   for (const place of PLACES) {
     for (let i = 0; i < place.count; i++) {
       let lat = 0
@@ -210,27 +234,24 @@ function generateBoreholes(): Borehole[] {
         if (!inLake(lat, lon) && !inStartView) break
       }
       const type = weighted<TemplateType>([['geothermal', 35], ['geotechnics', 30], ['general', 20], ['hydrogeology', 15]])
-      const boreholeId = String(id++)
-      const extra: BoreholeIdentifier[] = rand() < 0.4 ? [{ type: 'ID GeODin-Shortname', codes: [{ code: `6${place.name.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')}${year2()}${pick(['E', 'K', 'R', 'P'])}${String(100 + Math.floor(rand() * 900))}` }] }] : []
-      result.push({
-        id: boreholeId,
-        name: boreholeName(type, place.name, i),
-        type,
-        purpose: weighted(PURPOSE_BY_TYPE[type]),
-        access: weighted<Access>([['Öffentlich', 85], ['Gesperrt', 15]]),
-        boreholeType: weighted<BoreholeType>(
-          type === 'geotechnics'
-            ? [['Bohrung', 45], ['Rammsondierung', 25], ['Baggerschlitz', 12], ['Aufschluss', 6], ['Virtuelle Bohrung', 2], ['Anderer', 5], ['Keine Angabe', 5]]
-            : [['Bohrung', 70], ['Rammsondierung', 4], ['Baggerschlitz', 4], ['Aufschluss', 6], ['Virtuelle Bohrung', 5], ['Anderer', 5], ['Keine Angabe', 6]],
-        ),
-        workflow: weighted<WorkflowState>([['Publikation', 50], ['In Bearbeitung', 20], ['In Überprüfung', 12], ['In Validierung', 12], ['Änderung angefordert', 6]]),
-        lonLat: [lon, lat],
-        locationPrecision: pick([0.5, 1, 1, 2, 5, 10]),
-        referenceOffset: pick([0, 0, 0.2, 0.5, 0.8]),
-        identifiers: ids(boreholeId, extra),
-      })
+      const borehole = create(place, i, lon, lat, type)
+      placeOf.set(borehole, place)
+      result.push(borehole)
     }
   }
+
+  // Mehrere Bohrungen am exakt gleichen Standort (z.B. nur auf die Parzelle genau erfasst): erscheinen als Badge mit Anzahl
+  const singles = [...result]
+  singles.forEach((base, index) => {
+    if (index % 14 !== 4) return
+    const place = placeOf.get(base)!
+    const [lon, lat] = base.lonLat!
+    const extra = weighted<number>([[1, 50], [2, 25], [3, 12], [4, 7], [6, 4], [11, 2]])
+    for (let k = 0; k < extra; k++) {
+      const type = rand() < 0.7 ? base.type : weighted<TemplateType>([['geothermal', 35], ['geotechnics', 30], ['general', 20], ['hydrogeology', 15]])
+      result.push(create(place, place.count + k, lon, lat, type))
+    }
+  })
   return result
 }
 

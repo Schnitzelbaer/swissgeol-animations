@@ -295,7 +295,6 @@ const en = {
     } satisfies Record<Canton, string>,
     tooltipMore: (count: number) => `+ ${count} more`,
     popoverTitle: (count: number) => `${count} boreholes`,
-    closePopover: 'Close',
     templateType: {
       general: 'General',
       geothermal: 'Geothermal probe',
@@ -658,7 +657,6 @@ const de: Messages = {
     },
     tooltipMore: (count) => `+ ${count} weitere`,
     popoverTitle: (count) => `${count} Bohrungen`,
-    closePopover: 'Schliessen',
     templateType: {
       general: 'Allgemein',
       geothermal: 'Erdsonde',

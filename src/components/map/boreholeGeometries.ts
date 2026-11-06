@@ -4,6 +4,7 @@ import { fromLonLat, toLonLat } from 'ol/proj'
 import type { Coordinate } from 'ol/coordinate'
 import { boreholes, getBorehole, type Borehole } from '../../data/boreholes'
 import { FIGMA_MAP_CENTER_PX, INITIAL_CENTER, INITIAL_RESOLUTION } from './geometries'
+import { BADGE_FONT, BADGE_HALF_HEIGHT, clusterStyle } from './boreholeStyles'
 
 /*
  * Das Kartenbild im Boreholes-Screen (Figma 7558:31771) ist ein anderer Screenshot als bei Assets.
@@ -22,17 +23,40 @@ function px([x, y]: Coordinate): Coordinate {
 /** Kartenmitte beim Start: Mitte des Kartenbereichs rechts der Sidebar (x 80–1440, y 88–1024) */
 export const BOREHOLES_CENTER = px([760, 556])
 
+/**
+ * Wie in der Live-App: Ab etwas weiter herausgezoomt als die Startansicht (16.6 m/px) nur noch Badges,
+ * damit die Karte performant bleibt. Abstand der Badges 48px, Klick zoomt hinein.
+ */
+export const BOREHOLE_CLUSTERS = { resolution: 20, distance: 48, style: clusterStyle, halfHeight: BADGE_HALF_HEIGHT }
+
 /** Figma-Bohrungen über ihre Pixelposition, erzeugte Bohrungen über ihre WGS84-Lage */
 function location(borehole: Borehole) {
   return borehole.figma ? px(borehole.figma) : fromLonLat(borehole.lonLat!)
 }
 
+/**
+ * Ein Objekt pro Bohrung. Bohrungen am exakt gleichen Standort teilen sich ein Badge mit der Anzahl:
+ * Alle kennen die Gruppe (members), nur die erste (leader) zeichnet das Badge, die übrigen sind nur trefferbar.
+ */
 export function createBoreholeFeatures() {
-  return boreholes.map((borehole) => {
-    const feature = new Feature({ geometry: new Point(location(borehole)) })
+  const byLocation = new Map<string, Feature[]>()
+  const features = boreholes.map((borehole) => {
+    const coordinate = location(borehole)
+    const feature = new Feature({ geometry: new Point(coordinate) })
     feature.setId(borehole.id)
+    const key = coordinate.join(',')
+    byLocation.set(key, [...(byLocation.get(key) ?? []), feature])
     return feature
   })
+  const leaders: Feature[] = []
+  for (const members of byLocation.values()) {
+    if (members.length < 2) continue
+    members.forEach((feature, index) => feature.setProperties({ members, leader: index === 0, halfHeight: BADGE_HALF_HEIGHT }, true))
+    leaders.push(members[0])
+  }
+  // Die Zahl im Badge braucht Inter Bold auf dem Canvas: nach dem Laden neu zeichnen
+  document.fonts?.load(BADGE_FONT).then(() => leaders.forEach((feature) => feature.changed()))
+  return features
 }
 
 /** Lage einer Bohrung in Web-Mercator */

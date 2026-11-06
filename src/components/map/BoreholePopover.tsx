@@ -1,12 +1,10 @@
 import { useMemo } from 'react'
-import { Button } from '../Button'
 import { getBorehole } from '../../data/boreholes'
 import { useI18n } from '../../i18n'
 import { legendValue, symbolKey, type LegendTopic } from './boreholeLegends'
 import { SymbolIcon } from './SymbolIcon'
 import type { StackedControls } from './MapView'
 import styles from './BoreholePopover.module.css'
-import closeIcon from '../../assets/icons/close.svg'
 
 /** Höchstens so viele Namen im Tooltip, danach «+ N weitere» */
 const TOOLTIP_LIMIT = 8
@@ -32,7 +30,7 @@ type Props = {
   onOpen: (id: string) => void
 }
 
-/** Popover nach Klick auf einen Haufen: Liste der Bohrungen, ein Klick öffnet die Detailseite */
+/** Popover nach Klick auf einen Haufen: Liste der Bohrungen, ein Klick öffnet die Detailseite. Schliesst mit Escape oder Klick auf die Karte. */
 export function BoreholePopover({ ids, topic, controls, onOpen }: Props) {
   const { t } = useI18n()
   const entries = useMemo(
@@ -46,10 +44,6 @@ export function BoreholePopover({ ids, topic, controls, onOpen }: Props) {
 
   return (
     <div className={styles.popover} role="dialog" aria-label={t.boreholes.popoverTitle(entries.length)}>
-      <header className={styles.header}>
-        <span className="body3-bold">{t.boreholes.popoverTitle(entries.length)}</span>
-        <Button icon={closeIcon} aria-label={t.boreholes.closePopover} onClick={controls.close} />
-      </header>
       <ul className={styles.list} onMouseLeave={() => controls.highlight(null)}>
         {entries.map((entry) => (
           <li key={entry.id}>
