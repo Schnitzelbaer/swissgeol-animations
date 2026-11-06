@@ -66,6 +66,19 @@ export function drawSymbol(context: CanvasRenderingContext2D, symbol: SymbolDefi
   } else {
     context.stroke(stroke)
   }
+  // Zusätzliche Formen, z.B. die Sektoren bei «Verfügbare Inhalte»
+  for (const extra of symbol.extras ?? []) {
+    const extraPath = path2d(extra.path)
+    if (extra.fill) {
+      context.fillStyle = extra.fill
+      context.fill(extraPath)
+    }
+    if (extra.stroke) {
+      context.strokeStyle = extra.stroke
+      context.lineWidth = extra.strokeWidth ?? 1
+      context.stroke(extraPath)
+    }
+  }
   context.restore()
 }
 

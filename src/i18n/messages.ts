@@ -228,8 +228,10 @@ const en = {
       access: 'Access',
       boreholeType: 'Borehole type',
       workflow: 'Workflow status',
+      length: 'Borehole length',
+      contents: 'Available content',
     } satisfies Record<LegendTopic, string>,
-    /** Werte der Legenden Bohrzweck, Freigabe, Bohrtyp und Workflow Status (Codes = Figma-Varianten) */
+    /** Werte der Legenden Bohrzweck, Bohrtyp, Freigabe, Workflow Status und Verfügbare Inhalte (Codes = Figma-Varianten; Bohrlochlänge-Klassen ohne Übersetzung) */
     values: {
       'Belastete Standorte': 'Contaminated sites',
       'Naturgefahren': 'Natural hazards',
@@ -255,6 +257,14 @@ const en = {
       'Forschung': 'Research',
       'Anderer': 'Other',
       'Keine Angabe': 'Not specified',
+      'Profil': 'Profile',
+      'Fotos': 'Photos',
+      'Dokumente': 'Documents',
+      'Profil + Fotos': 'Profile + photos',
+      'Profil + Dokumente': 'Profile + documents',
+      'Fotos + Dokumente': 'Photos + documents',
+      'Alle': 'All',
+      'Keine': 'None',
       'Öffentlich': 'Public',
       'Gesperrt': 'Restricted',
       'Bohrung': 'Borehole',
@@ -591,6 +601,8 @@ const de: Messages = {
       access: 'Freigabe',
       boreholeType: 'Bohrtyp',
       workflow: 'Workflow Status',
+      length: 'Bohrlochlänge',
+      contents: 'Verfügbare Inhalte',
     },
     values: {
       'Belastete Standorte': 'Belastete Standorte',

@@ -17,11 +17,17 @@ export const PURPOSES = [
 export const ACCESS = ['Öffentlich', 'Gesperrt'] as const
 export const BOREHOLE_TYPES = ['Bohrung', 'Virtuelle Bohrung', 'Rammsondierung', 'Baggerschlitz', 'Aufschluss', 'Anderer', 'Keine Angabe'] as const
 export const WORKFLOW_STATES = ['In Bearbeitung', 'In Überprüfung', 'In Validierung', 'Publikation', 'Änderung angefordert'] as const
+/** Klassen der Legende «Bohrlochlänge» (Figma 21008:129420) */
+export const LENGTH_CLASSES = ['<1 m', '1-10 m', '10-20 m', '20-100 m', '100-250 m', '250-500 m', '500-1000 m', '>1000 m', 'Keine Angabe'] as const
+/** Werte der Legende «Verfügbare Inhalte» (Figma 21008:129504) */
+export const CONTENTS = ['Profil', 'Fotos', 'Dokumente', 'Profil + Fotos', 'Profil + Dokumente', 'Fotos + Dokumente', 'Alle', 'Keine'] as const
 
 export type Purpose = (typeof PURPOSES)[number]
 export type Access = (typeof ACCESS)[number]
 export type BoreholeType = (typeof BOREHOLE_TYPES)[number]
 export type WorkflowState = (typeof WORKFLOW_STATES)[number]
+export type LengthClass = (typeof LENGTH_CLASSES)[number]
+export type Contents = (typeof CONTENTS)[number]
 
 export type BoreholeIdentifier = {
   type: string
@@ -37,6 +43,10 @@ export type Borehole = {
   access: Access
   boreholeType: BoreholeType
   workflow: WorkflowState
+  /** Bohrlochlänge in m, null = keine Angabe */
+  lengthM: number | null
+  /** Vorhandene Inhalte (Profil, Fotos, Dokumente) */
+  contents: Contents
   /** Figma-Bohrungen: Mittelpunkt des Symbols im Screen «Desktop - 1» (Frame-Pixel) */
   figma?: [number, number]
   /** Erzeugte Bohrungen: Lage in WGS84 [Länge, Breite] */
@@ -48,7 +58,9 @@ export type Borehole = {
   identifiers: BoreholeIdentifier[]
 }
 
-type FigmaBorehole = Omit<Borehole, 'purpose' | 'access' | 'boreholeType' | 'workflow'>
+/** Ohne Länge und Inhalte: die kommen aus addDetails(), damit die übrigen Daten unverändert bleiben */
+type BoreholeBase = Omit<Borehole, 'lengthM' | 'contents'>
+type FigmaBorehole = Omit<BoreholeBase, 'purpose' | 'access' | 'boreholeType' | 'workflow'>
 
 /** Positionen aus Figma: Instanz «BG» liegt bei (-239, -13), die Symbole sind 30×30 */
 const at = (x: number, y: number): [number, number] => [-239 + x + 15, -13 + y + 15]
@@ -195,11 +207,11 @@ function boreholeName(type: TemplateType, place: string, index: number) {
   }
 }
 
-function generateBoreholes(): Borehole[] {
-  const result: Borehole[] = []
+function generateBoreholes(): BoreholeBase[] {
+  const result: BoreholeBase[] = []
   let id = 20001
 
-  const create = (place: Place, index: number, lon: number, lat: number, type: TemplateType): Borehole => {
+  const create = (place: Place, index: number, lon: number, lat: number, type: TemplateType): BoreholeBase => {
     const boreholeId = String(id++)
     const extra: BoreholeIdentifier[] = rand() < 0.4 ? [{ type: 'ID GeODin-Shortname', codes: [{ code: `6${place.name.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')}${year2()}${pick(['E', 'K', 'R', 'P'])}${String(100 + Math.floor(rand() * 900))}` }] }] : []
     return {
@@ -221,7 +233,7 @@ function generateBoreholes(): Borehole[] {
     }
   }
 
-  const placeOf = new Map<Borehole, Place>()
+  const placeOf = new Map<BoreholeBase, Place>()
   for (const place of PLACES) {
     for (let i = 0; i < place.count; i++) {
       let lat = 0
@@ -263,7 +275,7 @@ function year2() {
  * Zwei Bohrungen am exakt gleichen Standort in der Altstadt Sursee, im Startausschnitt (nicht in Figma):
  * zeigen beim Start ein Badge «2».
  */
-const SURSEE: Borehole[] = [
+const SURSEE: BoreholeBase[] = [
   {
     id: '17401', name: 'RB 1 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Rammsondierung', workflow: 'Publikation',
     lonLat: [8.1092, 47.1708], locationPrecision: 1, referenceOffset: 0,
@@ -276,14 +288,58 @@ const SURSEE: Borehole[] = [
   },
 ]
 
+/** Typische Längen in m je Bohrzweck (von, bis; dazwischen logarithmisch verteilt) */
+const LENGTH_BY_PURPOSE: Record<Purpose, [number, number]> = {
+  'Belastete Standorte': [2, 25], 'Naturgefahren': [5, 60], 'Geotechnik': [4, 40], 'Tunnel Exploration': [40, 600],
+  'Hydrogeologie': [8, 120], 'Grundwasser': [8, 80], 'Trinkwasser': [15, 150], 'Mineralwasser': [50, 600], 'Thermalwasser': [200, 1500],
+  'Geothermie Exploration': [600, 4500], 'Geothermie Produktion': [800, 4500], 'Geothermie Injektion': [800, 4000], 'Erdwärmesonde': [80, 380],
+  'CCS Exploration': [800, 2500], 'CCS Produktion': [800, 2500], 'CCS Injektion': [800, 2500], 'Mineralische Rohstoffe': [8, 90],
+  'Kohlenwasserstoff Exploration': [900, 5000], 'Kohlenwasserstoff Produktion': [900, 4000], 'Kohlenwasserstoff Injektion': [900, 3500],
+  'Wissenschaftliche Exploration': [30, 1500], 'Forschung': [10, 900], 'Anderer': [2, 300], 'Keine Angabe': [2, 200],
+}
+
+/** Länge und Inhalte mit eigenem Zufall pro ID: so bleiben Lage, Namen und übrige Werte aller Bohrungen gleich */
+function addDetails(borehole: BoreholeBase): Borehole {
+  let seed = 0
+  for (const char of borehole.id) seed = (seed * 31 + char.charCodeAt(0)) >>> 0
+  const next = random(seed ^ 0x5bd1e995)
+  const shallow = ['Rammsondierung', 'Baggerschlitz', 'Aufschluss'].includes(borehole.boreholeType)
+  const [from, to] = shallow ? (borehole.boreholeType === 'Aufschluss' ? [0.4, 6] : [0.8, 9]) : LENGTH_BY_PURPOSE[borehole.purpose]
+  const length = from * Math.pow(to / from, next())
+  const lengthM = next() < 0.05 ? null : Math.round(length * 10) / 10
+  const profile = next() < 0.7
+  const photos = next() < 0.35
+  const documents = next() < 0.5
+  const contents: Contents =
+    profile && photos && documents ? 'Alle'
+    : profile && photos ? 'Profil + Fotos'
+    : profile && documents ? 'Profil + Dokumente'
+    : photos && documents ? 'Fotos + Dokumente'
+    : profile ? 'Profil' : photos ? 'Fotos' : documents ? 'Dokumente' : 'Keine'
+  return { ...borehole, lengthM, contents }
+}
+
+/** Klasse der Legende «Bohrlochlänge» */
+export function lengthClass(lengthM: number | null): LengthClass {
+  if (lengthM === null) return 'Keine Angabe'
+  if (lengthM < 1) return '<1 m'
+  if (lengthM < 10) return '1-10 m'
+  if (lengthM < 20) return '10-20 m'
+  if (lengthM < 100) return '20-100 m'
+  if (lengthM < 250) return '100-250 m'
+  if (lengthM < 500) return '250-500 m'
+  if (lengthM <= 1000) return '500-1000 m'
+  return '>1000 m'
+}
+
 export const boreholes: Borehole[] = [
-  ...figmaBoreholes.map((borehole, index) => {
+  ...figmaBoreholes.map((borehole, index): BoreholeBase => {
     const [purpose, access, boreholeType, workflow] = FIGMA_VALUES[index]
     return { ...borehole, purpose, access, boreholeType, workflow }
   }),
   ...SURSEE,
   ...generateBoreholes(),
-]
+].map(addDetails)
 
 const byId = new Map(boreholes.map((borehole) => [borehole.id, borehole]))
 
