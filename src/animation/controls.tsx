@@ -67,6 +67,15 @@ export function ColorField({ label, value, onChange }: { label: string; value: s
   )
 }
 
+export function TextField({ label, value, placeholder, onChange }: { label: string; value: string; placeholder?: string; onChange: (value: string) => void }) {
+  return (
+    <label className={styles.field}>
+      <span className={styles.label}>{label}</span>
+      <input className={styles.text} type="text" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  )
+}
+
 export function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
   return (
     <label className={styles.field}>

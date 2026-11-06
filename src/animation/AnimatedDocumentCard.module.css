@@ -249,24 +249,21 @@
     linear-gradient(#000 0 0);
 }
 
-/* Fähnchen rechts oben: wächst aus der Oberkante der Kachel */
-.flagClip {
-  position: absolute;
-  right: 16px;
-  bottom: 100%;
-  z-index: 0;
-  height: 24px;
-  overflow: hidden;
-  pointer-events: none;
-}
-
+/* Fähnchen rechts oben; Lage, Grösse und Erscheinen kommen aus den Einstellungen */
 .flag {
+  position: absolute;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
-  padding: 0 9px;
-  border-radius: 6px 6px 0 0;
+  white-space: nowrap;
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.flagLabel {
+  font: 600 12px/1 Inter, sans-serif;
+  letter-spacing: 0.02em;
 }
 
 .sparkles {

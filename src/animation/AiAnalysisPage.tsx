@@ -1,12 +1,40 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { initialFiles } from '../data/files'
 import { AnimatedDocumentCard, useDocumentContent } from './AnimatedDocumentCard'
-import { ColorField, Group, NumberField, Segmented, StepFields, SubTitle, Toggle, EasingField } from './controls'
+import { ColorField, Group, NumberField, Segmented, StepFields, SubTitle, TextField, Toggle, EasingField } from './controls'
 import { Timeline, type Lane } from './Timeline'
-import { DEFAULT_CONFIG, decodeConfig, encodeConfig, tocEnd, totalDuration, type Aspect, type Config, type EffectVariant } from './timeline'
+import { DEFAULT_CONFIG, decodeConfig, encodeConfig, parseConfigJson, tocEnd, totalDuration, type Aspect, type Config, type EffectVariant, type FlagAppear, type FlagPlacement } from './timeline'
 import styles from './AiAnalysisPage.module.css'
 
 const FILE = initialFiles.find((file) => file.id === '4841')!
+
+/* Einstellungen bleiben im Browser gespeichert und sind nach dem Neuladen wieder da; ein Link mit ?cfg= hat Vorrang */
+const STORAGE_KEY = 'swissgeol-animation-ai-analysis'
+
+type Stored = { config?: unknown; loop?: boolean; speed?: number }
+
+function readStored(): Stored {
+  try {
+    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}') as Stored
+  } catch {
+    return {}
+  }
+}
+
+function writeStored(value: Stored) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+  } catch {
+    // Speicher nicht verfügbar (z.B. privates Fenster): Einstellungen bleiben nur im Link
+  }
+}
+
+function initialConfig(): Config {
+  const fromLink = new URLSearchParams(window.location.search).get('cfg')
+  if (fromLink) return decodeConfig(fromLink)
+  const stored = readStored().config
+  return (stored ? parseConfigJson(JSON.stringify(stored)) : null) ?? DEFAULT_CONFIG
+}
 
 const ASPECTS: Record<Exclude<Aspect, 'frei'>, number> = { '16:9': 16 / 9, '1:1': 1, '4:5': 4 / 5, '9:16': 9 / 16 }
 const REFERENCE_WIDTH: Record<Exclude<Aspect, 'frei'>, number> = { '16:9': 1440, '1:1': 1080, '4:5': 1080, '9:16': 1080 }
@@ -16,13 +44,13 @@ const REFERENCE_WIDTH: Record<Exclude<Aspect, 'frei'>, number> = { '16:9': 1440,
  * Unabhängig vom übrigen Prototyp; alle Einstellungen stehen im Link (?cfg=…).
  */
 export function AiAnalysisPage() {
-  const [config, setConfig] = useState<Config>(() => decodeConfig(new URLSearchParams(window.location.search).get('cfg')))
+  const [config, setConfig] = useState<Config>(initialConfig)
   // ?t=<ms> zeigt ein Standbild zu diesem Zeitpunkt
   const [initialTime] = useState(() => new URLSearchParams(window.location.search).get('t'))
   const [time, setTime] = useState(() => Number(initialTime ?? 0) || 0)
   const [playing, setPlaying] = useState(initialTime === null)
-  const [loop, setLoop] = useState(true)
-  const [speed, setSpeed] = useState(1)
+  const [loop, setLoop] = useState(() => readStored().loop ?? true)
+  const [speed, setSpeed] = useState(() => readStored().speed ?? 1)
   const [uiHidden, setUiHidden] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const { rows, chips } = useDocumentContent(FILE)
@@ -74,9 +102,10 @@ export function AiAnalysisPage() {
       else params.set('cfg', encodeConfig(config))
       const query = params.toString()
       window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+      writeStored({ config, loop, speed })
     }, 300)
     return () => window.clearTimeout(id)
-  }, [config])
+  }, [config, loop, speed])
 
   const restart = useCallback(() => {
     setTime(0)
@@ -194,6 +223,29 @@ export function AiAnalysisPage() {
               </Group>
 
               <Group title="Fähnchen mit AI-Sternen">
+                <Segmented<FlagAppear>
+                  label="Erscheinen"
+                  value={flag.appear}
+                  options={[['fade', 'Einblenden'], ['scale', 'Zoom'], ['slide', 'Schieben']]}
+                  onChange={(v) => update((d) => void (d.flag.appear = v))}
+                />
+                <Segmented<FlagPlacement>
+                  label="Lage"
+                  value={flag.placement}
+                  options={[['tab', 'Reiter'], ['corner', 'Ecke'], ['inside', 'Innen']]}
+                  onChange={(v) => update((d) => void (d.flag.placement = v))}
+                />
+                <NumberField label="Von rechts" value={flag.offsetX} min={-40} max={200} unit="px" onChange={(v) => update((d) => void (d.flag.offsetX = v))} />
+                <NumberField label="Versatz Y" value={flag.offsetY} min={-40} max={40} unit="px" onChange={(v) => update((d) => void (d.flag.offsetY = v))} />
+                <NumberField label="Höhe" value={flag.height} min={14} max={48} unit="px" onChange={(v) => update((d) => void (d.flag.height = v))} />
+                <NumberField label="Innenabstand" value={flag.paddingX} min={0} max={24} unit="px" onChange={(v) => update((d) => void (d.flag.paddingX = v))} />
+                <NumberField label="Radius" value={flag.radius} min={0} max={24} unit="px" onChange={(v) => update((d) => void (d.flag.radius = v))} />
+                <Toggle label="Verlauf" value={flag.gradient} onChange={(v) => update((d) => void (d.flag.gradient = v))} />
+                {!flag.gradient && <ColorField label="Farbe" value={flag.color} onChange={(v) => update((d) => void (d.flag.color = v))} />}
+                <ColorField label="Sterne" value={flag.iconColor} onChange={(v) => update((d) => void (d.flag.iconColor = v))} />
+                <NumberField label="Sterngrösse" value={flag.iconSize} min={8} max={32} unit="px" onChange={(v) => update((d) => void (d.flag.iconSize = v))} />
+                <TextField label="Text" value={flag.label} placeholder="z.B. AI-Analyse" onChange={(v) => update((d) => void (d.flag.label = v))} />
+                <NumberField label="Schatten" value={flag.shadow} min={0} max={1} step={0.05} onChange={(v) => update((d) => void (d.flag.shadow = v))} />
                 <NumberField label="Funkeln" value={flag.twinkle} min={0} max={4000} step={50} unit="ms" onChange={(v) => update((d) => void (d.flag.twinkle = v))} />
                 <StepFields title="Einblenden" value={flag.in} onChange={(v) => update((d) => void (d.flag.in = v))} />
                 <StepFields title="Ausblenden" value={flag.out} onChange={(v) => update((d) => void (d.flag.out = v))} />

@@ -82,6 +82,8 @@ export function eased(step: Step, time: number) {
 
 export type EffectVariant = 'veil' | 'shimmer' | 'border' | 'aura'
 export type Aspect = 'frei' | '16:9' | '1:1' | '4:5' | '9:16'
+export type FlagAppear = 'fade' | 'scale' | 'slide'
+export type FlagPlacement = 'tab' | 'corner' | 'inside'
 
 export type Config = {
   effect: {
@@ -107,7 +109,28 @@ export type Config = {
     haze: number
     pulseWidth: number
   }
-  flag: { in: Step; out: Step; twinkle: number }
+  flag: {
+    in: Step
+    out: Step
+    twinkle: number
+    /** Erscheinen: nur einblenden, mit leichtem Zoom oder aus der Kante schieben */
+    appear: FlagAppear
+    /** Lage: als Reiter auf der Oberkante, als Badge auf der Ecke oder innen in der Kachel */
+    placement: FlagPlacement
+    offsetX: number
+    offsetY: number
+    height: number
+    paddingX: number
+    radius: number
+    /** Füllung: Verlauf aus den Effektfarben oder eine Farbe */
+    gradient: boolean
+    color: string
+    iconColor: string
+    iconSize: number
+    /** Text neben den Sternen (leer = nur Sterne) */
+    label: string
+    shadow: number
+  }
   /** Sprache in der Meta-Zeile wird nach der Analyse hineingeschrieben */
   language: Step
   chips: { in: Step; stagger: number; out: Step }
@@ -153,7 +176,24 @@ export const DEFAULT_CONFIG: Config = {
     haze: 0.12,
     pulseWidth: 650,
   },
-  flag: { in: step(700, 500, EASING_PRESETS['back-out']), out: step(4700, 350, EASING_PRESETS['ease-in']), twinkle: 1400 },
+  flag: {
+    in: step(700, 350, EASING_PRESETS['ease-out']),
+    out: step(4700, 300, EASING_PRESETS['ease-in']),
+    twinkle: 1400,
+    appear: 'fade',
+    placement: 'tab',
+    offsetX: 16,
+    offsetY: 0,
+    height: 24,
+    paddingX: 9,
+    radius: 6,
+    gradient: true,
+    color: '#14afb8',
+    iconColor: '#ffffff',
+    iconSize: 16,
+    label: '',
+    shadow: 0,
+  },
   language: step(4900, 300, EASING_PRESETS.linear),
   chips: { in: step(5000, 350, EASING_PRESETS['back-out']), stagger: 90, out: step(6300, 250, EASING_PRESETS['ease-in']) },
   chevron: { in: step(5100, 300, EASING_PRESETS['ease-out']), rotate: step(6300, 400, EASING_PRESETS.swissgeol) },

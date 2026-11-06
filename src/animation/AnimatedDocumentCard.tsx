@@ -44,13 +44,13 @@ const SMALL_STARS: [number, number][] = [
   [13.67, 6],
 ]
 
-function Sparkles({ phase, twinkle }: { phase: number; twinkle: boolean }) {
+function Sparkles({ phase, twinkle, color, size }: { phase: number; twinkle: boolean; color: string; size: number }) {
   // Jeder Stern pulsiert mit eigener Phase
   const pulse = (offset: number) => (twinkle ? 0.5 + 0.5 * Math.sin((phase + offset) * Math.PI * 2) : 1)
   const big = pulse(0)
   return (
-    <svg viewBox="2.5 2.5 15 15" width="16" height="16" aria-hidden className={styles.sparkles}>
-      <path d={BIG_STAR} fill="#fff" transform={`translate(10 10) scale(${0.85 + 0.15 * big}) translate(-10 -10)`} />
+    <svg viewBox="2.5 2.5 15 15" width={size} height={size} aria-hidden className={styles.sparkles}>
+      <path d={BIG_STAR} fill={color} transform={`translate(10 10) scale(${0.85 + 0.15 * big}) translate(-10 -10)`} />
       {SMALL_STARS.map(([x, y], index) => {
         const p = pulse(0.33 * (index + 1))
         const size = 0.9 + 0.5 * p
@@ -58,7 +58,7 @@ function Sparkles({ phase, twinkle }: { phase: number; twinkle: boolean }) {
           <path
             key={index}
             d={`M${x} ${y - size}V${y + size}M${x - size} ${y}H${x + size}`}
-            stroke="#fff"
+            stroke={color}
             strokeWidth="1.4"
             strokeLinecap="round"
             opacity={0.45 + 0.55 * p}
@@ -153,18 +153,29 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
         )
       })}
 
-      {/* Fähnchen rechts oben, wächst aus der Oberkante */}
+      {/* Fähnchen rechts oben: blendet standardmässig einfach ein */}
       {flagShown > 0.001 && (
-        <div className={styles.flagClip}>
-          <div
-            className={styles.flag}
-            style={{
-              transform: `translateY(${(1 - flagShown) * 100}%)`,
-              background: `linear-gradient(120deg, ${c1}, ${c2} 55%, ${c3})`,
-            }}
-          >
-            <Sparkles phase={twinklePhase} twinkle={flag.twinkle > 0} />
-          </div>
+        <div
+          className={styles.flag}
+          aria-hidden
+          style={{
+            right: flag.offsetX,
+            top: (flag.placement === 'tab' ? -flag.height : flag.placement === 'corner' ? -flag.height / 2 : 12) + flag.offsetY,
+            height: flag.height,
+            padding: `0 ${flag.paddingX}px`,
+            gap: Math.round(flag.paddingX * 0.6),
+            borderRadius: flag.placement === 'tab' ? `${flag.radius}px ${flag.radius}px 0 0` : flag.radius,
+            background: flag.gradient ? `linear-gradient(120deg, ${c1}, ${c2} 55%, ${c3})` : flag.color,
+            color: flag.iconColor,
+            boxShadow: flag.shadow > 0 ? `0 ${2 * flag.shadow}px ${8 * flag.shadow}px rgba(0, 0, 0, ${0.25 * flag.shadow})` : undefined,
+            opacity: flag.appear === 'slide' ? 1 : clamp01(flagShown),
+            transform: flag.appear === 'scale' ? `scale(${0.85 + 0.15 * flagShown})` : flag.appear === 'slide' ? `translateY(${(1 - flagShown) * 100}%)` : undefined,
+            // Schieben: der Teil unterhalb der Kante bleibt verborgen
+            clipPath: flag.appear === 'slide' ? `inset(0 0 ${clamp01(1 - flagShown) * 100}% 0)` : undefined,
+          }}
+        >
+          <Sparkles phase={twinklePhase} twinkle={flag.twinkle > 0} color={flag.iconColor} size={flag.iconSize} />
+          {flag.label && <span className={styles.flagLabel}>{flag.label}</span>}
         </div>
       )}
 

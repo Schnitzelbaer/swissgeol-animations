@@ -206,3 +206,14 @@
 .bezierValues .number {
   width: 52px;
 }
+
+.text {
+  grid-column: 2 / 4;
+  min-width: 0;
+  padding: 4px 6px;
+  font: 400 12px/1.2 Inter, sans-serif;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--color-white);
+  color: var(--text-high-emphasis);
+}
