@@ -26,14 +26,9 @@ export function useDocumentContent(file: AssetFile) {
   return { chips, rows, languages: fileLanguages(file) }
 }
 
-/** Text bis zur getippten Länge, optional mit Schreibmarke */
-function Typed({ text, chars, cursor }: { text: string; chars: number; cursor: boolean }) {
-  return (
-    <>
-      {text.slice(0, chars)}
-      {cursor && <span className={styles.caret} aria-hidden />}
-    </>
-  )
+/** Text bis zur getippten Länge (ohne Schreibmarke) */
+function Typed({ text, chars }: { text: string; chars: number }) {
+  return <>{text.slice(0, chars)}</>
 }
 
 /* AI-Sterne aus dem Figma-Icon «analyse» (ohne Rahmenecken) */
@@ -237,10 +232,6 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
                       const grow = rowCurve(clamp01((time - start) / Math.max(1, toc.rowGrow)))
                       const typingTime = typingDuration(config, row.text)
                       const chars = Math.min(row.text.length, Math.floor(((time - start) / 1000) * toc.cps))
-                      const typing = chars < row.text.length
-                      // Schreibmarke an der zuletzt begonnenen Zeile, bis die nächste beginnt
-                      const nextStart = index + 1 < rows.length ? rowStart(config, index + 1) : Infinity
-                      const showCursor = toc.cursor && (typing || time < nextStart) && time < start + typingTime + 600
                       const metaP = clamp01((time - start - typingTime) / Math.max(1, toc.metaFade))
                       const gap = row.kind === 'group' && !row.first ? 12 * grow : 0
                       return (
@@ -248,12 +239,12 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
                           <div className={styles.revealClip}>
                             {row.kind === 'group' ? (
                               <span className={`${styles.groupTitle} body3-medium`}>
-                                <Typed text={row.text} chars={chars} cursor={showCursor} />
+                                <Typed text={row.text} chars={chars} />
                               </span>
                             ) : (
                               <span className={styles.entry}>
                                 <span className={`${styles.entryTitle} body3`}>
-                                  <Typed text={row.text} chars={chars} cursor={showCursor} />
+                                  <Typed text={row.text} chars={chars} />
                                 </span>
                                 <span className={styles.leader} style={{ transform: `scaleX(${metaP})` }} />
                                 <span className={styles.entryMeta} style={{ opacity: metaP }}>

@@ -270,7 +270,6 @@ export function AiAnalysisPage() {
                 <EasingField label="Kurve" value={toc.rowEasing} onChange={(v) => update((d) => void (d.toc.rowEasing = v))} />
                 <NumberField label="Tippen" value={toc.cps} min={5} max={300} step={5} unit="Z/s" onChange={(v) => update((d) => void (d.toc.cps = v))} />
                 <NumberField label="Seiten ein" value={toc.metaFade} min={0} max={1500} step={10} unit="ms" onChange={(v) => update((d) => void (d.toc.metaFade = v))} />
-                <Toggle label="Schreibmarke" value={toc.cursor} onChange={(v) => update((d) => void (d.toc.cursor = v))} />
               </Group>
 
               <Group title="Bühne" defaultOpen={false}>

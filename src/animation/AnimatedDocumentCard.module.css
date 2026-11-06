@@ -181,24 +181,6 @@
   white-space: nowrap;
 }
 
-/* Schreibmarke wie bei AI-Antworten */
-.caret {
-  display: inline-block;
-  width: 2px;
-  height: 1.05em;
-  margin-left: 1px;
-  vertical-align: -0.15em;
-  background: var(--fx-2);
-  border-radius: 1px;
-  animation: caret 900ms steps(1) infinite;
-}
-
-@keyframes caret {
-  50% {
-    opacity: 0;
-  }
-}
-
 /* Stapel hinter der Kachel */
 .stackLayer {
   position: absolute;
