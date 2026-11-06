@@ -198,6 +198,18 @@
   }
 }
 
+/* Stapel hinter der Kachel */
+.stackLayer {
+  position: absolute;
+  top: 0;
+  z-index: 0;
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+
 /* Effekte */
 .overlay {
   position: absolute;

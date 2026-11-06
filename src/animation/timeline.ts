@@ -125,6 +125,8 @@ export type Config = {
     /** Leitlinie, Sprache und Seiten erscheinen nach dem Titel in dieser Zeit */
     metaFade: number
   }
+  /** Stapel hinter der Kachel: deutet an, dass es viele Dokumente gibt */
+  stack: { count: number; offset: number; inset: number; fade: number }
   /** Pause am Ende, bevor die Schleife neu beginnt */
   hold: number
   stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; zoom: number; width: number; top: number }
@@ -156,6 +158,7 @@ export const DEFAULT_CONFIG: Config = {
   chips: { in: step(5000, 350, EASING_PRESETS['back-out']), stagger: 90, out: step(6300, 250, EASING_PRESETS['ease-in']) },
   chevron: { in: step(5100, 300, EASING_PRESETS['ease-out']), rotate: step(6300, 400, EASING_PRESETS.swissgeol) },
   toc: { start: 6350, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, stagger: 260, cps: 70, cursor: true, metaFade: 220 },
+  stack: { count: 2, offset: 8, inset: 14, fade: 0.25 },
   hold: 2000,
   stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', zoom: 1.4, width: 496, top: 22 },
 }

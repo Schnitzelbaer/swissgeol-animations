@@ -237,6 +237,11 @@ export function AiAnalysisPage() {
                 <NumberField label="Zoom" value={stage.zoom} min={0.5} max={3} step={0.05} unit="×" onChange={(v) => update((d) => void (d.stage.zoom = v))} />
                 <NumberField label="Breite" value={stage.width} min={320} max={720} step={2} unit="px" onChange={(v) => update((d) => void (d.stage.width = v))} />
                 <NumberField label="Oben" value={stage.top} min={0} max={80} unit="%" onChange={(v) => update((d) => void (d.stage.top = v))} />
+                <SubTitle>Stapel</SubTitle>
+                <NumberField label="Kacheln" value={config.stack.count} min={0} max={5} onChange={(v) => update((d) => void (d.stack.count = Math.round(v)))} />
+                <NumberField label="Versatz" value={config.stack.offset} min={0} max={24} unit="px" onChange={(v) => update((d) => void (d.stack.offset = v))} />
+                <NumberField label="Einzug" value={config.stack.inset} min={0} max={48} unit="px" onChange={(v) => update((d) => void (d.stack.inset = v))} />
+                <NumberField label="Verblassen" value={config.stack.fade} min={0} max={0.5} step={0.05} onChange={(v) => update((d) => void (d.stack.fade = v))} />
                 <SubTitle>Ablauf</SubTitle>
                 <NumberField label="Pause am Ende" value={config.hold} min={0} max={8000} step={100} unit="ms" onChange={(v) => update((d) => void (d.hold = v))} />
               </Group>

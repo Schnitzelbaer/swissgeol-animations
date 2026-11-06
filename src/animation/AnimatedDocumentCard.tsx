@@ -134,6 +134,25 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
         />
       )}
 
+      {/* Stapel: weitere Kacheln schauen unten hervor, je weiter hinten desto schmaler und blasser */}
+      {Array.from({ length: config.stack.count }, (_, index) => {
+        const level = config.stack.count - index
+        return (
+          <div
+            key={level}
+            className={styles.stackLayer}
+            style={{
+              left: config.stack.inset * level,
+              right: config.stack.inset * level,
+              bottom: -config.stack.offset * level,
+              // Deckend statt transparent, damit keine Kanten der hinteren Kacheln durchscheinen
+              background: `color-mix(in srgb, var(--color-white) ${Math.max(0, 100 - config.stack.fade * level * 100)}%, #dfe3e8)`,
+              borderColor: `color-mix(in srgb, var(--border-high-emphasis) ${Math.max(0, 100 - config.stack.fade * level * 100)}%, #e8ebee)`,
+            }}
+          />
+        )
+      })}
+
       {/* Fähnchen rechts oben, wächst aus der Oberkante */}
       {flagShown > 0.001 && (
         <div className={styles.flagClip}>
