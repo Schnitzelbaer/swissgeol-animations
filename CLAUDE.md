@@ -28,6 +28,11 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - `?doc=<Datei-ID>&page=<n>` öffnet den PDF-Viewer (auf jeder Seite), z.B. `/asset/4841?doc=8768&page=7`.
 - `/asset/4841/edit/files` Bearbeiten-Seite; `?tab=legal` rechtliche Einwilligungen, `?classify=<Datei-ID>` Klassifizierungs-Editor.
 
+## Animationen (eigene Branches)
+
+- Branch `animation-ai-analysis`: isolierte Ansicht `/animation/ai-analysis` (Vercel-Preview des Branches). Dokument-Kachel 4841 ohne Chips und Inhaltsverzeichnis; AI-Analyse mit Effekt (Schimmer, Rand oder Aura) und Fähnchen mit AI-Sternen, danach werden Chips und Inhaltsverzeichnis hineingeschrieben und die Kachel wächst mit.
+- Alles wird aus einer Zeit t berechnet (`src/animation/timeline.ts`, keine CSS-Transitions), daher scrubbar. Control-Panel (`controls.tsx`, Werkzeug, deutsch beschriftet, nicht in `messages.ts`) und Timeline mit ziehbaren Balken (`Timeline.tsx`). Einstellungen im Link `?cfg=` (base64url-JSON), `?t=<ms>` zeigt ein Standbild. Tasten: Leertaste, R, H (Panels aus für Aufnahmen), Pfeile.
+
 ## Aufbau
 
 - `src/styles/global.css`: Design-Tokens (Farben, Radien, Schatten) und Typografie-Klassen (`body3-medium` usw.) aus den Figma-Variablen. Schrift: Inter via `@fontsource/inter`.

@@ -1,0 +1,263 @@
+/* Kachel wie der Abschnitt «Dokumente» der Asset-Vorschau mit einem Datei-Eintrag (DocumentCard) */
+.wrap {
+  position: relative;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-8);
+  overflow: hidden;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 27px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-4);
+  background: #fae1e2;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-high-emphasis);
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.meta {
+  margin: 0;
+  padding-left: 48px;
+  color: var(--text-medium-emphasis);
+  white-space: nowrap;
+}
+
+.dot {
+  margin: 0 5px;
+}
+
+/* Inhaltszeile wächst von 0 auf; der Abstand von 12px zur Kopfzeile wächst mit */
+.reveal {
+  display: grid;
+}
+
+.revealClip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.contentBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.chips,
+.toc {
+  grid-area: 1 / 1;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  transform-origin: left center;
+}
+
+.toc {
+  display: flex;
+  flex-direction: column;
+  padding: 3px 8px 0 0;
+}
+
+.tocRow {
+  display: grid;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  color: var(--text-high-emphasis);
+  white-space: nowrap;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 30px;
+  padding-left: 36px;
+}
+
+.entryTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-primary);
+}
+
+.leader {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 1px;
+  background: var(--border-default);
+  transform-origin: left center;
+}
+
+.entryMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pages {
+  color: var(--text-disabled);
+  white-space: nowrap;
+}
+
+/* Schreibmarke wie bei AI-Antworten */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--fx-2);
+  border-radius: 1px;
+  animation: caret 900ms steps(1) infinite;
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Effekte */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.aura {
+  position: absolute;
+  z-index: 0;
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  border-radius: var(--radius-8);
+  pointer-events: none;
+}
+
+/* Umlaufender Farbverlauf als Rand: nur der Ring bleibt sichtbar */
+.ring {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: var(--radius-8);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+/* Fähnchen rechts oben: wächst aus der Oberkante der Kachel */
+.flagClip {
+  position: absolute;
+  right: 16px;
+  bottom: 100%;
+  z-index: 0;
+  height: 24px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 6px 6px 0 0;
+}
+
+.sparkles {
+  display: block;
+  overflow: visible;
+}

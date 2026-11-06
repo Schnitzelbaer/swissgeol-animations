@@ -5,6 +5,7 @@ import { BoreholesMapPage } from './pages/BoreholesMapPage'
 import { BoreholePage } from './pages/BoreholePage'
 import { DocumentViewerHost } from './components/viewer/DocumentViewerHost'
 import { DEFAULT_ASSET_ID } from './data/assets'
+import { AiAnalysisPage } from './animation/AiAnalysisPage'
 
 export default function App() {
   return (
@@ -21,6 +22,9 @@ export default function App() {
         <Route path="/boreholes" element={<BoreholesMapPage />} />
         <Route path="/boreholes/:boreholeId" element={<Navigate to="location" replace />} />
         <Route path="/boreholes/:boreholeId/:section" element={<BoreholePage />} />
+        {/* Isolierte Animation, unabhängig vom übrigen Prototyp */}
+        <Route path="/animation/ai-analysis" element={<AiAnalysisPage />} />
+        <Route path="/animation" element={<Navigate to="/animation/ai-analysis" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <DocumentViewerHost />

@@ -1,0 +1,237 @@
+/*
+ * Zeitachse der Animation «AI-Analyse eines Dokuments». Alles, was sichtbar ist, wird aus einer Zeit t (ms)
+ * berechnet, ohne CSS-Transitions: So lässt sich die Animation scrubben und jedes Bild ist reproduzierbar.
+ */
+
+export type Bezier = [number, number, number, number]
+
+/** Kurven-Vorlagen; «swissgeol» ist --ease-out aus global.css */
+export const EASING_PRESETS: Record<string, Bezier> = {
+  linear: [0, 0, 1, 1],
+  ease: [0.25, 0.1, 0.25, 1],
+  'ease-in': [0.42, 0, 1, 1],
+  'ease-out': [0, 0, 0.58, 1],
+  'ease-in-out': [0.42, 0, 0.58, 1],
+  swissgeol: [0.22, 1, 0.36, 1],
+  'expo-out': [0.16, 1, 0.3, 1],
+  'back-out': [0.34, 1.56, 0.64, 1],
+}
+
+export function presetName(bezier: Bezier) {
+  return Object.entries(EASING_PRESETS).find(([, value]) => value.every((v, i) => Math.abs(v - bezier[i]) < 1e-6))?.[0] ?? 'custom'
+}
+
+const curves = new Map<string, (x: number) => number>()
+
+/** cubic-bezier wie in CSS: x ist die Zeit (0–1), Rückgabe der Fortschritt */
+export function cubicBezier(bezier: Bezier): (x: number) => number {
+  const key = bezier.join(',')
+  const cached = curves.get(key)
+  if (cached) return cached
+  const [x1, y1, x2, y2] = bezier
+  const cx = 3 * x1
+  const bx = 3 * (x2 - x1) - cx
+  const ax = 1 - cx - bx
+  const cy = 3 * y1
+  const by = 3 * (y2 - y1) - cy
+  const ay = 1 - cy - by
+  const sampleX = (t: number) => ((ax * t + bx) * t + cx) * t
+  const sampleY = (t: number) => ((ay * t + by) * t + cy) * t
+  const slopeX = (t: number) => (3 * ax * t + 2 * bx) * t + cx
+  const solve = (x: number) => {
+    let t = x
+    for (let i = 0; i < 8; i++) {
+      const error = sampleX(t) - x
+      if (Math.abs(error) < 1e-6) return t
+      const slope = slopeX(t)
+      if (Math.abs(slope) < 1e-6) break
+      t -= error / slope
+    }
+    // Fallback: Bisektion
+    let lo = 0
+    let hi = 1
+    t = x
+    for (let i = 0; i < 30; i++) {
+      const value = sampleX(t)
+      if (Math.abs(value - x) < 1e-6) break
+      if (value < x) lo = t
+      else hi = t
+      t = (lo + hi) / 2
+    }
+    return t
+  }
+  const fn = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : sampleY(solve(x)))
+  curves.set(key, fn)
+  return fn
+}
+
+export type Step = { start: number; duration: number; easing: Bezier }
+
+export const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
+
+/** Linearer Fortschritt eines Schritts (0–1) */
+export function linear(step: Pick<Step, 'start' | 'duration'>, time: number) {
+  if (step.duration <= 0) return time >= step.start ? 1 : 0
+  return clamp01((time - step.start) / step.duration)
+}
+
+/** Fortschritt mit Kurve (kann bei «back-out» kurz über 1 gehen) */
+export function eased(step: Step, time: number) {
+  return cubicBezier(step.easing)(linear(step, time))
+}
+
+export type EffectVariant = 'shimmer' | 'border' | 'aura'
+export type Aspect = 'frei' | '16:9' | '1:1' | '4:5' | '9:16'
+
+export type Config = {
+  effect: {
+    variant: EffectVariant
+    in: Step
+    out: Step
+    /** Dauer eines Durchlaufs (Schimmer, Umlauf des Rands, Atemzug) */
+    period: number
+    intensity: number
+    /** Inhalt während der Analyse abschwächen (0–1) */
+    dim: number
+    colors: [string, string, string]
+    /** Schimmer: Winkel und Breite des Lichtstreifens */
+    angle: number
+    band: number
+    /** Rand: Breite und Glow */
+    borderWidth: number
+    glow: number
+    /** Aura: Ausdehnung */
+    spread: number
+  }
+  flag: { in: Step; out: Step; twinkle: number }
+  /** Sprache in der Meta-Zeile wird nach der Analyse hineingeschrieben */
+  language: Step
+  chips: { in: Step; stagger: number; out: Step }
+  chevron: { in: Step; rotate: Step }
+  toc: {
+    start: number
+    /** Jede Zeile wächst in dieser Zeit auf ihre Höhe */
+    rowGrow: number
+    rowEasing: Bezier
+    /** Abstand zwischen dem Start zweier Zeilen */
+    stagger: number
+    /** Tippgeschwindigkeit in Zeichen pro Sekunde */
+    cps: number
+    cursor: boolean
+    /** Leitlinie, Sprache und Seiten erscheinen nach dem Titel in dieser Zeit */
+    metaFade: number
+  }
+  /** Pause am Ende, bevor die Schleife neu beginnt */
+  hold: number
+  stage: { background: string; aspect: Aspect; zoom: number; width: number; top: number }
+}
+
+const step = (start: number, duration: number, easing: Bezier): Step => ({ start, duration, easing })
+
+export const DEFAULT_CONFIG: Config = {
+  effect: {
+    variant: 'shimmer',
+    in: step(600, 600, EASING_PRESETS['ease-out']),
+    out: step(4600, 600, EASING_PRESETS['ease-in-out']),
+    period: 1600,
+    intensity: 0.7,
+    dim: 0.15,
+    colors: ['#14afb8', '#6366f1', '#a855f7'],
+    angle: 110,
+    band: 35,
+    borderWidth: 2,
+    glow: 14,
+    spread: 28,
+  },
+  flag: { in: step(700, 500, EASING_PRESETS['back-out']), out: step(4700, 350, EASING_PRESETS['ease-in']), twinkle: 1400 },
+  language: step(4900, 300, EASING_PRESETS.linear),
+  chips: { in: step(5000, 350, EASING_PRESETS['back-out']), stagger: 90, out: step(6300, 250, EASING_PRESETS['ease-in']) },
+  chevron: { in: step(5100, 300, EASING_PRESETS['ease-out']), rotate: step(6300, 400, EASING_PRESETS.swissgeol) },
+  toc: { start: 6350, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, stagger: 260, cps: 70, cursor: true, metaFade: 220 },
+  hold: 2000,
+  stage: { background: '#eef0f3', aspect: '16:9', zoom: 1.4, width: 496, top: 22 },
+}
+
+/** Zeilen des Inhaltsverzeichnisses in Lesereihenfolge */
+export type TocRow = { kind: 'group'; text: string; first: boolean } | { kind: 'entry'; text: string; language?: string; pages: string }
+
+export function rowStart(config: Config, index: number) {
+  return config.toc.start + index * config.toc.stagger
+}
+
+export function typingDuration(config: Config, text: string) {
+  return (text.length / Math.max(1, config.toc.cps)) * 1000
+}
+
+/** Ende einer Zeile: gewachsen, getippt und Metadaten eingeblendet */
+export function rowEnd(config: Config, rows: TocRow[], index: number) {
+  const row = rows[index]
+  const typed = typingDuration(config, row.text) + (row.kind === 'entry' ? config.toc.metaFade : 0)
+  return rowStart(config, index) + Math.max(config.toc.rowGrow, typed)
+}
+
+export function tocEnd(config: Config, rows: TocRow[]) {
+  return rows.reduce((end, _, index) => Math.max(end, rowEnd(config, rows, index)), config.toc.start)
+}
+
+const end = (s: Step) => s.start + s.duration
+
+/** Gesamtdauer inklusive Pause am Ende */
+export function totalDuration(config: Config, rows: TocRow[], chipCount: number) {
+  const ends = [
+    end(config.effect.in), end(config.effect.out), end(config.flag.in), end(config.flag.out), end(config.language),
+    end(config.chips.in) + Math.max(0, chipCount - 1) * config.chips.stagger, end(config.chips.out),
+    end(config.chevron.in), end(config.chevron.rotate), tocEnd(config, rows),
+  ]
+  return Math.max(...ends) + config.hold
+}
+
+/** Fehlende Werte (z.B. aus einem älteren Link) mit den Standardwerten auffüllen */
+function merge<T>(base: T, value: unknown): T {
+  if (Array.isArray(base)) return (Array.isArray(value) && value.length === base.length ? value : base) as T
+  if (base && typeof base === 'object') {
+    const result: Record<string, unknown> = { ...(base as Record<string, unknown>) }
+    if (value && typeof value === 'object') {
+      for (const key of Object.keys(result)) result[key] = merge(result[key], (value as Record<string, unknown>)[key])
+    }
+    return result as T
+  }
+  return (typeof value === typeof base ? value : base) as T
+}
+
+/** Einstellungen im Link (?cfg=…, base64url-codiertes JSON) */
+export function encodeConfig(config: Config) {
+  const bytes = new TextEncoder().encode(JSON.stringify(config))
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+export function decodeConfig(value: string | null): Config {
+  if (!value) return DEFAULT_CONFIG
+  try {
+    const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'))
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+    return merge(DEFAULT_CONFIG, JSON.parse(new TextDecoder().decode(bytes)))
+  } catch {
+    return DEFAULT_CONFIG
+  }
+}
+
+export function parseConfigJson(text: string): Config | null {
+  try {
+    return merge(DEFAULT_CONFIG, JSON.parse(text))
+  } catch {
+    return null
+  }
+}
+
+/** Hex-Farbe mit Deckkraft */
+export function alpha(hex: string, opacity: number) {
+  const value = hex.replace('#', '')
+  const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value
+  const r = parseInt(full.slice(0, 2), 16)
+  const g = parseInt(full.slice(2, 4), 16)
+  const b = parseInt(full.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, opacity))})`
+}

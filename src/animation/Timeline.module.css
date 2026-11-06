@@ -1,0 +1,186 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  background: var(--color-white);
+  border-top: 1px solid var(--border-default);
+  font: 400 12px/1.2 Inter, sans-serif;
+  color: var(--text-high-emphasis);
+  user-select: none;
+}
+
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  font-size: 12px;
+  color: var(--color-white);
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+.button {
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  color: var(--color-primary);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.time {
+  font-family: ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin-left: auto;
+  color: var(--text-medium-emphasis);
+  font-size: 11px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+}
+
+.labels {
+  display: flex;
+  flex-direction: column;
+}
+
+.rulerLabel {
+  height: 20px;
+}
+
+.laneLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  color: var(--text-medium-emphasis);
+  white-space: nowrap;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.track {
+  position: relative;
+  cursor: text;
+}
+
+.ruler {
+  position: relative;
+  height: 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.tick,
+.tickMajor {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 5px;
+  background: var(--border-default);
+}
+
+.tickMajor {
+  height: 9px;
+  background: var(--text-disabled);
+}
+
+.tickLabel {
+  position: absolute;
+  bottom: 10px;
+  left: 3px;
+  font-size: 10px;
+  color: var(--text-medium-emphasis);
+}
+
+.band {
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  background: repeating-linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0 6px, rgba(99, 102, 241, 0.12) 6px 12px);
+  pointer-events: none;
+}
+
+.band span {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-size: 10px;
+  color: #6366f1;
+}
+
+.total {
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--text-disabled);
+  pointer-events: none;
+}
+
+.lane {
+  position: relative;
+  height: 22px;
+}
+
+.bar {
+  position: absolute;
+  top: 5px;
+  height: 12px;
+  border-radius: 3px;
+  opacity: 0.85;
+}
+
+.movable {
+  cursor: grab;
+}
+
+.movable:active {
+  cursor: grabbing;
+}
+
+.bar:hover {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(51, 112, 131, 0.25);
+}
+
+.handle {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 16px;
+  cursor: ew-resize;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #e53940;
+  pointer-events: none;
+}
