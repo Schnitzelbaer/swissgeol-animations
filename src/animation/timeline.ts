@@ -152,7 +152,7 @@ export type Config = {
   stack: { count: number; offset: number; inset: number; fade: number }
   /** Pause am Ende, bevor die Schleife neu beginnt */
   hold: number
-  stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; zoom: number; width: number; top: number }
+  stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; zoom: number; width: number; top: number; paddingY: number; paddingX: number }
 }
 
 const step = (start: number, duration: number, easing: Bezier): Step => ({ start, duration, easing })
@@ -200,7 +200,7 @@ export const DEFAULT_CONFIG: Config = {
   toc: { start: 6350, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, stagger: 260, cps: 70, cursor: true, metaFade: 220 },
   stack: { count: 2, offset: 8, inset: 14, fade: 0.25 },
   hold: 2000,
-  stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', zoom: 1.4, width: 496, top: 22 },
+  stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', zoom: 1.4, width: 496, top: 22, paddingY: 24, paddingX: 27 },
 }
 
 /** Zeilen des Inhaltsverzeichnisses in Lesereihenfolge */

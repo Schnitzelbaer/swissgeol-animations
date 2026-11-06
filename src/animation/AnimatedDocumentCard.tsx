@@ -180,7 +180,7 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
       )}
 
       <article className={styles.card}>
-        <div className={styles.content} style={{ opacity: 1 - effect.dim * envelope }}>
+        <div className={styles.content} style={{ opacity: 1 - effect.dim * envelope, padding: `${config.stage.paddingY}px ${config.stage.paddingX}px` }}>
           <div className={styles.head}>
             <div className={styles.row}>
               <div className={styles.file}>

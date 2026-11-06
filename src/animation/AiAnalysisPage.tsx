@@ -288,6 +288,8 @@ export function AiAnalysisPage() {
                   ))}
                 <NumberField label="Zoom" value={stage.zoom} min={0.5} max={3} step={0.05} unit="×" onChange={(v) => update((d) => void (d.stage.zoom = v))} />
                 <NumberField label="Breite" value={stage.width} min={320} max={720} step={2} unit="px" onChange={(v) => update((d) => void (d.stage.width = v))} />
+                <NumberField label="Abstand o/u" value={stage.paddingY} min={8} max={48} unit="px" onChange={(v) => update((d) => void (d.stage.paddingY = v))} />
+                <NumberField label="Abstand l/r" value={stage.paddingX} min={8} max={48} unit="px" onChange={(v) => update((d) => void (d.stage.paddingX = v))} />
                 <NumberField label="Oben" value={stage.top} min={0} max={80} unit="%" onChange={(v) => update((d) => void (d.stage.top = v))} />
                 <SubTitle>Stapel</SubTitle>
                 <NumberField label="Kacheln" value={config.stack.count} min={0} max={5} onChange={(v) => update((d) => void (d.stack.count = Math.round(v)))} />

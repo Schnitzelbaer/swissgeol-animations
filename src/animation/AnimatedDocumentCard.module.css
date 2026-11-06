@@ -15,7 +15,8 @@
 .content {
   display: flex;
   flex-direction: column;
-  padding: 16px 27px;
+  /* Innenabstand kommt aus den Einstellungen (Bühne → Abstand) */
+  padding: 24px 27px;
 }
 
 .head {
