@@ -30,7 +30,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 
 ## Animationen (eigene Branches)
 
-- Branch `animation-ai-analysis`: isolierte Ansicht `/animation/ai-analysis` (Vercel-Preview des Branches). Dokument-Kachel 4841 ohne Chips und Inhaltsverzeichnis; AI-Analyse mit Effekt (Schimmer, Rand oder Aura) und Fähnchen mit AI-Sternen, danach werden Chips und Inhaltsverzeichnis hineingeschrieben und die Kachel wächst mit.
+- Branch `animation-ai-analysis`: isolierte Ansicht `/animation/ai-analysis`; auf diesem Branch leitet `/` dorthin, damit der Vercel-Preview-Link direkt die Animation öffnet (Prototyp weiter unter `/asset/4841`). Dokument-Kachel 4841 ohne Chips und Inhaltsverzeichnis; AI-Analyse mit Effekt (Schimmer, Rand oder Aura) und Fähnchen mit AI-Sternen, danach werden Chips und Inhaltsverzeichnis hineingeschrieben und die Kachel wächst mit.
 - Alles wird aus einer Zeit t berechnet (`src/animation/timeline.ts`, keine CSS-Transitions), daher scrubbar. Control-Panel (`controls.tsx`, Werkzeug, deutsch beschriftet, nicht in `messages.ts`) und Timeline mit ziehbaren Balken (`Timeline.tsx`). Einstellungen im Link `?cfg=` (base64url-JSON), `?t=<ms>` zeigt ein Standbild. Tasten: Leertaste, R, H (Panels aus für Aufnahmen), Pfeile.
 
 ## Aufbau
