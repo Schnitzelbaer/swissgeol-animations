@@ -259,11 +259,29 @@ function year2() {
   return String(Math.floor(rand() * 26)).padStart(2, '0')
 }
 
+/**
+ * Zwei Bohrungen am exakt gleichen Standort in der Altstadt Sursee, im Startausschnitt (nicht in Figma):
+ * zeigen beim Start ein Badge «2».
+ */
+const SURSEE: Borehole[] = [
+  {
+    id: '17401', name: 'RB 1 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Rammsondierung', workflow: 'Publikation',
+    lonLat: [8.1092, 47.1708], locationPrecision: 1, referenceOffset: 0,
+    identifiers: ids('17401', [{ type: 'ID GeODin-Shortname', codes: [{ code: '6SUR23R001' }] }]),
+  },
+  {
+    id: '17402', name: 'KB 2 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Bohrung', workflow: 'In Bearbeitung',
+    lonLat: [8.1092, 47.1708], locationPrecision: 1, referenceOffset: 0.2,
+    identifiers: ids('17402', [{ type: 'ID GeODin-Shortname', codes: [{ code: '6SUR23K002' }] }]),
+  },
+]
+
 export const boreholes: Borehole[] = [
   ...figmaBoreholes.map((borehole, index) => {
     const [purpose, access, boreholeType, workflow] = FIGMA_VALUES[index]
     return { ...borehole, purpose, access, boreholeType, workflow }
   }),
+  ...SURSEE,
   ...generateBoreholes(),
 ]
 
