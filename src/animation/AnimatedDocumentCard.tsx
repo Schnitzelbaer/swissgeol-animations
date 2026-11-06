@@ -3,7 +3,7 @@ import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { CLASSES_WITHOUT_LANGUAGE, fileLanguages, groupSections, pageRange, sectionTitle, type AssetFile } from '../data/files'
 import { useI18n } from '../i18n'
-import { alpha, clamp01, cubicBezier, eased, linear, pulse, rowStart, typingDuration, type Config, type TocRow } from './timeline'
+import { alpha, clamp01, cubicBezier, eased, linear, pulse, tocLayout, type Config, type TocRow } from './timeline'
 import styles from './AnimatedDocumentCard.module.css'
 import pdfIcon from '../assets/icons/filetype-pdf.svg'
 import downloadIcon from '../assets/icons/download.svg'
@@ -95,6 +95,7 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
   const chevronIn = clamp01(eased(chevron.in, time))
   const chevronRotate = eased(chevron.rotate, time)
   const rowCurve = cubicBezier(toc.rowEasing)
+  const layout = tocLayout(config, rows)
 
   const cardStyle = {
     '--fx-1': c1,
@@ -227,12 +228,13 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
 
                   <nav className={styles.toc} aria-label={t.document.contentsOf(file.name)}>
                     {rows.map((row, index) => {
-                      const start = rowStart(config, index)
+                      // Startzeit aus der Verteilung über die eingestellte Dauer; scale < 1 beschleunigt alles
+                      const start = layout.starts[index]
                       if (time < start) return null
-                      const grow = rowCurve(clamp01((time - start) / Math.max(1, toc.rowGrow)))
-                      const typingTime = typingDuration(config, row.text)
-                      const chars = Math.min(row.text.length, Math.floor(((time - start) / 1000) * toc.cps))
-                      const metaP = clamp01((time - start - typingTime) / Math.max(1, toc.metaFade))
+                      const grow = rowCurve(clamp01((time - start) / Math.max(1, toc.rowGrow * layout.scale)))
+                      const typingTime = ((row.text.length / Math.max(1, toc.cps)) * 1000) * layout.scale
+                      const chars = Math.min(row.text.length, Math.floor(((time - start) / Math.max(1, typingTime)) * row.text.length))
+                      const metaP = clamp01((time - start - typingTime) / Math.max(1, toc.metaFade * layout.scale))
                       const gap = row.kind === 'group' && !row.first ? 12 * grow : 0
                       return (
                         <div key={index} className={styles.tocRow} style={{ gridTemplateRows: `${grow}fr`, marginTop: gap }}>

@@ -53,8 +53,8 @@ export function AiAnalysisPage() {
   const [speed, setSpeed] = useState(() => readStored().speed ?? 1)
   const [uiHidden, setUiHidden] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const { rows, chips } = useDocumentContent(FILE)
-  const total = useMemo(() => totalDuration(config, rows, chips.length), [config, rows, chips.length])
+  const { chips } = useDocumentContent(FILE)
+  const total = useMemo(() => totalDuration(config, chips.length), [config, chips.length])
 
   /** Änderung an einer Kopie der Einstellungen */
   const update = useCallback((change: (draft: Config) => void) => {
@@ -158,7 +158,7 @@ export function AiAnalysisPage() {
     { id: 'chevron-in', label: 'Pfeil ein', color: '#337083', start: chevron.in.start, end: chevron.in.start + chevron.in.duration, onMove: (v) => update((d) => void (d.chevron.in.start = v)), onResize: (v) => update((d) => void (d.chevron.in.duration = v)) },
     { id: 'chips-out', label: 'Chips aus', color: '#f59e0b', start: chipSteps.out.start, end: chipSteps.out.start + chipSteps.out.duration, onMove: (v) => update((d) => void (d.chips.out.start = v)), onResize: (v) => update((d) => void (d.chips.out.duration = v)) },
     { id: 'chevron-rotate', label: 'Pfeil drehen', color: '#337083', start: chevron.rotate.start, end: chevron.rotate.start + chevron.rotate.duration, onMove: (v) => update((d) => void (d.chevron.rotate.start = v)), onResize: (v) => update((d) => void (d.chevron.rotate.duration = v)) },
-    { id: 'toc', label: 'Inhaltsverzeichnis', color: '#10b981', start: toc.start, end: tocEnd(config, rows), onMove: (v) => update((d) => void (d.toc.start = v)) },
+    { id: 'toc', label: 'Inhaltsverzeichnis', color: '#10b981', start: toc.start, end: tocEnd(config), onMove: (v) => update((d) => void (d.toc.start = v)), onResize: (v) => update((d) => void (d.toc.duration = Math.max(100, v))) },
   ]
 
   return (
@@ -265,7 +265,8 @@ export function AiAnalysisPage() {
 
               <Group title="Inhaltsverzeichnis">
                 <NumberField label="Start" value={toc.start} min={0} max={15000} step={10} unit="ms" onChange={(v) => update((d) => void (d.toc.start = v))} />
-                <NumberField label="Zeilenversatz" value={toc.stagger} min={0} max={1500} step={10} unit="ms" onChange={(v) => update((d) => void (d.toc.stagger = v))} />
+                <NumberField label="Dauer" value={toc.duration} min={100} max={10000} step={50} unit="ms" onChange={(v) => update((d) => void (d.toc.duration = v))} />
+                <EasingField label="Verteilung" value={toc.easing} onChange={(v) => update((d) => void (d.toc.easing = v))} />
                 <NumberField label="Zeile wächst" value={toc.rowGrow} min={0} max={1500} step={10} unit="ms" onChange={(v) => update((d) => void (d.toc.rowGrow = v))} />
                 <EasingField label="Kurve" value={toc.rowEasing} onChange={(v) => update((d) => void (d.toc.rowEasing = v))} />
                 <NumberField label="Tippen" value={toc.cps} min={5} max={300} step={5} unit="Z/s" onChange={(v) => update((d) => void (d.toc.cps = v))} />

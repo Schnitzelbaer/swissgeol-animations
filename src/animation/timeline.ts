@@ -140,8 +140,10 @@ export type Config = {
     /** Jede Zeile wächst in dieser Zeit auf ihre Höhe */
     rowGrow: number
     rowEasing: Bezier
-    /** Abstand zwischen dem Start zweier Zeilen */
-    stagger: number
+    /** Dauer der ganzen Einblendung: Nach dieser Zeit ist die letzte Zeile fertig */
+    duration: number
+    /** Verteilung der Zeilen über die Dauer (linear = gleichmässig, ease-out = erst schnell, dann langsamer) */
+    easing: Bezier
     /** Tippgeschwindigkeit in Zeichen pro Sekunde */
     cps: number
     /** Leitlinie, Sprache und Seiten erscheinen nach dem Titel in dieser Zeit */
@@ -196,7 +198,7 @@ export const DEFAULT_CONFIG: Config = {
   language: step(4900, 300, EASING_PRESETS.linear),
   chips: { in: step(5000, 350, EASING_PRESETS['back-out']), stagger: 90, out: step(6300, 250, EASING_PRESETS['ease-in']) },
   chevron: { in: step(5100, 300, EASING_PRESETS['ease-out']), rotate: step(6300, 400, EASING_PRESETS.swissgeol) },
-  toc: { start: 6350, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, stagger: 260, cps: 70, metaFade: 220 },
+  toc: { start: 6350, duration: 2400, easing: EASING_PRESETS.linear, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, cps: 70, metaFade: 220 },
   stack: { count: 2, offset: 8, inset: 14, fade: 0.25 },
   hold: 2000,
   stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', zoom: 1.4, width: 496, top: 22, paddingY: 24, paddingX: 27 },
@@ -205,33 +207,64 @@ export const DEFAULT_CONFIG: Config = {
 /** Zeilen des Inhaltsverzeichnisses in Lesereihenfolge */
 export type TocRow = { kind: 'group'; text: string; first: boolean } | { kind: 'entry'; text: string; language?: string; pages: string }
 
-export function rowStart(config: Config, index: number) {
-  return config.toc.start + index * config.toc.stagger
+/** Eigene Dauer einer Zeile in normalem Tempo: wachsen, tippen, Metadaten einblenden */
+function rowOwnDuration(config: Config, row: TocRow) {
+  const typed = (row.text.length / Math.max(1, config.toc.cps)) * 1000 + (row.kind === 'entry' ? config.toc.metaFade : 0)
+  return Math.max(config.toc.rowGrow, typed)
 }
 
-export function typingDuration(config: Config, text: string) {
-  return (text.length / Math.max(1, config.toc.cps)) * 1000
+export type TocLayout = {
+  /** Startzeit jeder Zeile */
+  starts: number[]
+  /** Zeitfaktor für Wachsen, Tippen und Metadaten (< 1, wenn die Dauer kürzer ist als das normale Tempo) */
+  scale: number
 }
 
-/** Ende einer Zeile: gewachsen, getippt und Metadaten eingeblendet */
-export function rowEnd(config: Config, rows: TocRow[], index: number) {
-  const row = rows[index]
-  const typed = typingDuration(config, row.text) + (row.kind === 'entry' ? config.toc.metaFade : 0)
-  return rowStart(config, index) + Math.max(config.toc.rowGrow, typed)
+const layouts = new WeakMap<Config, TocLayout>()
+
+/**
+ * Verteilt die Zeilen so über die eingestellte Dauer, dass die letzte genau am Ende fertig ist.
+ * Die Kurve bestimmt, wann welche Zeile startet; ist die Dauer zu kurz, wird alles schneller.
+ */
+export function tocLayout(config: Config, rows: TocRow[]): TocLayout {
+  const cached = layouts.get(config)
+  if (cached && cached.starts.length === rows.length) return cached
+  const { start, duration, easing } = config.toc
+  const curve = cubicBezier(easing)
+  const own = rows.map((row) => rowOwnDuration(config, row))
+  const share = rows.map((_, index) => (rows.length > 1 ? curve(index / (rows.length - 1)) : 0))
+  const finish = (spread: number, scale: number) => Math.max(0, ...own.map((d, i) => spread * share[i] + d * scale))
+  let layout: TocLayout
+  const longest = Math.max(1, ...own)
+  if (longest >= duration) {
+    layout = { starts: rows.map(() => start), scale: Math.max(0.05, duration / longest) }
+  } else {
+    // Verteilung so weit strecken, bis die zuletzt fertige Zeile auf die Dauer fällt
+    let lo = 0
+    let hi = duration * 4
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2
+      if (finish(mid, 1) > duration) hi = mid
+      else lo = mid
+    }
+    layout = { starts: share.map((value) => start + lo * value), scale: 1 }
+  }
+  layouts.set(config, layout)
+  return layout
 }
 
-export function tocEnd(config: Config, rows: TocRow[]) {
-  return rows.reduce((end, _, index) => Math.max(end, rowEnd(config, rows, index)), config.toc.start)
+export function tocEnd(config: Config) {
+  return config.toc.start + config.toc.duration
 }
 
 const end = (s: Step) => s.start + s.duration
 
 /** Gesamtdauer inklusive Pause am Ende */
-export function totalDuration(config: Config, rows: TocRow[], chipCount: number) {
+export function totalDuration(config: Config, chipCount: number) {
   const ends = [
     end(config.effect.in), end(config.effect.out), end(config.flag.in), end(config.flag.out), end(config.language),
     end(config.chips.in) + Math.max(0, chipCount - 1) * config.chips.stagger, end(config.chips.out),
-    end(config.chevron.in), end(config.chevron.rotate), tocEnd(config, rows),
+    end(config.chevron.in), end(config.chevron.rotate), tocEnd(config),
   ]
   return Math.max(...ends) + config.hold
 }
