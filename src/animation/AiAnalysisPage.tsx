@@ -188,6 +188,7 @@ export function AiAnalysisPage() {
             <div className={styles.panelScroll}>
               <Group title="Einstieg">
                 <NumberField label="Distanz" value={config.intro.distance} min={0} max={120} unit="px" onChange={(v) => update((d) => void (d.intro.distance = v))} />
+                <Toggle label="Einblenden" value={config.intro.fade} onChange={(v) => update((d) => void (d.intro.fade = v))} />
                 <NumberField label="Stapel später" value={config.intro.stagger} min={0} max={600} step={10} unit="ms" onChange={(v) => update((d) => void (d.intro.stagger = v))} />
                 <StepFields title="Kachel von unten" value={config.intro.step} onChange={(v) => update((d) => void (d.intro.step = v))} />
               </Group>

@@ -104,11 +104,12 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
     width: config.stage.width,
   } as CSSProperties
 
-  // Einstieg: Kurve mit leichtem Überschwingen ergibt das Federn; deckend nach der ersten Hälfte
+  // Einstieg: Kurve mit leichtem Überschwingen ergibt das Federn
   const { intro } = config
   const introAt = (delay: number) => {
     const s = { ...intro.step, start: intro.step.start + delay }
-    return { y: (1 - eased(s, time)) * intro.distance, opacity: clamp01(linear(s, time) * 2) }
+    // Ohne «Einblenden» sind die Kacheln von Anfang an deckend und bewegen sich nur
+    return { y: (1 - eased(s, time)) * intro.distance, opacity: intro.fade ? clamp01(linear(s, time) * 2) : 1 }
   }
   const main = introAt(0)
   cardStyle.transform = main.y ? `translateY(${main.y}px)` : undefined
