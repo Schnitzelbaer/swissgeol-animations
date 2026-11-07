@@ -84,7 +84,7 @@
 
 .track {
   position: relative;
-  cursor: text;
+  cursor: crosshair;
 }
 
 .ruler {
@@ -183,4 +183,49 @@
   margin-left: -1px;
   background: #e53940;
   pointer-events: none;
+}
+
+/* Mehrfachauswahl */
+.selected {
+  opacity: 1;
+  outline: 2px solid var(--text-high-emphasis);
+  outline-offset: 1px;
+}
+
+.laneLabel {
+  cursor: pointer;
+}
+
+.laneLabelSelected {
+  color: var(--text-high-emphasis);
+  font-weight: 600;
+}
+
+.marquee {
+  position: absolute;
+  z-index: 5;
+  background: rgba(51, 112, 131, 0.08);
+  border: 1px solid rgba(51, 112, 131, 0.6);
+  pointer-events: none;
+}
+
+.selection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-weight: 500;
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+  border-radius: 4px;
+}
+
+.selection button {
+  font: inherit;
+  text-decoration: underline;
+  color: inherit;
+}
+
+.ruler {
+  cursor: text;
 }
