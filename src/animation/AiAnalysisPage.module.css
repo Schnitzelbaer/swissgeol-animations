@@ -30,6 +30,7 @@
 .frame {
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .cardAnchor {
@@ -94,4 +95,85 @@
   grid-column: 1;
   grid-row: 2;
   min-width: 0;
+}
+
+/* Canvas für den Export: volle Grösse, ausserhalb des sichtbaren Bereichs */
+.exportHost {
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  pointer-events: none;
+}
+
+.exportBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 10px;
+  background: var(--color-bg-grey);
+  border-radius: 6px;
+  font: 400 12px/1.2 Inter, sans-serif;
+}
+
+.exportRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.exportRow label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-medium-emphasis);
+}
+
+.exportRow input {
+  width: 52px;
+  padding: 3px 5px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+}
+
+.exportRow button {
+  margin-left: auto;
+  padding: 5px 10px;
+  font: 500 12px/1.2 Inter, sans-serif;
+  color: var(--color-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--color-white);
+}
+
+.exportRow .exportButton {
+  color: var(--color-white);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.exportMeta {
+  color: var(--text-medium-emphasis);
+  font-variant-numeric: tabular-nums;
+}
+
+.exportStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--text-medium-emphasis);
+  overflow-wrap: anywhere;
+}
+
+.progress {
+  height: 4px;
+  background: var(--border-default);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress div {
+  height: 100%;
+  background: var(--color-primary);
 }

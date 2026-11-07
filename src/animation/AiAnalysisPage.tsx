@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { flushSync } from 'react-dom'
 import { initialFiles } from '../data/files'
 import { AnimatedDocumentCard, useDocumentContent } from './AnimatedDocumentCard'
 import { ColorField, Group, NumberField, Segmented, StepFields, SubTitle, TextField, Toggle, EasingField } from './controls'
@@ -36,8 +37,28 @@ function initialConfig(): Config {
   return (stored ? parseConfigJson(JSON.stringify(stored)) : null) ?? DEFAULT_CONFIG
 }
 
-const ASPECTS: Record<Exclude<Aspect, 'frei'>, number> = { '16:9': 16 / 9, '1:1': 1, '4:5': 4 / 5, '9:16': 9 / 16 }
-const REFERENCE_WIDTH: Record<Exclude<Aspect, 'frei'>, number> = { '16:9': 1440, '1:1': 1080, '4:5': 1080, '9:16': 1080 }
+/** Canvas-Vorlagen in Pixeln; «eigene» nimmt Breite und Höhe aus den Einstellungen */
+const PRESETS: Record<Exclude<Aspect, 'frei' | 'eigene'>, [number, number]> = {
+  '16:9': [1920, 1080],
+  '1:1': [1080, 1080],
+  '4:5': [1080, 1350],
+  '9:16': [1080, 1920],
+}
+
+/** Canvas-Grösse in Pixeln; «frei» füllt den verfügbaren Platz im Fenster */
+function canvasSize(config: Config, area: { width: number; height: number }) {
+  if (config.stage.aspect === 'frei') return { width: Math.max(2, Math.round(area.width)), height: Math.max(2, Math.round(area.height)) }
+  return { width: config.stage.canvasWidth, height: config.stage.canvasHeight }
+}
+
+/**
+ * Massstab der Kachel im Canvas. Der Zoom bezieht sich auf eine Referenzbreite (quer 1440 px, sonst 1080 px),
+ * damit die Kachel bei 1920 × 1080 und 3840 × 2160 gleich gross wirkt.
+ */
+function cardScale(config: Config, size: { width: number; height: number }) {
+  if (config.stage.aspect === 'frei') return config.stage.zoom
+  return (config.stage.zoom * size.width) / (size.width > size.height ? 1440 : 1080)
+}
 
 /**
  * Isolierte Ansicht für die Animation «AI-Analyse eines Dokuments» (Route /animation/ai-analysis).
@@ -52,6 +73,12 @@ export function AiAnalysisPage() {
   const [loop, setLoop] = useState(() => readStored().loop ?? true)
   const [speed, setSpeed] = useState(() => readStored().speed ?? 1)
   const [uiHidden, setUiHidden] = useState(false)
+  const [area, setArea] = useState<Size>({ width: 1280, height: 720 })
+  // Video-Export: eigener Zeitstand für den unsichtbaren Canvas in voller Grösse
+  const [exporting, setExporting] = useState<AbortController | null>(null)
+  const [exportTime, setExportTime] = useState(0)
+  const [exportState, setExportState] = useState<{ message: string; progress?: number } | null>(null)
+  const exportRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const { chips } = useDocumentContent(FILE)
   const total = useMemo(() => totalDuration(config, chips.length), [config, chips.length])
@@ -132,6 +159,46 @@ export function AiAnalysisPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [restart])
 
+  const startExport = async () => {
+    const controller = new AbortController()
+    setPlaying(false)
+    setExportTime(0)
+    flushSync(() => setExporting(controller))
+    const size = canvasSize(config, area)
+    const started = performance.now()
+    try {
+      setExportState({ message: 'Bereite vor …', progress: 0 })
+      // Export-Bibliotheken erst beim ersten Export laden
+      const { exportVideo } = await import('./exportVideo')
+      const result = await exportVideo({
+        node: exportRef.current!,
+        width: size.width,
+        height: size.height,
+        fps: config.export.fps,
+        bitrate: config.export.bitrate * 1_000_000,
+        from: 0,
+        to: total,
+        renderAt: (value) => flushSync(() => setExportTime(value)),
+        onProgress: (done, count) => setExportState({ message: `Bild ${done} von ${count}`, progress: done / count }),
+        signal: controller.signal,
+      })
+      const name = `ai-analyse-${size.width}x${size.height}-${config.export.fps}fps.${result.extension}`
+      const url = URL.createObjectURL(result.blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = name
+      link.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      const seconds = ((performance.now() - started) / 1000).toFixed(0)
+      setExportState({ message: `Fertig: ${name} (${(result.blob.size / 1_000_000).toFixed(1)} MB, ${seconds} s)` })
+    } catch (error) {
+      const aborted = error instanceof DOMException && error.name === 'AbortError'
+      setExportState({ message: aborted ? 'Export abgebrochen' : `Export fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}` })
+    } finally {
+      setExporting(null)
+    }
+  }
+
   const seek = (value: number) => {
     setPlaying(false)
     setTime(value)
@@ -164,7 +231,14 @@ export function AiAnalysisPage() {
 
   return (
     <div className={`${styles.page} ${uiHidden ? styles.uiHidden : ''}`}>
-      <Stage config={config} time={time} />
+      <Stage config={config} time={time} onArea={setArea} />
+
+      {/* Export: Canvas in voller Grösse ausserhalb des Bildschirms, Bild für Bild gerastert */}
+      {exporting && (
+        <div className={styles.exportHost} aria-hidden>
+          <Canvas ref={exportRef} config={config} time={exportTime} size={canvasSize(config, area)} />
+        </div>
+      )}
 
       {!uiHidden && (
         <>
@@ -183,6 +257,56 @@ export function AiAnalysisPage() {
                 </button>
               </div>
               {copied && <span className={styles.copied}>{copied}</span>}
+              <div className={styles.exportBox}>
+                <div className={styles.exportRow}>
+                  <strong>Video</strong>
+                  <span className={styles.exportMeta}>
+                    {canvasSize(config, area).width} × {canvasSize(config, area).height} px · {(total / 1000).toFixed(1)} s
+                  </span>
+                </div>
+                <div className={styles.exportRow}>
+                  <label>
+                    Bilder/s{' '}
+                    <select value={config.export.fps} disabled={!!exporting} onChange={(e) => update((d) => void (d.export.fps = Number(e.target.value)))}>
+                      {[24, 25, 30, 50, 60].map((fps) => (
+                        <option key={fps} value={fps}>
+                          {fps}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Mbit/s{' '}
+                    <input
+                      type="number"
+                      min={1}
+                      max={80}
+                      value={config.export.bitrate}
+                      disabled={!!exporting}
+                      onChange={(e) => update((d) => void (d.export.bitrate = Math.max(1, Number(e.target.value) || 1)))}
+                    />
+                  </label>
+                  {exporting ? (
+                    <button type="button" onClick={() => exporting.abort()}>
+                      Abbrechen
+                    </button>
+                  ) : (
+                    <button type="button" className={styles.exportButton} onClick={startExport}>
+                      Video exportieren
+                    </button>
+                  )}
+                </div>
+                {exportState && (
+                  <div className={styles.exportStatus}>
+                    {exportState.progress !== undefined && (
+                      <div className={styles.progress}>
+                        <div style={{ width: `${exportState.progress * 100}%` }} />
+                      </div>
+                    )}
+                    <span>{exportState.message}</span>
+                  </div>
+                )}
+              </div>
             </header>
 
             <div className={styles.panelScroll}>
@@ -285,9 +409,20 @@ export function AiAnalysisPage() {
                 <Segmented<Aspect>
                   label="Format"
                   value={stage.aspect}
-                  options={[['frei', 'frei'], ['16:9', '16:9'], ['1:1', '1:1'], ['4:5', '4:5'], ['9:16', '9:16']]}
-                  onChange={(v) => update((d) => void (d.stage.aspect = v))}
+                  options={[['frei', 'Fenster'], ['16:9', '16:9'], ['1:1', '1:1'], ['4:5', '4:5'], ['9:16', '9:16'], ['eigene', 'eigene']]}
+                  onChange={(v) =>
+                    update((d) => {
+                      d.stage.aspect = v
+                      if (v !== 'frei' && v !== 'eigene') [d.stage.canvasWidth, d.stage.canvasHeight] = PRESETS[v]
+                    })
+                  }
                 />
+                {stage.aspect !== 'frei' && (
+                  <>
+                    <NumberField label="Canvas Breite" value={stage.canvasWidth} min={320} max={3840} step={2} unit="px" onChange={(v) => update((d) => void ((d.stage.canvasWidth = Math.round(v)), (d.stage.aspect = 'eigene')))} />
+                    <NumberField label="Canvas Höhe" value={stage.canvasHeight} min={320} max={3840} step={2} unit="px" onChange={(v) => update((d) => void ((d.stage.canvasHeight = Math.round(v)), (d.stage.aspect = 'eigene')))} />
+                  </>
+                )}
                 <ColorField label="Hintergrund" value={stage.background} onChange={(v) => update((d) => void (d.stage.background = v))} />
                 <Toggle label="Verlauf" value={stage.gradient} onChange={(v) => update((d) => void (d.stage.gradient = v))} />
                 {stage.gradient &&
@@ -335,42 +470,54 @@ export function AiAnalysisPage() {
   )
 }
 
-/** Bühne im gewählten Format; die Kachel steht oben fest und wächst nach unten */
-function Stage({ config, time }: { config: Config; time: number }) {
+type Size = { width: number; height: number }
+
+/** Canvas in seiner echten Pixelgrösse: Hintergrund und Kachel; für Anzeige und Export gleich */
+const Canvas = forwardRef<HTMLDivElement, { config: Config; time: number; size: Size }>(function Canvas({ config, time, size }, ref) {
+  const { stage } = config
+  return (
+    <div
+      ref={ref}
+      className={styles.frame}
+      style={{
+        width: size.width,
+        height: size.height,
+        // Verlauf wie im Referenzvideo: Türkis links oben, Gelbgrün rechts unten
+        background: stage.gradient
+          ? `radial-gradient(90% 80% at 100% 75%, ${stage.gradientColors[1]} 0%, transparent 60%), linear-gradient(135deg, ${stage.gradientColors[0]} 0%, ${stage.gradientColors[0]} 45%, ${stage.gradientColors[1]} 120%)`
+          : stage.background,
+      } as CSSProperties}
+    >
+      <div className={styles.cardAnchor} style={{ top: `${stage.top}%`, transform: `translateX(-50%) scale(${cardScale(config, size)})` }}>
+        <AnimatedDocumentCard file={FILE} config={config} time={time} />
+      </div>
+    </div>
+  )
+})
+
+/** Bühne: zeigt den Canvas verkleinert so gross wie möglich; die Kachel steht oben fest und wächst nach unten */
+function Stage({ config, time, onArea }: { config: Config; time: number; onArea: (area: Size) => void }) {
   const areaRef = useRef<HTMLDivElement>(null)
-  const [area, setArea] = useState({ width: 0, height: 0 })
+  const [area, setArea] = useState<Size>({ width: 0, height: 0 })
   useEffect(() => {
     const element = areaRef.current!
-    const observer = new ResizeObserver(([entry]) => setArea({ width: entry.contentRect.width, height: entry.contentRect.height }))
+    const observer = new ResizeObserver(([entry]) => {
+      const next = { width: entry.contentRect.width, height: entry.contentRect.height }
+      setArea(next)
+      onArea(next)
+    })
     observer.observe(element)
     return () => observer.disconnect()
-  }, [])
+  }, [onArea])
 
-  const { stage } = config
-  let frame = { width: area.width, height: area.height }
-  if (stage.aspect !== 'frei') {
-    const ratio = ASPECTS[stage.aspect]
-    const width = Math.min(area.width, area.height * ratio)
-    frame = { width, height: width / ratio }
-  }
-  // Zoom bezieht sich auf eine Referenzbühne (16:9 = 1440 px breit, sonst 1080 px), damit Aufnahmen in jedem Fenster gleich aussehen
-  const scale = stage.aspect === 'frei' ? stage.zoom : (frame.width / REFERENCE_WIDTH[stage.aspect]) * stage.zoom
+  const size = canvasSize(config, area)
+  const fit = config.stage.aspect === 'frei' ? 1 : Math.min(1, area.width / size.width, area.height / size.height) || 0
 
   return (
     <div className={styles.stageArea} ref={areaRef}>
-      <div
-        className={styles.frame}
-        style={{
-          width: frame.width,
-          height: frame.height,
-          // Verlauf wie im Referenzvideo: Türkis links oben, Gelbgrün rechts unten
-          background: stage.gradient
-            ? `radial-gradient(90% 80% at 100% 75%, ${stage.gradientColors[1]} 0%, transparent 60%), linear-gradient(135deg, ${stage.gradientColors[0]} 0%, ${stage.gradientColors[0]} 45%, ${stage.gradientColors[1]} 120%)`
-            : stage.background,
-        } as CSSProperties}
-      >
-        <div className={styles.cardAnchor} style={{ top: `${stage.top}%`, transform: `translateX(-50%) scale(${scale})` }}>
-          <AnimatedDocumentCard file={FILE} config={config} time={time} />
+      <div style={{ width: size.width * fit, height: size.height * fit, overflow: 'hidden' }}>
+        <div style={{ transform: `scale(${fit})`, transformOrigin: '0 0' }}>
+          <Canvas config={config} time={time} size={size} />
         </div>
       </div>
     </div>
