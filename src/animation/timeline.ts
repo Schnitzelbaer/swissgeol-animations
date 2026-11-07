@@ -82,6 +82,17 @@ export function eased(step: Step, time: number) {
 
 export type EffectVariant = 'veil' | 'shimmer' | 'border' | 'aura'
 export type Aspect = 'frei' | '16:9' | '1:1' | '4:5' | '9:16' | 'eigene'
+/** Export-Auflösung nach der langen Seite: wie der Canvas, Full HD (1920), QHD (2560) oder 4K (3840) */
+export type ExportResolution = 'canvas' | 'fhd' | 'qhd' | 'uhd'
+export const EXPORT_LONG_EDGE: Record<Exclude<ExportResolution, 'canvas'>, number> = { fhd: 1920, qhd: 2560, uhd: 3840 }
+
+/** Ausgabegrösse des Videos: Seitenverhältnis des Canvas, lange Seite nach der gewählten Auflösung, gerade Pixelzahl */
+export function exportSize(resolution: ExportResolution, canvas: { width: number; height: number }) {
+  const factor = resolution === 'canvas' ? 1 : EXPORT_LONG_EDGE[resolution] / Math.max(canvas.width, canvas.height)
+  const even = (value: number) => Math.max(2, Math.round((value * factor) / 2) * 2)
+  return { width: even(canvas.width), height: even(canvas.height), factor }
+}
+
 export type FlagAppear = 'fade' | 'scale' | 'slide'
 export type FlagPlacement = 'tab' | 'corner' | 'inside'
 
@@ -155,9 +166,12 @@ export type Config = {
   intro: { step: Step; distance: number; stagger: number; fade: boolean }
   /** Pause am Ende, bevor die Schleife neu beginnt */
   hold: number
+  /** Ende der Animation von Hand festlegen (sonst letzter Schritt + Pause) */
+  endManual: boolean
+  end: number
   stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; canvasWidth: number; canvasHeight: number; zoom: number; width: number; top: number; paddingY: number; paddingX: number }
   /** Video-Export */
-  export: { fps: number; bitrate: number }
+  export: { fps: number; bitrate: number; resolution: ExportResolution }
 }
 
 const step = (start: number, duration: number, easing: Bezier): Step => ({ start, duration, easing })
@@ -206,8 +220,10 @@ export const DEFAULT_CONFIG: Config = {
   stack: { count: 2, offset: 8, inset: 14, fade: 0.25 },
   intro: { step: step(0, 700, [0.34, 1.4, 0.64, 1]), distance: 24, stagger: 90, fade: false },
   hold: 2000,
+  endManual: false,
+  end: 10000,
   stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', canvasWidth: 1920, canvasHeight: 1080, zoom: 1.4, width: 496, top: 22, paddingY: 24, paddingX: 27 },
-  export: { fps: 60, bitrate: 16 },
+  export: { fps: 60, bitrate: 16, resolution: 'canvas' },
 }
 
 /** Zeilen des Inhaltsverzeichnisses in Lesereihenfolge */
@@ -272,6 +288,7 @@ export function totalDuration(config: Config, chipCount: number) {
     end(config.chips.in) + Math.max(0, chipCount - 1) * config.chips.stagger, end(config.chips.out),
     end(config.chevron.in), end(config.chevron.rotate), tocEnd(config),
   ]
+  if (config.endManual) return Math.max(100, config.end)
   return Math.max(...ends) + config.hold
 }
 

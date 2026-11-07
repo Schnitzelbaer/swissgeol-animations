@@ -11,8 +11,12 @@ import { ArrayBufferTarget as WebmTarget, Muxer as WebmMuxer } from 'webm-muxer'
 export type ExportOptions = {
   /** Element in Canvas-Grösse, das gerastert wird */
   node: HTMLElement
+  /** Canvas-Grösse in CSS-Pixeln */
   width: number
   height: number
+  /** Videogrösse in Pixeln (z.B. QHD); der Canvas wird in dieser Auflösung gerastert, nicht hochskaliert */
+  outputWidth: number
+  outputHeight: number
   fps: number
   /** Bitrate in Bit/s */
   bitrate: number
@@ -54,8 +58,14 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => res
 
 export async function exportVideo(options: ExportOptions): Promise<ExportResult> {
   // H.264 verlangt gerade Abmessungen
-  const width = Math.max(2, Math.round(options.width / 2) * 2)
-  const height = Math.max(2, Math.round(options.height / 2) * 2)
+  const width = Math.max(2, Math.round(options.outputWidth / 2) * 2)
+  const height = Math.max(2, Math.round(options.outputHeight / 2) * 2)
+  // Rasterfaktor: Text und Kanten bleiben in der Zielauflösung scharf
+  const rasterScale = width / options.width
+  const target = document.createElement('canvas')
+  target.width = width
+  target.height = height
+  const targetContext = target.getContext('2d')!
   const { fps, bitrate, from, to, renderAt, onProgress, signal, node } = options
   const codec = await pickCodec(width, height, fps, bitrate)
 
@@ -77,10 +87,11 @@ export async function exportVideo(options: ExportOptions): Promise<ExportResult>
   })
   encoder.configure(codec.config)
 
-  const frames = Math.max(1, Math.round(((to - from) / 1000) * fps) + 1)
+  // So viele Bilder, dass das Video genau bis zum Ende dauert
+  const frames = Math.max(1, Math.round(((to - from) / 1000) * fps))
   const frameDuration = 1_000_000 / fps
   // Kontext einmal anlegen: Schriften und Bilder werden nur einmal eingebettet
-  const context = await createContext(node, { width, height, scale: 1, backgroundColor: null })
+  const context = await createContext(node, { width: options.width, height: options.height, scale: rasterScale, backgroundColor: null })
   try {
     for (let index = 0; index < frames; index++) {
       if (signal.aborted) throw new DOMException('Export abgebrochen', 'AbortError')
@@ -88,7 +99,10 @@ export async function exportVideo(options: ExportOptions): Promise<ExportResult>
       renderAt(from + (index * 1000) / fps)
       await nextFrame()
       const canvas = await domToCanvas(context)
-      const frame = new VideoFrame(canvas, { timestamp: Math.round(index * frameDuration), duration: Math.round(frameDuration) })
+      // Auf exakte Videogrösse bringen (Rundung auf gerade Pixel)
+      targetContext.clearRect(0, 0, width, height)
+      targetContext.drawImage(canvas, 0, 0, width, height)
+      const frame = new VideoFrame(target, { timestamp: Math.round(index * frameDuration), duration: Math.round(frameDuration) })
       encoder.encode(frame, { keyFrame: index % (fps * 2) === 0 })
       frame.close()
       // Nicht zu viele Bilder in der Warteschlange des Encoders

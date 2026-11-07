@@ -133,11 +133,41 @@
 
 .total {
   position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  margin-left: -4px;
+  cursor: ew-resize;
+}
+
+/* Gestrichelte Ende-Linie; ziehbar, durchgezogen wenn von Hand festgelegt */
+.total::before {
+  content: '';
+  position: absolute;
   top: 20px;
   bottom: 0;
-  width: 0;
+  left: 4px;
   border-left: 1px dashed var(--text-disabled);
-  pointer-events: none;
+}
+
+.totalManual::before {
+  border-left: 2px solid var(--text-high-emphasis);
+}
+
+.endLabel {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  padding: 1px 4px;
+  font-size: 10px;
+  color: var(--color-white);
+  background: var(--text-medium-emphasis);
+  border-radius: 3px;
+}
+
+.totalManual .endLabel {
+  background: var(--text-high-emphasis);
 }
 
 .lane {

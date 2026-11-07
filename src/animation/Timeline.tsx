@@ -23,6 +23,9 @@ type Props = {
   loop: boolean
   speed: number
   onSeek: (time: number) => void
+  /** Ende ziehen legt es von Hand fest */
+  endManual: boolean
+  onEnd: (end: number) => void
   onPlay: () => void
   onRestart: () => void
   onLoop: (loop: boolean) => void
@@ -31,11 +34,13 @@ type Props = {
 
 const SNAP = 10
 
-export function Timeline({ lanes, band, time, total, playing, loop, speed, onSeek, onPlay, onRestart, onLoop, onSpeed }: Props) {
+export function Timeline({ lanes, band, time, total, playing, loop, speed, onSeek, endManual, onEnd, onPlay, onRestart, onLoop, onSpeed }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   // Massstab bleibt während des Ziehens fest, sonst springen die Balken
   const [frozenScale, setFrozenScale] = useState<number | null>(null)
-  const scaleMax = frozenScale ?? Math.ceil((total + 500) / 1000) * 1000
+  // Massstab bis hinter das letzte Element, auch wenn das Ende von Hand früher gesetzt ist
+  const contentEnd = Math.max(total, band?.end ?? 0, ...lanes.map((lane) => lane.end))
+  const scaleMax = frozenScale ?? Math.ceil((contentEnd + 500) / 1000) * 1000
   const pct = (ms: number) => `${(ms / scaleMax) * 100}%`
 
   const msAt = (clientX: number) => {
@@ -179,6 +184,25 @@ export function Timeline({ lanes, band, time, total, playing, loop, speed, onSee
     window.addEventListener('pointerup', up)
   }
 
+  /** Ende-Linie ziehen: Ende von Hand, im 10-ms-Raster (Shift: 100 ms) */
+  const dragEnd = (event: React.PointerEvent) => {
+    event.stopPropagation()
+    event.preventDefault()
+    const scale = scaleMax
+    setFrozenScale(scale)
+    const move = (e: PointerEvent) => {
+      const snap = e.shiftKey ? 100 : SNAP
+      onEnd(Math.round(msAt(e.clientX) / snap) * snap)
+    }
+    const up = () => {
+      setFrozenScale(null)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
   const ticks = Array.from({ length: Math.floor(scaleMax / 500) + 1 }, (_, i) => i * 500)
 
   return (
@@ -244,7 +268,14 @@ export function Timeline({ lanes, band, time, total, playing, loop, speed, onSee
               <span>{band.label}</span>
             </div>
           )}
-          <div className={styles.total} style={{ left: pct(total) }} title="Ende inkl. Pause" />
+          <div
+            className={`${styles.total} ${endManual ? styles.totalManual : ''}`}
+            style={{ left: pct(total) }}
+            title={endManual ? `Ende von Hand: ${Math.round(total)} ms (ziehen)` : 'Ende inkl. Pause (ziehen, um es von Hand festzulegen)'}
+            onPointerDown={dragEnd}
+          >
+            <span className={styles.endLabel}>Ende</span>
+          </div>
           {lanes.map((lane) => (
             <div key={lane.id} className={styles.lane}>
               <div

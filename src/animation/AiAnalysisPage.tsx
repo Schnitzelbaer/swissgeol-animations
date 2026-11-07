@@ -4,7 +4,7 @@ import { initialFiles } from '../data/files'
 import { AnimatedDocumentCard, useDocumentContent } from './AnimatedDocumentCard'
 import { ColorField, Group, NumberField, Segmented, StepFields, SubTitle, TextField, Toggle, EasingField } from './controls'
 import { Timeline, type Lane } from './Timeline'
-import { DEFAULT_CONFIG, decodeConfig, encodeConfig, parseConfigJson, tocEnd, totalDuration, type Aspect, type Config, type EffectVariant, type FlagAppear, type FlagPlacement } from './timeline'
+import { DEFAULT_CONFIG, decodeConfig, encodeConfig, exportSize, type ExportResolution, parseConfigJson, tocEnd, totalDuration, type Aspect, type Config, type EffectVariant, type FlagAppear, type FlagPlacement } from './timeline'
 import styles from './AiAnalysisPage.module.css'
 
 const FILE = initialFiles.find((file) => file.id === '4841')!
@@ -165,6 +165,7 @@ export function AiAnalysisPage() {
     setExportTime(0)
     flushSync(() => setExporting(controller))
     const size = canvasSize(config, area)
+    const output = exportSize(config.export.resolution, size)
     const started = performance.now()
     try {
       setExportState({ message: 'Bereite vor …', progress: 0 })
@@ -174,6 +175,8 @@ export function AiAnalysisPage() {
         node: exportRef.current!,
         width: size.width,
         height: size.height,
+        outputWidth: output.width,
+        outputHeight: output.height,
         fps: config.export.fps,
         bitrate: config.export.bitrate * 1_000_000,
         from: 0,
@@ -182,7 +185,7 @@ export function AiAnalysisPage() {
         onProgress: (done, count) => setExportState({ message: `Bild ${done} von ${count}`, progress: done / count }),
         signal: controller.signal,
       })
-      const name = `ai-analyse-${size.width}x${size.height}-${config.export.fps}fps.${result.extension}`
+      const name = `ai-analyse-${output.width}x${output.height}-${config.export.fps}fps.${result.extension}`
       const url = URL.createObjectURL(result.blob)
       const link = document.createElement('a')
       link.href = url
@@ -261,10 +264,19 @@ export function AiAnalysisPage() {
                 <div className={styles.exportRow}>
                   <strong>Video</strong>
                   <span className={styles.exportMeta}>
-                    {canvasSize(config, area).width} × {canvasSize(config, area).height} px · {(total / 1000).toFixed(1)} s
+                    {exportSize(config.export.resolution, canvasSize(config, area)).width} × {exportSize(config.export.resolution, canvasSize(config, area)).height} px · {(total / 1000).toFixed(1)} s
                   </span>
                 </div>
                 <div className={styles.exportRow}>
+                  <label>
+                    Auflösung{' '}
+                    <select value={config.export.resolution} disabled={!!exporting} onChange={(e) => update((d) => void (d.export.resolution = e.target.value as ExportResolution))}>
+                      <option value="canvas">wie Canvas</option>
+                      <option value="fhd">Full HD</option>
+                      <option value="qhd">QHD</option>
+                      <option value="uhd">4K</option>
+                    </select>
+                  </label>
                   <label>
                     Bilder/s{' '}
                     <select value={config.export.fps} disabled={!!exporting} onChange={(e) => update((d) => void (d.export.fps = Number(e.target.value)))}>
@@ -440,7 +452,12 @@ export function AiAnalysisPage() {
                 <NumberField label="Einzug" value={config.stack.inset} min={0} max={48} unit="px" onChange={(v) => update((d) => void (d.stack.inset = v))} />
                 <NumberField label="Verblassen" value={config.stack.fade} min={0} max={0.5} step={0.05} onChange={(v) => update((d) => void (d.stack.fade = v))} />
                 <SubTitle>Ablauf</SubTitle>
-                <NumberField label="Pause am Ende" value={config.hold} min={0} max={8000} step={100} unit="ms" onChange={(v) => update((d) => void (d.hold = v))} />
+                <Toggle label="Ende manuell" value={config.endManual} onChange={(v) => update((d) => void ((d.endManual = v), v && (d.end = Math.round(total / 10) * 10)))} />
+                {config.endManual ? (
+                  <NumberField label="Ende" value={config.end} min={100} max={30000} step={10} unit="ms" onChange={(v) => update((d) => void (d.end = v))} />
+                ) : (
+                  <NumberField label="Pause am Ende" value={config.hold} min={0} max={8000} step={100} unit="ms" onChange={(v) => update((d) => void (d.hold = v))} />
+                )}
               </Group>
             </div>
           </aside>
@@ -455,6 +472,8 @@ export function AiAnalysisPage() {
               loop={loop}
               speed={speed}
               onSeek={seek}
+              endManual={config.endManual}
+              onEnd={(v) => update((d) => void ((d.endManual = true), (d.end = Math.max(100, v))))}
               onPlay={() => {
                 if (!playing && time >= total) setTime(0)
                 setPlaying(!playing)
