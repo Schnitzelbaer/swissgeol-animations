@@ -149,6 +149,7 @@ export function AiAnalysisPage() {
 
   const { effect, flag, chips: chipSteps, chevron, toc, stage } = config
   const lanes: Lane[] = [
+    { id: 'intro', label: 'Einstieg', color: '#64748b', start: config.intro.step.start, end: config.intro.step.start + config.intro.step.duration + config.stack.count * config.intro.stagger, onMove: (v) => update((d) => void (d.intro.step.start = v)), onResize: (v) => update((d) => void (d.intro.step.duration = Math.max(0, v - d.stack.count * d.intro.stagger))) },
     { id: 'fx-in', label: 'Effekt ein', color: '#6366f1', start: effect.in.start, end: effect.in.start + effect.in.duration, onMove: (v) => update((d) => void (d.effect.in.start = v)), onResize: (v) => update((d) => void (d.effect.in.duration = v)) },
     { id: 'fx-out', label: 'Effekt aus', color: '#6366f1', start: effect.out.start, end: effect.out.start + effect.out.duration, onMove: (v) => update((d) => void (d.effect.out.start = v)), onResize: (v) => update((d) => void (d.effect.out.duration = v)) },
     { id: 'flag-in', label: 'Fähnchen ein', color: '#a855f7', start: flag.in.start, end: flag.in.start + flag.in.duration, onMove: (v) => update((d) => void (d.flag.in.start = v)), onResize: (v) => update((d) => void (d.flag.in.duration = v)) },
@@ -185,6 +186,12 @@ export function AiAnalysisPage() {
             </header>
 
             <div className={styles.panelScroll}>
+              <Group title="Einstieg">
+                <NumberField label="Distanz" value={config.intro.distance} min={0} max={120} unit="px" onChange={(v) => update((d) => void (d.intro.distance = v))} />
+                <NumberField label="Stapel später" value={config.intro.stagger} min={0} max={600} step={10} unit="ms" onChange={(v) => update((d) => void (d.intro.stagger = v))} />
+                <StepFields title="Kachel von unten" value={config.intro.step} onChange={(v) => update((d) => void (d.intro.step = v))} />
+              </Group>
+
               <Group title="Effekt während der Analyse">
                 <Segmented<EffectVariant>
                   label="Variante"

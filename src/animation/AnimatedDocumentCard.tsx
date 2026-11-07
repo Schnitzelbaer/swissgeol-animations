@@ -104,6 +104,16 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
     width: config.stage.width,
   } as CSSProperties
 
+  // Einstieg: Kurve mit leichtem Überschwingen ergibt das Federn; deckend nach der ersten Hälfte
+  const { intro } = config
+  const introAt = (delay: number) => {
+    const s = { ...intro.step, start: intro.step.start + delay }
+    return { y: (1 - eased(s, time)) * intro.distance, opacity: clamp01(linear(s, time) * 2) }
+  }
+  const main = introAt(0)
+  cardStyle.transform = main.y ? `translateY(${main.y}px)` : undefined
+  cardStyle.opacity = main.opacity
+
   return (
     <div className={styles.wrap} style={cardStyle}>
       {/* Aura und Glow liegen hinter der Kachel */}
@@ -138,6 +148,9 @@ export function AnimatedDocumentCard({ file, config, time }: Props) {
             key={level}
             className={styles.stackLayer}
             style={{
+              // Eigene, verzögerte Bewegung; die Kachel davor bewegt den ganzen Stapel bereits mit
+              transform: `translateY(${introAt(level * intro.stagger).y - main.y}px)`,
+              opacity: introAt(level * intro.stagger).opacity,
               left: config.stack.inset * level,
               right: config.stack.inset * level,
               bottom: -config.stack.offset * level,

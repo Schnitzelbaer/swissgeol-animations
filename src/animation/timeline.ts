@@ -151,6 +151,8 @@ export type Config = {
   }
   /** Stapel hinter der Kachel: deutet an, dass es viele Dokumente gibt */
   stack: { count: number; offset: number; inset: number; fade: number }
+  /** Einstieg: Kachel kommt mit leichtem Federn von unten, die Kacheln des Stapels etwas später */
+  intro: { step: Step; distance: number; stagger: number }
   /** Pause am Ende, bevor die Schleife neu beginnt */
   hold: number
   stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; zoom: number; width: number; top: number; paddingY: number; paddingX: number }
@@ -200,6 +202,7 @@ export const DEFAULT_CONFIG: Config = {
   chevron: { in: step(5100, 300, EASING_PRESETS['ease-out']), rotate: step(6300, 400, EASING_PRESETS.swissgeol) },
   toc: { start: 6350, duration: 2400, easing: EASING_PRESETS.linear, rowGrow: 280, rowEasing: EASING_PRESETS.swissgeol, cps: 70, metaFade: 220 },
   stack: { count: 2, offset: 8, inset: 14, fade: 0.25 },
+  intro: { step: step(0, 700, [0.34, 1.4, 0.64, 1]), distance: 24, stagger: 90 },
   hold: 2000,
   stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', zoom: 1.4, width: 496, top: 22, paddingY: 24, paddingX: 27 },
 }
@@ -262,7 +265,7 @@ const end = (s: Step) => s.start + s.duration
 /** Gesamtdauer inklusive Pause am Ende */
 export function totalDuration(config: Config, chipCount: number) {
   const ends = [
-    end(config.effect.in), end(config.effect.out), end(config.flag.in), end(config.flag.out), end(config.language),
+    end(config.intro.step) + config.stack.count * config.intro.stagger, end(config.effect.in), end(config.effect.out), end(config.flag.in), end(config.flag.out), end(config.language),
     end(config.chips.in) + Math.max(0, chipCount - 1) * config.chips.stagger, end(config.chips.out),
     end(config.chevron.in), end(config.chevron.rotate), tocEnd(config),
   ]
