@@ -164,6 +164,7 @@ export function EditPage() {
                 <div className={`${styles.tabPanel} ${tab === 'legal' ? styles.tabPanelLegal : ''}`} role="tabpanel">
                   <FilesTable
                     key={tab}
+                    legal={tab === 'legal'}
                     files={tabFiles}
                     analysing={analysing}
                     onUpload={(uploads) => setDraft((current) => [...current, ...uploads.map((file) => toAssetFile(file, asset.id, tab === 'legal'))])}

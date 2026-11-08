@@ -84,6 +84,7 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
 
           <div className={styles.group} style={{ gap: 16 }}>
             <Section title={t.panel.documents} flush>
+              {documents.length === 0 && <p className={`${styles.emptyDocuments} body3`}>{t.panel.noDocuments}</p>}
               {documents.map((file, index) => (
                 <Fragment key={file.id}>
                   {index > 0 && <hr className={styles.itemDivider} />}
@@ -138,8 +139,12 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
 
             <Section title={t.panel.nationalInterest} gap={16}>
               <p className="body3-medium">{asset.nationalInterest.value ? t.codes.yes : t.codes.no}</p>
-              <hr className={styles.rule} />
-              <Chips items={asset.nationalInterest.reasons.map((reason) => t.codes.nationalInterest[reason])} gap="4px 6px" />
+              {asset.nationalInterest.reasons.length > 0 && (
+                <>
+                  <hr className={styles.rule} />
+                  <Chips items={asset.nationalInterest.reasons.map((reason) => t.codes.nationalInterest[reason])} gap="4px 6px" />
+                </>
+              )}
             </Section>
 
             <Section title={t.panel.contacts} gap={16}>
@@ -155,6 +160,7 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
             </Section>
 
             <Section title={t.panel.alternativeIds} gap={16}>
+              {asset.alternativeIds.length === 0 && <p className="body3-medium">–</p>}
               {asset.alternativeIds.map((entry, index) => (
                 <Fragment key={index}>
                   {index > 0 && <hr className={styles.rule} />}
@@ -170,6 +176,7 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
           <hr className={styles.divider} />
 
           <Section title={t.panel.references} gap={16} paddingBottom={20}>
+            {asset.references.length === 0 && <p className="body3-medium">–</p>}
             {asset.references.map((reference, index) => (
               <Fragment key={reference.label}>
                 {index > 0 && <hr className={styles.rule} />}

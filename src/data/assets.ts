@@ -121,6 +121,26 @@ export const assets: Asset[] = [
     alternativeIds: [{ id: 'AGS 16621', description: { de: 'Verwandtes Dossier', en: 'Related dossier' } }],
     references: [{ label: 'T20, sondages de reconnaissance au Creux du Seret, S La Chaux-de-Fonds', assetId: '16623' }],
   },
+  // Neu erfasstes Asset ohne Dateien: zeigt den leeren Zustand im Panel und im Files-Tab
+  {
+    id: '24518',
+    title: 'Schenkon, Pumpversuch Grundwasserfassung Zellfeld',
+    status: 'reviewed',
+    restriction: 'public',
+    topics: ['hydrogeology', 'borehole'],
+    kinds: ['wellLocationMap'],
+    languages: ['de'],
+    originalTitle: 'Gemeinde Schenkon – Grundwasserfassung Zellfeld, Pumpversuch und Wasserqualität',
+    dates: { created: '03.11.2026', received: '05.11.2026' },
+    nationalInterest: { value: false, reasons: [] },
+    contacts: [
+      { role: 'author', names: ['M. Brunner'] },
+      { role: 'initiator', names: ['Gemeinde Schenkon'] },
+      { role: 'supplier', names: ['Brunner Geologie GmbH'] },
+    ],
+    alternativeIds: [],
+    references: [],
+  },
 ]
 
 export function getAsset(id: string | undefined) {

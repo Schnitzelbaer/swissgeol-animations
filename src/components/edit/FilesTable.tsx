@@ -18,6 +18,10 @@ import rowClassifyGreyIcon from '../../assets/icons/row-classify-grey.svg'
 import spinnerIcon from '../../assets/icons/spinner.svg'
 import trashIcon from '../../assets/icons/trash.svg'
 import downloadIcon from '../../assets/icons/download.svg'
+import uploadWhiteIcon from '../../assets/icons/upload-white.svg'
+
+/** Angenommene Formate je Tab, als Chips im leeren Zustand */
+const FORMATS = { files: ['PDF', 'CSV', 'DOCX', 'JPG', 'PNG'], legal: ['PDF', 'DOCX', 'JPG', 'PNG'] }
 
 function Checkbox({ checked, indeterminate, onChange, label }: { checked: boolean; indeterminate?: boolean; onChange: () => void; label: string }) {
   const ref = useRef<HTMLInputElement>(null)
@@ -49,9 +53,9 @@ function UploadField({ onFiles }: { onFiles: (files: File[]) => void }) {
         onFiles([...event.dataTransfer.files])
       }}
     >
-      {/* Lange Striche wie in Figma; CSS-«dashed» wäre zu fein */}
+      {/* Feine, kurze Striche; als SVG, damit Strichlänge und Abstand genau stimmen */}
       <svg className={styles.uploadBorder} aria-hidden>
-        <rect x="1" y="1" rx="4" />
+        <rect x="0.5" y="0.5" rx="4" />
       </svg>
       <span className={styles.uploadTitle}>
         <img src={uploadIcon} alt="" />
@@ -72,7 +76,62 @@ function UploadField({ onFiles }: { onFiles: (files: File[]) => void }) {
   )
 }
 
+/**
+ * Leerer Zustand: grosse Ablagefläche mit Erklärung, Button zum Durchsuchen und den erlaubten Formaten.
+ * Dateien lassen sich auf die ganze Fläche ziehen.
+ */
+function EmptyUpload({ legal, onFiles }: { legal: boolean; onFiles: (files: File[]) => void }) {
+  const { t } = useI18n()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+  return (
+    <div
+      className={`${styles.empty} ${dragging ? styles.dragging : ''}`}
+      onDragOver={(event) => {
+        event.preventDefault()
+        setDragging(true)
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(event) => {
+        event.preventDefault()
+        setDragging(false)
+        onFiles([...event.dataTransfer.files])
+      }}
+    >
+      <svg className={styles.uploadBorder} aria-hidden>
+        <rect x="0.5" y="0.5" rx="6" />
+      </svg>
+      <span className={styles.emptyIcon}>
+        <img src={uploadIcon} alt="" />
+      </span>
+      <h3 className={styles.emptyTitle}>{legal ? t.files.emptyLegalTitle : t.files.emptyFilesTitle}</h3>
+      <p className={styles.emptyText}>{legal ? t.files.emptyLegalText : t.files.emptyFilesText}</p>
+      <Button variant="primary" icon={uploadWhiteIcon} label={t.files.browse} onClick={() => inputRef.current?.click()} />
+      <div className={styles.formats}>
+        {(legal ? FORMATS.legal : FORMATS.files).map((format) => (
+          <span key={format} className={styles.format}>
+            {format}
+          </span>
+        ))}
+        <span className={styles.maxSize}>{t.files.maxSize}</span>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        hidden
+        onChange={(event) => {
+          onFiles([...(event.target.files ?? [])])
+          event.target.value = ''
+        }}
+      />
+    </div>
+  )
+}
+
 type Props = {
+  /** Tab «Legal consents»: andere Texte und Formate im leeren Zustand */
+  legal?: boolean
   files: AssetFile[]
   analysing: Set<string>
   onUpload: (files: File[]) => void
@@ -82,7 +141,7 @@ type Props = {
 }
 
 /** Dateitabelle der Bearbeiten-Seite: Upload, Auswahl, Suche, Sortierung und Aktionen pro Zeile */
-export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, onClassify }: Props) {
+export function FilesTable({ legal = false, files, analysing, onUpload, onDelete, onAnalyse, onClassify }: Props) {
   const { t } = useI18n()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState('')
@@ -112,6 +171,9 @@ export function FilesTable({ files, analysing, onUpload, onDelete, onAnalyse, on
       link.click()
     }
   }
+
+  // Noch keine Dateien in diesem Tab: grosser leerer Zustand statt Upload-Feld und Tabelle
+  if (files.length === 0) return <EmptyUpload legal={legal} onFiles={onUpload} />
 
   return (
     <div className={styles.root}>

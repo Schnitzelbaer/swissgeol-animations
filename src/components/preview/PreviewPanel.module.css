@@ -204,3 +204,10 @@
     flex-basis: calc(50% - 3px);
   }
 }
+
+/* Asset ohne Dokumente */
+.emptyDocuments {
+  margin: 0;
+  padding: 16px 27px;
+  color: var(--text-medium-emphasis);
+}

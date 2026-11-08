@@ -142,7 +142,8 @@
 }
 
 .content {
-  width: 950px;
+  /* Breiter als in Figma (950px) auf Wunsch, damit Upload und Tabelle mehr Platz haben */
+  width: 1200px;
   max-width: 100%;
   margin: 0 auto;
 }

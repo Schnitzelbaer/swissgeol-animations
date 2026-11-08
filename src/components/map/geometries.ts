@@ -53,6 +53,8 @@ const GEOMETRIES: GeometryDefinition[] = [
   // «Punkt» (mit stärkerem Schatten)
   { id: 'punkt-6', assetId: '16623', kind: 'pin', geometry: () => new Point(px([450, 370])) },
   { id: 'punkt-7', assetId: '16622', kind: 'pin', geometry: () => new Point(px([502, 343])) },
+  // Neues Asset ohne Dateien (nicht in Figma), östlich bei Schenkon / Zellfeld
+  { id: 'punkt-8', assetId: '24518', kind: 'point', geometry: () => new Point(px([741, 620])) },
 ]
 
 export function createAssetFeatures() {
