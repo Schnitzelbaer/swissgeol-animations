@@ -169,7 +169,7 @@ export type Config = {
   /** Ende der Animation von Hand festlegen (sonst letzter Schritt + Pause) */
   endManual: boolean
   end: number
-  stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; canvasWidth: number; canvasHeight: number; zoom: number; width: number; top: number; paddingY: number; paddingX: number }
+  stage: { background: string; gradient: boolean; gradientColors: [string, string]; aspect: Aspect; canvasWidth: number; canvasHeight: number; zoom: number; width: number; vAlign: 'center' | 'top'; top: number; paddingY: number; paddingX: number }
   /** Video-Export */
   export: { fps: number; bitrate: number; resolution: ExportResolution }
 }
@@ -222,7 +222,7 @@ export const DEFAULT_CONFIG: Config = {
   hold: 2000,
   endManual: false,
   end: 10000,
-  stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', canvasWidth: 1920, canvasHeight: 1080, zoom: 1.4, width: 496, top: 22, paddingY: 24, paddingX: 27 },
+  stage: { background: '#eef0f3', gradient: false, gradientColors: ['#009db9', '#cdbe4d'], aspect: '16:9', canvasWidth: 1920, canvasHeight: 1080, zoom: 1.4, width: 496, vAlign: 'center', top: 22, paddingY: 24, paddingX: 27 },
   export: { fps: 60, bitrate: 16, resolution: 'canvas' },
 }
 

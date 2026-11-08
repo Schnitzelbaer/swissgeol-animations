@@ -445,7 +445,8 @@ export function AiAnalysisPage() {
                 <NumberField label="Breite" value={stage.width} min={320} max={720} step={2} unit="px" onChange={(v) => update((d) => void (d.stage.width = v))} />
                 <NumberField label="Abstand o/u" value={stage.paddingY} min={8} max={48} unit="px" onChange={(v) => update((d) => void (d.stage.paddingY = v))} />
                 <NumberField label="Abstand l/r" value={stage.paddingX} min={8} max={48} unit="px" onChange={(v) => update((d) => void (d.stage.paddingX = v))} />
-                <NumberField label="Oben" value={stage.top} min={0} max={80} unit="%" onChange={(v) => update((d) => void (d.stage.top = v))} />
+                <Segmented<'center' | 'top'> label="Vertikal" value={stage.vAlign} options={[['center', 'Mitte'], ['top', 'Oben']]} onChange={(v) => update((d) => void (d.stage.vAlign = v))} />
+                {stage.vAlign === 'top' && <NumberField label="Oben" value={stage.top} min={0} max={80} unit="%" onChange={(v) => update((d) => void (d.stage.top = v))} />}
                 <SubTitle>Stapel</SubTitle>
                 <NumberField label="Kacheln" value={config.stack.count} min={0} max={5} onChange={(v) => update((d) => void (d.stack.count = Math.round(v)))} />
                 <NumberField label="Versatz" value={config.stack.offset} min={0} max={24} unit="px" onChange={(v) => update((d) => void (d.stack.offset = v))} />
@@ -491,6 +492,20 @@ export function AiAnalysisPage() {
 
 type Size = { width: number; height: number }
 
+/**
+ * Lage der Kachel im Canvas. «Mitte»: Kachel samt Stapel bleibt vertikal zentriert, auch während sie wächst
+ * (Höhe wird jedes Bild neu gemessen, weil die Kachel aus der Zeit gerendert wird). «Oben»: Oberkante fest.
+ */
+function anchorStyle(config: Config, size: Size): CSSProperties {
+  const scale = cardScale(config, size)
+  if (config.stage.vAlign === 'top') {
+    return { top: `${config.stage.top}%`, transform: `translateX(-50%) scale(${scale})`, transformOrigin: 'top center' }
+  }
+  // Der Stapel ragt unten um count × Versatz heraus: Gruppe aus Kachel und Stapel zentrieren
+  const stackExtent = config.stack.count * config.stack.offset * scale
+  return { top: '50%', transform: `translate(-50%, calc(-50% - ${stackExtent / 2}px)) scale(${scale})`, transformOrigin: 'center center' }
+}
+
 /** Canvas in seiner echten Pixelgrösse: Hintergrund und Kachel; für Anzeige und Export gleich */
 const Canvas = forwardRef<HTMLDivElement, { config: Config; time: number; size: Size }>(function Canvas({ config, time, size }, ref) {
   const { stage } = config
@@ -507,7 +522,7 @@ const Canvas = forwardRef<HTMLDivElement, { config: Config; time: number; size: 
           : stage.background,
       } as CSSProperties}
     >
-      <div className={styles.cardAnchor} style={{ top: `${stage.top}%`, transform: `translateX(-50%) scale(${cardScale(config, size)})` }}>
+      <div className={styles.cardAnchor} style={anchorStyle(config, size)}>
         <AnimatedDocumentCard file={FILE} config={config} time={time} />
       </div>
     </div>
