@@ -4,10 +4,19 @@
 // Titel, Namen und Verweise bleiben wie in der Live-Applikation in der Originalsprache.
 
 import type { Lang } from '../i18n/messages'
+import { generatedAssets } from './generatedAssets'
 
-export type Topic = 'borehole' | 'geotechnics' | 'seismic3d' | 'crossSection' | 'hydrogeology'
-export type Kind = 'seismic3d' | 'wellLocationMap' | 'boreholeProfile'
-export type AssetLanguage = 'de' | 'fr' | 'other'
+export type Topic = 'borehole' | 'geotechnics' | 'seismic3d' | 'crossSection' | 'hydrogeology' | 'naturalHazards' | 'geophysics' | 'mineralResources'
+export type Kind =
+  | 'seismic3d'
+  | 'wellLocationMap'
+  | 'boreholeProfile'
+  | 'report'
+  | 'geologicalMap'
+  | 'crossSection'
+  | 'labAnalysis'
+  | 'measurements'
+export type AssetLanguage = 'de' | 'fr' | 'it' | 'en' | 'other'
 export type NationalInterestReason = 'federalParticipation' | 'nationalImpact'
 export type ContactRole = 'author' | 'initiator' | 'supplier'
 
@@ -141,6 +150,67 @@ export const assets: Asset[] = [
     alternativeIds: [],
     references: [],
   },
+  // SBB, Ausbau Bahnhof und Bahnanlage Tecknau (BL): Sondierungen 1975
+  {
+    id: '14366',
+    title: 'SBB Tecknau, Sondierungen für den Ausbau von Bahnhof und Bahnanlage, Strecke Basel – Olten',
+    status: 'reviewed',
+    restriction: 'public',
+    topics: ['borehole', 'geotechnics'],
+    kinds: ['boreholeProfile', 'measurements'],
+    languages: ['de'],
+    originalTitle: 'Ausbau Bahnhof und Bahnanlage Tecknau – Sondierungen SB 1 – SB 6 und Rammsondierungen RS 1 – RS 13',
+    dates: { created: '07.01.1976', received: '20.02.1976' },
+    nationalInterest: { value: true, reasons: ['federalParticipation'] },
+    contacts: [
+      { role: 'author', names: ['Gebr. Mengis Luzern'] },
+      { role: 'initiator', names: ['SBB Bauabteilung Kreis II, Sektion Tiefbau Luzern'] },
+      { role: 'supplier', names: ['Gebr. Mengis Luzern'] },
+    ],
+    alternativeIds: [{ id: '75 652', description: { de: 'Plan-Nr. Situation', en: 'Site plan no.' } }],
+    references: [{ label: 'N3, Sondierungen für SBB-Unterführung N Feldmoos, E Lachen', assetId: '8768' }],
+  },
+  // Berichte der Landesgeologie Nr. 12: Ceneri-Basistunnel
+  {
+    id: '41205',
+    title: 'Ceneri-Basistunnel, zusammenfassender geologischer Schlussbericht',
+    status: 'reviewed',
+    restriction: 'public',
+    topics: ['geotechnics', 'hydrogeology', 'crossSection'],
+    kinds: ['report', 'crossSection', 'labAnalysis'],
+    languages: ['de', 'it', 'fr', 'en'],
+    originalTitle: 'Ceneri-Basistunnel – Zusammenfassender geologischer Schlussbericht (Berichte der Landesgeologie Nr. 12)',
+    dates: { created: '01.11.2020', received: '30.11.2020' },
+    nationalInterest: { value: true, reasons: ['federalParticipation', 'nationalImpact'] },
+    contacts: [
+      { role: 'author', names: ['A. Hürzeler', 'G. Bergamini', 'S. Pozzorini', 'P.-F. Erard', 'M. Morandi'] },
+      { role: 'initiator', names: ['AlpTransit Gotthard AG'] },
+      { role: 'supplier', names: ['Bundesamt für Landestopografie swisstopo'] },
+    ],
+    alternativeIds: [{ id: 'BLGD 12', description: { de: 'Berichte der Landesgeologie Nr. 12', en: 'Reports of the Swiss Geological Survey no. 12' } }],
+    references: [{ label: 'Lötschberg-Basistunnel, geologische Voruntersuchungen und Prognosen', assetId: '19873' }],
+  },
+  // Geologische Berichte Nr. 22: Lötschberg-Basistunnel
+  {
+    id: '19873',
+    title: 'Lötschberg-Basistunnel, geologische Voruntersuchungen und Prognosen',
+    status: 'reviewed',
+    restriction: 'public',
+    topics: ['geotechnics', 'borehole', 'crossSection'],
+    kinds: ['report', 'crossSection', 'boreholeProfile'],
+    languages: ['de', 'fr', 'it'],
+    originalTitle: 'Geologie des Lötschberg-Basistunnels – Geologische Berichte Nr. 22',
+    dates: { created: '01.06.1998', received: '15.06.1998' },
+    nationalInterest: { value: true, reasons: ['federalParticipation', 'nationalImpact'] },
+    contacts: [
+      { role: 'author', names: ['P. Kellerhals', 'A. Isler'] },
+      { role: 'initiator', names: ['BLS AlpTransit AG'] },
+      { role: 'supplier', names: ['Geologengruppe Lötschberg-Basistunnel'] },
+    ],
+    alternativeIds: [{ id: 'GB 22', description: { de: 'Geologische Berichte Nr. 22', en: 'Geological reports no. 22' } }],
+    references: [{ label: 'Ceneri-Basistunnel, zusammenfassender geologischer Schlussbericht', assetId: '41205' }],
+  },
+  ...generatedAssets,
 ]
 
 export function getAsset(id: string | undefined) {

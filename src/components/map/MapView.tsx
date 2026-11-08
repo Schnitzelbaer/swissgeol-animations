@@ -6,7 +6,7 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import Cluster from 'ol/source/Cluster'
-import { boundingExtent, getCenter } from 'ol/extent'
+import { boundingExtent, containsExtent, createEmpty, extend, getCenter } from 'ol/extent'
 import XYZ from 'ol/source/XYZ'
 import { Attribution } from 'ol/control'
 import Feature from 'ol/Feature'
@@ -116,6 +116,8 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const [popoverIds, setPopoverIds] = useState<string[]>([])
   const popoverIdsRef = useRef<string[]>([])
   const hoveredRef = useRef<Feature[]>([])
+  /** Objekte direkt unter dem Zeiger (ohne die übrigen ihrer Gruppe) */
+  const hitsRef = useRef<Feature[]>([])
   const tooltipOverlayRef = useRef<Overlay | null>(null)
   const popoverOverlayRef = useRef<Overlay | null>(null)
 
@@ -124,11 +126,27 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     stackedRef.current = stacked
   }, [onFeatureClick, stacked])
 
-  const setHovered = useCallback((features: Feature[]) => {
-    for (const feature of hoveredRef.current) if (!features.includes(feature)) feature.set('hover', false)
-    for (const feature of features) feature.set('hover', true)
-    hoveredRef.current = features
+  // Zusammengehörige Objekte (Feature-Eigenschaft `group`, bei Assets die Asset-ID) werden gemeinsam markiert
+  const groupsRef = useRef(new Map<string, Feature[]>())
+  const withGroups = useCallback((features: Feature[]) => {
+    const result: Feature[] = []
+    for (const feature of features) {
+      const group = feature.get('group') as string | undefined
+      for (const member of (group && groupsRef.current.get(group)) || [feature]) if (!result.includes(member)) result.push(member)
+    }
+    return result
   }, [])
+
+  const setHovered = useCallback(
+    (hits: Feature[]) => {
+      const features = withGroups(hits)
+      for (const feature of hoveredRef.current) if (!features.includes(feature)) feature.set('hover', false)
+      for (const feature of features) feature.set('hover', true)
+      hoveredRef.current = features
+      hitsRef.current = hits
+    },
+    [withGroups],
+  )
 
   const closePopover = useCallback(() => {
     popoverIdsRef.current = []
@@ -145,6 +163,11 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     const initial = initialRef.current
     const source = new VectorSource({ features: initial.createFeatures() })
     sourceRef.current = source
+    groupsRef.current = new Map()
+    for (const feature of source.getFeatures()) {
+      const group = feature.get('group') as string | undefined
+      if (group) groupsRef.current.set(group, [...(groupsRef.current.get(group) ?? []), feature])
+    }
     const objectLayer = new VectorLayer({ source, style: initial.style })
     objectLayerRef.current = objectLayer
 
@@ -232,7 +255,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       containerRef.current!.style.cursor = hits.length && onFeatureClickRef.current ? 'pointer' : ''
       // Offenes Popover: seine Bohrungen bleiben hervorgehoben, kein Tooltip
       if (popoverIdsRef.current.length) return
-      const same = hits.length === hoveredRef.current.length && hits.every((feature) => hoveredRef.current.includes(feature))
+      const same = hits.length === hitsRef.current.length && hits.every((feature) => hitsRef.current.includes(feature))
       if (same) return
       setHovered(hits)
       showTooltip(hits)
@@ -320,12 +343,35 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     [setHovered],
   )
 
-  // Gewähltes Objekt hervorheben
+  // Gewähltes Objekt samt seiner Gruppe hervorheben; liegt es ausserhalb des sichtbaren Ausschnitts, dorthin fahren
+  const firstSelectionRef = useRef(true)
   useEffect(() => {
-    for (const feature of sourceRef.current?.getFeatures() ?? []) {
-      feature.set('selected', feature.getId() === selectedId)
+    const features = sourceRef.current?.getFeatures() ?? []
+    const chosen = features.find((feature) => feature.getId() === selectedId)
+    const selected = chosen ? withGroups([chosen]) : []
+    for (const feature of features) feature.set('selected', selected.includes(feature))
+
+    const map = mapRef.current
+    const first = firstSelectionRef.current
+    firstSelectionRef.current = false
+    if (!map || !selected.length) return
+    const extent = createEmpty()
+    for (const feature of selected) extend(extent, feature.getGeometry()!.getExtent())
+    const fit = () => {
+      const view = map.getView()
+      const visible = view.calculateExtent()
+      if (containsExtent(visible, extent)) return
+      // fit() rechnet das View-Padding (Panel) schon ein, hier nur der Rand
+      view.fit(extent, {
+        padding: [120, 120, 120, 120],
+        maxZoom: 15,
+        duration: first ? 0 : 600,
+      })
     }
-  }, [selectedId])
+    // Beim ersten Aufruf hat die Karte noch nicht gerendert und kennt ihre Grösse nicht: nach dem ersten Bild einpassen
+    if (first) map.once('postrender', fit)
+    else fit()
+  }, [selectedId, withGroups])
 
   // Das Panel überdeckt die Karte: Padding hält den sichtbaren Kartenmittelpunkt links davon.
   useEffect(() => {
