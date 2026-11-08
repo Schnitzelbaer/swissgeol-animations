@@ -8,6 +8,13 @@ import chevronDownIcon from '../../assets/icons/chevron-down.svg'
 import downloadIcon from '../../assets/icons/download.svg'
 import searchIcon from '../../assets/icons/search-viewer.svg'
 import closeIcon from '../../assets/icons/close.svg'
+import pdfIcon from '../../assets/icons/filetype-pdf.svg'
+import csvIcon from '../../assets/icons/filetype-csv.svg'
+
+/** Dateityp-Icon wie in der Dokumentliste: PDF eigenes Symbol, übrige Formate das Tabellen-Symbol */
+function FileTypeIcon({ file }: { file: AssetFile }) {
+  return <img src={file.format === 'PDF' ? pdfIcon : csvIcon} alt="" className={styles.fileIcon} />
+}
 
 function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; current: AssetFile; onSelect: (fileId: string) => void }) {
   const { t } = useI18n()
@@ -27,6 +34,7 @@ function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; curren
     <div ref={rootRef} className={`${styles.dropdown} ${open ? styles.open : ''}`}>
       <div className={styles.card}>
         <button type="button" className={styles.dropdownButton} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <FileTypeIcon file={current} />
           <span className="button-text ellipsis">{current.name}</span>
           <img src={chevronDownIcon} alt="" className={styles.dropdownChevron} />
         </button>
@@ -44,7 +52,10 @@ function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; curren
                 onSelect(file.id)
               }}
             >
-              <span className="ellipsis">{file.name}</span>
+              <span className={styles.optionName}>
+                <FileTypeIcon file={file} />
+                <span className="ellipsis">{file.name}</span>
+              </span>
               <span className={styles.optionMeta}>{file.pages && t.viewer.pages(file.pages)}</span>
             </button>
           </li>

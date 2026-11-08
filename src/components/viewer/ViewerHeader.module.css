@@ -93,6 +93,20 @@
   pointer-events: auto;
 }
 
+.fileIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.optionName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .option {
   display: flex;
   align-items: center;
