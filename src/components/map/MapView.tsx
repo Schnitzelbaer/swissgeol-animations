@@ -4,6 +4,7 @@ import OlMap from 'ol/Map'
 import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
+import HeatmapLayer from 'ol/layer/Heatmap'
 import VectorSource from 'ol/source/Vector'
 import Cluster from 'ol/source/Cluster'
 import { boundingExtent, containsExtent, createEmpty, extend, getCenter } from 'ol/extent'
@@ -78,9 +79,17 @@ type Props = {
    * damit die Karte performant bleibt. Ein Klick auf ein Badge zoomt hinein.
    */
   clusters?: { resolution: number; distance: number; style: StyleFunction; halfHeight: number }
+  /**
+   * Ab dieser Auflösung (m/px, also weiter herausgezoomt) eine Heatmap statt der Objekte (Assets).
+   * Die Punkte kommen aus `createPoints` (Feature mit Punkt und Eigenschaft `weight`).
+   */
+  heatmap?: { resolution: number; createPoints: () => Feature[] }
   /** Eingebettete Karte (Detailseite): ohne Tabellenleiste darunter */
   embedded?: boolean
 }
+
+/** Farbverlauf der Heatmap wie in der Live-App: Cyan am Rand über Grün und Gelb zu Rot */
+const HEATMAP_GRADIENT = ['rgba(56, 189, 248, 0)', 'rgba(94, 234, 212, 0.75)', '#4ade80', '#a3e635', '#fde047', '#fb923c', '#ef4444']
 
 /** Anker über den getroffenen Objekten: mittig, auf Höhe des obersten */
 function anchorOf(features: Feature[]): Coordinate {
@@ -96,7 +105,7 @@ function offsetOf(features: Feature[], gap: number): [number, number] {
   return [0, -(halfHeight + gap)]
 }
 
-export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, stacked, clusters, embedded }: Props) {
+export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, stacked, clusters, heatmap, embedded }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
   const sourceRef = useRef<VectorSource | null>(null)
@@ -104,7 +113,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const colorLayerRef = useRef<TileLayer | null>(null)
   const onFeatureClickRef = useRef(onFeatureClick)
   const stackedRef = useRef(stacked)
-  const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset, clusters })
+  const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset, clusters, heatmap })
   // Standard ist die farbige Landeskarte; die graue liegt darunter und erscheint beim Umschalten
   const [basemap, setBasemap] = useState<Basemap>('farbe')
   const initialBasemapRef = useRef(basemap)
@@ -173,7 +182,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
 
     // Herausgezoomt: Cluster-Layer mit Badges statt der einzelnen Objekte
     const clusterOptions = initial.clusters
-    const clusterLayers: VectorLayer[] = []
+    const clusterLayers: (VectorLayer | HeatmapLayer)[] = []
     if (clusterOptions) {
       objectLayer.setMaxResolution(clusterOptions.resolution)
       const clusterSource = new Cluster({
@@ -183,6 +192,24 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
         createCluster: (point, features) => new Feature({ geometry: point, features, halfHeight: clusterOptions.halfHeight }),
       })
       clusterLayers.push(new VectorLayer({ source: clusterSource, style: clusterOptions.style, minResolution: clusterOptions.resolution }))
+    }
+
+    // Herausgezoomt: Heatmap statt der Objekte. Radius und Unschärfe wachsen beim Hineinzoomen mit (rund 3 km im Gelände),
+    // damit das Bild über die Zoomstufen gleich wirkt.
+    const heatmapOptions = initial.heatmap
+    if (heatmapOptions) {
+      objectLayer.setMaxResolution(heatmapOptions.resolution)
+      clusterLayers.push(
+        new HeatmapLayer({
+          source: new VectorSource({ features: heatmapOptions.createPoints() }),
+          minResolution: heatmapOptions.resolution,
+          weight: 'weight',
+          radius: ['clamp', ['/', 2600, ['resolution']], 5, 40],
+          blur: ['clamp', ['/', 4200, ['resolution']], 9, 64],
+          gradient: HEATMAP_GRADIENT,
+          opacity: 0.7,
+        }),
+      )
     }
 
     const tooltipOverlay = new Overlay({ element: tooltipElement, positioning: 'bottom-center', stopEvent: false })
@@ -215,7 +242,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
           if (feature instanceof Feature && !hits.includes(feature)) hits.push(feature)
           return stackedRef.current ? undefined : true
         },
-        { hitTolerance: stackedRef.current ? 0 : 4 },
+        { hitTolerance: stackedRef.current ? 0 : 4, layerFilter: (layer) => !(layer instanceof HeatmapLayer) },
       )
       return hits
     }

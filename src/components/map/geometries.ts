@@ -5,6 +5,7 @@ import Polygon from 'ol/geom/Polygon'
 import { fromLonLat } from 'ol/proj'
 import type { Coordinate } from 'ol/coordinate'
 import { assetGeometries, type GeometryKind, type GeometrySpec } from '../../data/generatedAssets'
+import { HEAT_POINTS } from '../../data/assetHeatmap'
 
 /*
  * Startansicht wie im Figma-Screen «Desktop - 1» (1440×1024): Das Figma-Kartenbild wurde anhand der
@@ -53,4 +54,12 @@ export function defaultGeometryId(assetId: string) {
 
 export function geometryAssetId(geometryId: string | null | undefined) {
   return assetGeometries.find((spec) => spec.id === geometryId)?.assetId
+}
+
+/** Ab dieser Auflösung (m/px, zwei Zoomschritte weiter heraus als die Startansicht) zeigt die Karte eine Heatmap */
+export const ASSET_HEATMAP_RESOLUTION = 60
+
+/** Punkte der Heatmap (data/assetHeatmap.ts) */
+export function createAssetHeatPoints() {
+  return HEAT_POINTS.map(({ at, weight }) => new Feature({ geometry: new Point(fromLonLat(at)), weight }))
 }

@@ -5,7 +5,7 @@ import { Sidebar } from '../components/Sidebar'
 import { MapView } from '../components/map/MapView'
 import { Legend } from '../components/map/Legend'
 import { assetStyle } from '../components/map/styles'
-import { createAssetFeatures, INITIAL_CENTER, INITIAL_RESOLUTION } from '../components/map/geometries'
+import { ASSET_HEATMAP_RESOLUTION, createAssetFeatures, createAssetHeatPoints, INITIAL_CENTER, INITIAL_RESOLUTION } from '../components/map/geometries'
 import { TableBar } from '../components/TableBar'
 import { PreviewPanel } from '../components/preview/PreviewPanel'
 import { useDocumentViewer } from '../components/viewer/useDocumentViewer'
@@ -118,6 +118,7 @@ export function MapPage() {
             panelOffset={panelOffset}
             selectedId={selectedGeometryId}
             onFeatureClick={selectGeometry}
+            heatmap={{ resolution: ASSET_HEATMAP_RESOLUTION, createPoints: createAssetHeatPoints }}
           />
           <TableBar count={t.table.count(ASSET_COUNT)} />
           <PreviewPanel
