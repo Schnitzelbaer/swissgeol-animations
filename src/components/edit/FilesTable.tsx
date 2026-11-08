@@ -20,9 +20,6 @@ import trashIcon from '../../assets/icons/trash.svg'
 import downloadIcon from '../../assets/icons/download.svg'
 import uploadWhiteIcon from '../../assets/icons/upload-white.svg'
 
-/** Angenommene Formate je Tab, als Chips im leeren Zustand */
-const FORMATS = { files: ['PDF', 'CSV', 'DOCX', 'JPG', 'PNG'], legal: ['PDF', 'DOCX', 'JPG', 'PNG'] }
-
 function Checkbox({ checked, indeterminate, onChange, label }: { checked: boolean; indeterminate?: boolean; onChange: () => void; label: string }) {
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -77,7 +74,7 @@ function UploadField({ onFiles }: { onFiles: (files: File[]) => void }) {
 }
 
 /**
- * Leerer Zustand: grosse Ablagefläche mit Erklärung, Button zum Durchsuchen und den erlaubten Formaten.
+ * Leerer Zustand: gleiche Ablagefläche wie das Upload-Feld (weiss, feiner Rahmen, Hover), dazu Erklärung und Button.
  * Dateien lassen sich auf die ganze Fläche ziehen.
  */
 function EmptyUpload({ legal, onFiles }: { legal: boolean; onFiles: (files: File[]) => void }) {
@@ -86,7 +83,9 @@ function EmptyUpload({ legal, onFiles }: { legal: boolean; onFiles: (files: File
   const [dragging, setDragging] = useState(false)
   return (
     <div
-      className={`${styles.empty} ${dragging ? styles.dragging : ''}`}
+      className={`${styles.emptyDrop} ${dragging ? styles.dragging : ''}`}
+      // Wie das Upload-Feld: Klick auf die ganze Fläche öffnet die Dateiauswahl (der Button löst denselben Klick aus)
+      onClick={() => inputRef.current?.click()}
       onDragOver={(event) => {
         event.preventDefault()
         setDragging(true)
@@ -99,27 +98,20 @@ function EmptyUpload({ legal, onFiles }: { legal: boolean; onFiles: (files: File
       }}
     >
       <svg className={styles.uploadBorder} aria-hidden>
-        <rect x="0.5" y="0.5" rx="6" />
+        <rect x="0.5" y="0.5" rx="4" />
       </svg>
       <span className={styles.emptyIcon}>
         <img src={uploadIcon} alt="" />
       </span>
       <h3 className={styles.emptyTitle}>{legal ? t.files.emptyLegalTitle : t.files.emptyFilesTitle}</h3>
       <p className={styles.emptyText}>{legal ? t.files.emptyLegalText : t.files.emptyFilesText}</p>
-      <Button variant="primary" icon={uploadWhiteIcon} label={t.files.browse} onClick={() => inputRef.current?.click()} />
-      <div className={styles.formats}>
-        {(legal ? FORMATS.legal : FORMATS.files).map((format) => (
-          <span key={format} className={styles.format}>
-            {format}
-          </span>
-        ))}
-        <span className={styles.maxSize}>{t.files.maxSize}</span>
-      </div>
+      <Button variant="primary" icon={uploadWhiteIcon} label={t.files.browse} />
       <input
         ref={inputRef}
         type="file"
         multiple
         hidden
+        onClick={(event) => event.stopPropagation()}
         onChange={(event) => {
           onFiles([...(event.target.files ?? [])])
           event.target.value = ''

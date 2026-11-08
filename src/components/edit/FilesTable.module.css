@@ -50,7 +50,7 @@
 }
 
 .upload:hover .uploadBorder rect,
-.empty:hover .uploadBorder rect,
+.emptyDrop:hover .uploadBorder rect,
 .dragging .uploadBorder rect {
   stroke: var(--color-primary);
 }
@@ -66,19 +66,21 @@
 }
 
 /* Leerer Zustand (Figma-Skizze des Nutzers): grosse Ablagefläche, zentrierter Inhalt */
-.empty {
+.emptyDrop {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 56px 24px 64px;
+  padding: 56px 24px;
   text-align: center;
-  background: var(--color-bg-grey);
-  border-radius: 6px;
+  border-radius: var(--radius-4);
+  cursor: pointer;
   transition: background-color 200ms ease;
 }
 
-.empty.dragging {
+/* Wie das Upload-Feld: weisser Grund, Hover und Drag-Over mit leichtem Grün */
+.emptyDrop:hover,
+.emptyDrop.dragging {
   background: var(--color-primary-tint);
 }
 
@@ -114,31 +116,6 @@
   color: var(--text-medium-emphasis);
 }
 
-.formats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 20px;
-}
-
-.format {
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 18px;
-  letter-spacing: 0.02em;
-  color: var(--text-medium-emphasis);
-  background: #eceff2;
-  border-radius: 4px;
-}
-
-.maxSize {
-  margin-left: 4px;
-  font-size: 12px;
-  color: var(--text-medium-emphasis);
-}
 
 .uploadTitle {
   display: flex;

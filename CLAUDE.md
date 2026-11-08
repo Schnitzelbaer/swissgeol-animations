@@ -26,7 +26,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 - Assets: `4841` (Inhalte wie im Figma-Screen), `8768`, `16623`, `16622` und `24518` (neu erfasst, ohne Dateien; Punkt östlich bei Schenkon/Zellfeld, nicht in Figma: Panel zeigt «No documents yet», Files-Tab den leeren Zustand). Jede Geometrie auf der Karte gehört zu einem Asset (`src/components/map/geometries.ts`); ein Klick markiert sie pink und öffnet das Panel dieses Assets.
 - `?lang=de` schaltet auf Deutsch; ohne Parameter ist alles Englisch. Der Parameter bleibt bei jeder Navigation erhalten (`src/i18n/index.tsx` trägt ihn nach), die Sprachwahl im Header setzt ihn.
 - `?doc=<Datei-ID>&page=<n>` öffnet den PDF-Viewer (auf jeder Seite), z.B. `/asset/4841?doc=8768&page=7`.
-- `/asset/4841/edit/files` Bearbeiten-Seite (Inhalt 1200 px breit; Upload-Rahmen fein gestrichelt; ist ein Tab leer, ersetzt eine grosse Ablagefläche mit Titel, Text, «Browse files» und Formaten Upload-Feld und Tabelle, z.B. `/asset/24518/edit/files`); `?tab=legal` rechtliche Einwilligungen, `?classify=<Datei-ID>` Klassifizierungs-Editor.
+- `/asset/4841/edit/files` Bearbeiten-Seite (Inhalt 1200 px breit; Upload-Rahmen fein gestrichelt; ist ein Tab leer, ersetzt eine grosse Ablagefläche im Stil des Upload-Felds (weiss, feiner Rahmen, ganze Fläche klickbar) mit Icon, Titel, Text und «Browse files» Upload-Feld und Tabelle, z.B. `/asset/24518/edit/files`); `?tab=legal` rechtliche Einwilligungen, `?classify=<Datei-ID>` Klassifizierungs-Editor.
 
 ## Aufbau
 
