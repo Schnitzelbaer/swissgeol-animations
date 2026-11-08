@@ -9,6 +9,9 @@ const PAD_Y = 32
 const GAP = 24
 const MAX_PIXEL_RATIO = 2
 const SCROLLBAR = 16
+/** Sprung zu einer Seite: feste Dauer, gleitet höchstens so viele Bildschirmhöhen (Rest wird übersprungen) */
+const SCROLL_DURATION_MS = 450
+const SCROLL_GLIDE = 1.2
 
 export type ScrollRequest = { page: number; id: number; smooth?: boolean }
 
@@ -228,14 +231,52 @@ export function PdfPages({ pdf, zoom, rotation, scrollRequest, onPageChange, onZ
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boxes])
 
-  // Sprung zu einer Seite (Inhaltsverzeichnis, Blättern, URL)
+  // Sprung zu einer Seite (Inhaltsverzeichnis, Blättern, URL). Die Animation dauert immer gleich lang, egal wie weit
+  // das Ziel entfernt ist: Bei grossen Distanzen springt sie zuerst bis kurz vor das Ziel und gleitet den Rest,
+  // so werden auch keine Seiten unterwegs gerendert. Mausrad oder Touch brechen sie ab.
+  const scrollAnimationRef = useRef(0)
+  useEffect(() => {
+    const element = scrollRef.current
+    if (!element) return
+    const cancel = () => cancelAnimationFrame(scrollAnimationRef.current)
+    element.addEventListener('wheel', cancel, { passive: true })
+    element.addEventListener('touchstart', cancel, { passive: true })
+    element.addEventListener('pointerdown', cancel)
+    return () => {
+      cancel()
+      element.removeEventListener('wheel', cancel)
+      element.removeEventListener('touchstart', cancel)
+      element.removeEventListener('pointerdown', cancel)
+    }
+  }, [])
+
   useLayoutEffect(() => {
     const element = scrollRef.current
     if (!element || !viewport.height) return
     const page = Math.min(Math.max(scrollRequest.page, 1), boxes.length)
     currentPageRef.current = page
     anchorRef.current = { page, fraction: 0.5 }
-    element.scrollTo({ top: pageTop(page) - PAD_Y, behavior: scrollRequest.smooth ? 'smooth' : 'auto' })
+    cancelAnimationFrame(scrollAnimationRef.current)
+    const target = Math.min(pageTop(page) - PAD_Y, element.scrollHeight - element.clientHeight)
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!scrollRequest.smooth || reducedMotion) {
+      element.scrollTop = target
+      return
+    }
+    const glide = element.clientHeight * SCROLL_GLIDE
+    let from = element.scrollTop
+    if (Math.abs(target - from) > glide) {
+      from = target - Math.sign(target - from) * glide
+      element.scrollTop = from
+    }
+    const start = performance.now()
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / SCROLL_DURATION_MS, 1)
+      const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2
+      element.scrollTop = from + (target - from) * eased
+      if (progress < 1) scrollAnimationRef.current = requestAnimationFrame(step)
+    }
+    scrollAnimationRef.current = requestAnimationFrame(step)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollRequest.id, viewport.height > 0])
 
