@@ -42,10 +42,11 @@
 .dropdownButton {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   height: 36px;
   max-width: 320px;
-  padding: 8px 12px;
+  /* Links wenig Abstand: das 28px-Badge sitzt 4px vom Rand wie ein Icon-Button */
+  padding: 4px 12px 4px 4px;
   border-radius: var(--radius-4);
   color: var(--color-primary);
   transition: background-color 150ms ease;
@@ -93,11 +94,28 @@
   pointer-events: auto;
 }
 
-.fileIcon {
+/* Dateityp-Badge wie in den Dokument-Kacheln (36px dort), hier kompakter 28px */
+.fileBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-4);
+}
+
+.fileBadge img {
+  width: 16px;
+  height: 19px;
+}
+
+.pdf {
+  background: #fae1e2;
+}
+
+.csv {
+  background: #dbeafe;
 }
 
 .optionName {
@@ -114,7 +132,8 @@
   gap: 16px;
   width: 100%;
   min-height: 36px;
-  padding: 8px 12px;
+  /* Badge links bündig mit dem Badge im Dropdown-Button */
+  padding: 4px 12px 4px 4px;
   border-radius: var(--radius-4);
   font-size: 14px;
   line-height: 20px;

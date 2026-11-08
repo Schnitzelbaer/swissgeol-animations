@@ -11,9 +11,14 @@ import closeIcon from '../../assets/icons/close.svg'
 import pdfIcon from '../../assets/icons/filetype-pdf.svg'
 import csvIcon from '../../assets/icons/filetype-csv.svg'
 
-/** Dateityp-Icon wie in der Dokumentliste: PDF eigenes Symbol, übrige Formate das Tabellen-Symbol */
+/** Dateityp-Icon wie in der Dokumentliste: farbiger Hintergrund, PDF rot, übrige Formate blau */
 function FileTypeIcon({ file }: { file: AssetFile }) {
-  return <img src={file.format === 'PDF' ? pdfIcon : csvIcon} alt="" className={styles.fileIcon} />
+  const isPdf = file.format === 'PDF'
+  return (
+    <span className={`${styles.fileBadge} ${isPdf ? styles.pdf : styles.csv}`}>
+      <img src={isPdf ? pdfIcon : csvIcon} alt="" />
+    </span>
+  )
 }
 
 function FileDropdown({ files, current, onSelect }: { files: AssetFile[]; current: AssetFile; onSelect: (fileId: string) => void }) {
