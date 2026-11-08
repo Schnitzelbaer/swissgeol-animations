@@ -94,8 +94,8 @@ function Search({ file, page, onGoToPage }: { file: AssetFile; page: number; onG
   }
 
   return (
-    <div className={`${styles.card} ${styles.search} ${open ? styles.searchOpen : ''}`}>
-      <Button icon={searchIcon} aria-label={t.viewer.search} aria-expanded={open} onClick={() => setOpen(!open)} />
+    <div className={`${styles.search} ${open ? styles.searchOpen : ''}`}>
+      <Button variant="tertiary-dark" icon={searchIcon} aria-label={t.viewer.search} tooltip={t.viewer.search} aria-expanded={open} onClick={() => setOpen(!open)} />
       <div className={styles.searchField}>
         <input
           ref={inputRef}
@@ -121,22 +121,18 @@ type Props = {
   onClose?: () => void
 }
 
-/** Kopfzeile des Datei-Viewers: Dateiwahl, Download, Suche und Schliessen */
+/** Kopfzeile des Datei-Viewers: Dateiwahl, dann Download, Suche und Schliessen als Tertiary-Buttons für dunklen Grund (weisses Icon, ohne Kachel) */
 export function ViewerHeader({ files, file, page, onSelectFile, onGoToPage, onClose }: Props) {
   const { t } = useI18n()
   return (
     <header className={styles.header}>
       <div className={styles.group}>
         <FileDropdown files={files} current={file} onSelect={onSelectFile} />
-        <div className={styles.card}>
-          <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={t.viewer.download} tooltip={t.viewer.download} />
-        </div>
+        <ButtonLink variant="tertiary-dark" icon={downloadIcon} href={file.url} download={file.name} aria-label={t.viewer.download} tooltip={t.viewer.download} />
         <Search key={file.id} file={file} page={page} onGoToPage={onGoToPage} />
       </div>
       {onClose && (
-        <div className={styles.card}>
-          <Button icon={closeIcon} aria-label={t.viewer.close} onClick={onClose} />
-        </div>
+        <Button variant="tertiary-dark" icon={closeIcon} aria-label={t.viewer.close} tooltip={t.viewer.close} onClick={onClose} />
       )}
     </header>
   )

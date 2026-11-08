@@ -71,6 +71,32 @@
   background: var(--color-primary-tint);
 }
 
+/*
+ * Tertiär auf dunklem Grund (neu, nicht im Designsystem): transparent mit weissem Icon und Text,
+ * Hover/Gedrückt als leichter weisser Schleier, Fokus weiss. Für den dunklen Kopf des Datei-Viewers.
+ */
+.tertiary-dark {
+  color: var(--color-white);
+}
+
+/* Icons sind Figma-SVGs in Grün: weiss einfärben */
+.tertiary-dark img {
+  filter: brightness(0) invert(1);
+}
+
+.tertiary-dark:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tertiary-dark:active,
+.tertiary-dark[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.tertiary-dark:focus-visible {
+  outline-color: var(--color-white);
+}
+
 /* Sekundär – transparent mit Rahmen */
 .secondary {
   border: 1px solid var(--color-primary);
