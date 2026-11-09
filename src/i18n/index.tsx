@@ -26,6 +26,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState(() => parseLang(new URLSearchParams(location.search).get('lang')))
 
   useEffect(() => {
+    // Eine Weiterleitung (z.B. / → /asset/4841) hat die Adresse schon geändert: warten, bis location nachzieht
+    if (window.location.pathname !== location.pathname) return
     const params = new URLSearchParams(location.search)
     const wanted = lang === DEFAULT_LANG ? null : lang
     if (params.get('lang') === wanted) return

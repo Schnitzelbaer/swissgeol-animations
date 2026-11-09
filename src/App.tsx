@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { MapPage } from './pages/MapPage'
 import { EditPage } from './pages/EditPage'
 import { BoreholesMapPage } from './pages/BoreholesMapPage'
@@ -10,13 +10,15 @@ import { VariantsProvider } from './variants'
 import styles from './App.module.css'
 
 export default function App() {
+  // Weiterleitung von / behält Sprache, Legende und Varianten
+  const { search } = useLocation()
   return (
     <VariantsProvider>
       <div className={styles.shell}>
         <VariantBar />
         <div className={styles.content}>
           <Routes>
-            <Route path="/" element={<Navigate to={`/asset/${DEFAULT_ASSET_ID}`} replace />} />
+            <Route path="/" element={<Navigate to={{ pathname: `/asset/${DEFAULT_ASSET_ID}`, search }} replace />} />
             {/* Gemeinsames Layout, damit die Karte beim Öffnen und Schliessen des Panels erhalten bleibt */}
             <Route element={<MapPage />}>
               <Route path="/map" element={null} />

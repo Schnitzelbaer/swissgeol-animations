@@ -46,6 +46,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [boreholeContent, setBoreholeContent] = useState<ContentKind>(() => parseContent(new URLSearchParams(location.search).get('content')))
   useEffect(() => {
     if (!location.pathname.startsWith('/boreholes')) return
+    // Eine Weiterleitung (z.B. / → /asset/4841) hat die Adresse schon geändert: warten, bis location nachzieht
+    if (window.location.pathname !== location.pathname) return
     // window.location statt location: Sprache und Varianten werden im selben Durchgang nachgetragen
     const params = new URLSearchParams(window.location.search)
     const before = params.toString()

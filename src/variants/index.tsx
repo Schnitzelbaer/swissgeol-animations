@@ -51,6 +51,8 @@ export function VariantsProvider({ children }: { children: ReactNode }) {
   const [barVisible, setBarVisibleState] = useState(readBarVisible)
 
   useEffect(() => {
+    // Eine Weiterleitung (z.B. / → /asset/4841) hat die Adresse schon geändert: warten, bis location nachzieht
+    if (window.location.pathname !== location.pathname) return
     // window.location statt location: Sprache und Legende werden im selben Durchgang nachgetragen
     const params = new URLSearchParams(window.location.search)
     const before = params.toString()
