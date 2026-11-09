@@ -51,7 +51,21 @@
   grid-template-rows: 1fr;
 }
 
+/* Inhalt unter dem Kopf: optional ein Bedienelement, darunter die Einträge */
+.body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.controls {
+  flex-shrink: 0;
+  padding: 12px 16px 2px;
+}
+
 .items {
+  flex: 0 1 auto;
   min-height: 0;
   overflow: hidden;
   margin: 0;

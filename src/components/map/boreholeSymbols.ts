@@ -68,3 +68,15 @@ export const SYMBOLS: Record<string, SymbolDefinition> = {
   'Workflow Status/Publikation': { fill: '#10b981', path: 'M7.0 15.0A8.0 8.0 0 1 0 23.0 15.0A8.0 8.0 0 1 0 7.0 15.0Z', stroke: '#064e3b', strokePath: 'M8.0 15.0A7.0 7.0 0 1 0 22.0 15.0A7.0 7.0 0 1 0 8.0 15.0Z', strokeWidth: 2, inside: false, shadow: 'rgba(16, 185, 129, 0.4)' },
   'Workflow Status/Änderung angefordert': { fill: '#e53940', path: 'M23.5295 10.0944L19.9056 6.47049C19.515 6.07997 18.8819 6.07997 18.4913 6.47049L15 9.96183L11.5087 6.47049C11.1181 6.07997 10.485 6.07997 10.0944 6.47049L6.47052 10.0944C6.08 10.4849 6.08 11.1181 6.47052 11.5086L9.96186 15L6.47052 18.4913C6.08 18.8818 6.08 19.515 6.47052 19.9055L10.0944 23.5294C10.485 23.92 11.1181 23.92 11.5087 23.5294L15 20.0381L18.4913 23.5294C18.8819 23.92 19.515 23.92 19.9056 23.5294L23.5295 19.9055C23.92 19.515 23.92 18.8818 23.5295 18.4913L20.0381 15L23.5295 11.5086C23.92 11.1181 23.92 10.4849 23.5295 10.0944Z', stroke: '#801519', strokePath: 'M22.8224 10.8015L18.6239 15L22.8224 19.1984L19.1984 22.8223L15 18.6239L10.8016 22.8223L7.17763 19.1984L11.3761 15L7.17763 10.8015L10.8016 7.1776L15 11.376L19.1984 7.1776L22.8224 10.8015Z', strokeWidth: 2, inside: false, shadow: 'rgba(229, 57, 64, 0.4)' },
 }
+
+/*
+ * Legende v2, «Verfügbare Inhalte»: Kreis wie die übrigen Symbole, vorhanden in der Farbe des Inhalts, nicht vorhanden grau.
+ * Es ist immer nur ein Inhalt sichtbar; die drei Farben unterscheiden die Inhalte in Legende und Popover.
+ */
+const CIRCLE = { path: 'M7 15A8 8 0 1 0 23 15A8 8 0 1 0 7 15Z', strokePath: 'M8 15A7 7 0 1 0 22 15A7 7 0 1 0 8 15Z', strokeWidth: 2, inside: false }
+Object.assign(SYMBOLS, {
+  'Inhalt/Profil': { ...CIRCLE, fill: '#f59e0b', stroke: '#78350f', shadow: 'rgba(245, 158, 11, 0.4)' },
+  'Inhalt/Dokumente': { ...CIRCLE, fill: '#e53940', stroke: '#801519', shadow: 'rgba(229, 57, 64, 0.4)' },
+  'Inhalt/Fotos': { ...CIRCLE, fill: '#0891b2', stroke: '#164e63', shadow: 'rgba(8, 145, 178, 0.4)' },
+  'Inhalt/Nicht vorhanden': { ...CIRCLE, fill: '#c9d1d8', stroke: '#6c7680', shadow: 'rgba(130, 142, 154, 0.4)' },
+} satisfies Record<string, SymbolDefinition>)

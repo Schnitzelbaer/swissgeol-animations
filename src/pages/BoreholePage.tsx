@@ -6,8 +6,8 @@ import { MapView } from '../components/map/MapView'
 import { boreholeStyle } from '../components/map/boreholeStyles'
 import { BOREHOLE_CLUSTERS, BOREHOLES_RESOLUTION, boreholeCoordinate, boreholeLonLat, createBoreholeFeatures } from '../components/map/boreholeGeometries'
 import { formatSwissNumber, getBorehole, nearestPlace, stableOffset, wgs84ToLv95, type Borehole } from '../data/boreholes'
-import { useStore } from '../data/store'
 import { useBoreholeStack } from '../components/map/boreholeStack'
+import { useBoreholeLegendView } from '../components/map/useBoreholeLegendView'
 import { useI18n } from '../i18n'
 import styles from './BoreholePage.module.css'
 import backIcon from '../assets/icons/back.svg'
@@ -40,9 +40,9 @@ function Card({ title, spacious, children }: { title: string; spacious?: boolean
 function Location({ borehole }: { borehole: Borehole }) {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const { boreholeLegend } = useStore()
+  const legendView = useBoreholeLegendView()
   const openBorehole = useCallback((id: string) => navigate(`/boreholes/${id}/location`), [navigate])
-  const stacked = useBoreholeStack(boreholeLegend, openBorehole)
+  const stacked = useBoreholeStack(legendView, openBorehole)
   const [lon, lat] = boreholeLonLat(borehole.id)
   const { east, north } = wgs84ToLv95(lon, lat)
   const place = nearestPlace(lon, lat)
@@ -82,7 +82,7 @@ function Location({ borehole }: { borehole: Borehole }) {
           <MapView
             key={borehole.id}
             createFeatures={createBoreholeFeatures}
-            style={boreholeStyle(boreholeLegend)}
+            style={boreholeStyle(legendView)}
             center={boreholeCoordinate(borehole.id)}
             resolution={BOREHOLES_RESOLUTION}
             selectedId={borehole.id}

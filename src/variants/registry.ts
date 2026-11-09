@@ -28,10 +28,23 @@ export type Variant = {
 export type VariantGroup = {
   key: string
   label: string
+  /** Ohne Gruppen-Überschrift: die Varianten stehen direkt im Dropdown (z.B. «Legende v1», «Legende v2») */
+  flat?: boolean
   /** Seiten, auf denen die Gruppe wirkt (Pfad der URL) */
   pages: RegExp
   /** Erste Variante = Standard */
   variants: Variant[]
 }
 
-export const VARIANT_GROUPS: VariantGroup[] = []
+export const VARIANT_GROUPS: VariantGroup[] = [
+  {
+    key: 'legend',
+    label: 'Legende',
+    flat: true,
+    pages: /^\/boreholes/,
+    variants: [
+      { key: 'v1', label: 'Legende v1', description: 'Stand vom 9. November 2026' },
+      { key: 'v2', label: 'Legende v2', description: '«Verfügbare Inhalte»: ein Inhalt auf einmal, vorhanden / nicht vorhanden' },
+    ],
+  },
+]

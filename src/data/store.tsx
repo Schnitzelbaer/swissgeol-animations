@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { initialFiles, type AssetFile, type Section } from './files'
-import { LEGEND_TOPICS, type LegendTopic } from '../components/map/boreholeLegends'
+import { CONTENT_KINDS, LEGEND_TOPICS, type ContentKind, type LegendTopic } from '../components/map/boreholeLegends'
 
 /** Dauer der simulierten AI-Analyse (in der echten Anwendung teils über 20 Minuten) */
 export const ANALYSIS_DURATION_MS = 7000
@@ -17,11 +17,18 @@ type Store = {
   /** Legende der Boreholes-Karte; bleibt beim Wechsel zur Detailseite und zurück erhalten */
   boreholeLegend: LegendTopic
   setBoreholeLegend: (topic: LegendTopic) => void
+  /** Legende v2, «Verfügbare Inhalte»: gewählter Inhalt der Segmented Control */
+  boreholeContent: ContentKind
+  setBoreholeContent: (kind: ContentKind) => void
 }
 
 const StoreContext = createContext<Store | null>(null)
 
 const DEFAULT_LEGEND: LegendTopic = 'templateType'
+
+function parseContent(value: string | null): ContentKind {
+  return CONTENT_KINDS.find((kind) => kind.toLowerCase() === value) ?? CONTENT_KINDS[0]
+}
 
 function parseLegend(value: string | null): LegendTopic {
   return LEGEND_TOPICS.includes(value as LegendTopic) ? (value as LegendTopic) : DEFAULT_LEGEND
@@ -35,17 +42,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [boreholeLegend, setBoreholeLegend] = useState<LegendTopic>(() => parseLegend(new URLSearchParams(location.search).get('legend')))
+  // Legende v2: gewählter Inhalt als ?content=dokumente|fotos (Profil ist Standard)
+  const [boreholeContent, setBoreholeContent] = useState<ContentKind>(() => parseContent(new URLSearchParams(location.search).get('content')))
   useEffect(() => {
     if (!location.pathname.startsWith('/boreholes')) return
-    // window.location statt location: der Sprach-Parameter wird im selben Durchgang nachgetragen
+    // window.location statt location: Sprache und Varianten werden im selben Durchgang nachgetragen
     const params = new URLSearchParams(window.location.search)
-    const wanted = boreholeLegend === DEFAULT_LEGEND ? null : boreholeLegend
-    if (params.get('legend') === wanted) return
-    if (wanted) params.set('legend', wanted)
+    const before = params.toString()
+    const legend = boreholeLegend === DEFAULT_LEGEND ? null : boreholeLegend
+    const content = boreholeContent === CONTENT_KINDS[0] ? null : boreholeContent.toLowerCase()
+    if (legend) params.set('legend', legend)
     else params.delete('legend')
+    if (content) params.set('content', content)
+    else params.delete('content')
     const search = params.toString()
+    if (search === before) return
     navigate({ pathname: location.pathname, search: search ? `?${search}` : '', hash: location.hash }, { replace: true, state: location.state })
-  }, [boreholeLegend, location, navigate])
+  }, [boreholeLegend, boreholeContent, location, navigate])
   const timers = useRef(new Map<string, number>())
 
   const getFile = useCallback((id: string | null | undefined) => files.find((file) => file.id === id), [files])
@@ -74,8 +87,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend, setBoreholeLegend }),
-    [files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend],
+    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend, setBoreholeLegend, boreholeContent, setBoreholeContent }),
+    [files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend, boreholeContent],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

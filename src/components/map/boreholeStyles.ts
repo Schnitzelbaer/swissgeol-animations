@@ -6,7 +6,7 @@ import { Style } from 'ol/style'
 import type { StyleFunction } from 'ol/style/Style'
 import { getBorehole } from '../../data/boreholes'
 import { SYMBOLS, type SymbolDefinition } from './boreholeSymbols'
-import { legendValue, symbolKey, type LegendTopic } from './boreholeLegends'
+import { viewKey, viewSymbol, viewValue, type LegendView } from './boreholeLegends'
 import { HOVER, SELECTED } from './styles'
 
 /*
@@ -208,11 +208,11 @@ export const clusterStyle: StyleFunction = (feature) => {
   return badgeStyle(members.length, state)
 }
 
-const styleFunctions = new Map<LegendTopic, StyleFunction>()
+const styleFunctions = new Map<string, StyleFunction>()
 
 /** Stil der Bohrungen für eine Legende; Hover und Auswahl bekommen den Rahmen und liegen oben */
-export function boreholeStyle(topic: LegendTopic): StyleFunction {
-  let fn = styleFunctions.get(topic)
+export function boreholeStyle(view: LegendView): StyleFunction {
+  let fn = styleFunctions.get(viewKey(view))
   if (!fn) {
     fn = (feature: FeatureLike) => {
       const borehole = getBorehole(String(feature.getId()))
@@ -224,7 +224,7 @@ export function boreholeStyle(topic: LegendTopic): StyleFunction {
         const states = members.map(stateOf)
         return badgeStyle(members.length, states.includes('selected') ? 'selected' : states.includes('hover') ? 'hover' : 'default')
       }
-      const key = symbolKey(topic, legendValue(borehole, topic))
+      const key = viewSymbol(view, viewValue(borehole, view))
       const state = stateOf(feature)
       const cacheKey = `${key}|${state}`
       let style = styles.get(cacheKey)
@@ -243,7 +243,7 @@ export function boreholeStyle(topic: LegendTopic): StyleFunction {
       }
       return style
     }
-    styleFunctions.set(topic, fn)
+    styleFunctions.set(viewKey(view), fn)
   }
   return fn
 }

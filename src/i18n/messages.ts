@@ -2,7 +2,7 @@ import type { AssetLanguage, ContactRole, Kind, NationalInterestReason, Topic } 
 import type { PageClass } from '../data/files'
 import type { TemplateType } from '../data/boreholes'
 import type { Canton } from '../data/swissPlaces'
-import type { LegendTopic } from '../components/map/boreholeLegends'
+import type { ContentKind, LegendTopic } from '../components/map/boreholeLegends'
 
 export type Lang = 'en' | 'de'
 
@@ -256,6 +256,11 @@ const en = {
       length: 'Borehole length',
       contents: 'Available content',
     } satisfies Record<LegendTopic, string>,
+    /** Legende v2, «Verfügbare Inhalte»: Segmented Control und Einträge */
+    contentKinds: { Profil: 'Profile', Dokumente: 'Documents', Fotos: 'Photos' } satisfies Record<ContentKind, string>,
+    contentKindLabel: 'Content type',
+    contentPresent: { Profil: 'Profile available', Dokumente: 'Documents available', Fotos: 'Photos available' } satisfies Record<ContentKind, string>,
+    contentMissing: { Profil: 'No profile', Dokumente: 'No documents', Fotos: 'No photos' } satisfies Record<ContentKind, string>,
     /** Werte der Legenden Bohrzweck, Bohrtyp, Freigabe, Workflow Status und Verfügbare Inhalte (Codes = Figma-Varianten; Bohrlochlänge-Klassen ohne Übersetzung) */
     values: {
       'Belastete Standorte': 'Contaminated sites',
@@ -654,6 +659,10 @@ const de: Messages = {
       length: 'Bohrlochlänge',
       contents: 'Verfügbare Inhalte',
     },
+    contentKinds: { Profil: 'Profil', Dokumente: 'Dokumente', Fotos: 'Fotos' },
+    contentKindLabel: 'Inhalt',
+    contentPresent: { Profil: 'Profil vorhanden', Dokumente: 'Dokumente vorhanden', Fotos: 'Fotos vorhanden' },
+    contentMissing: { Profil: 'Kein Profil', Dokumente: 'Keine Dokumente', Fotos: 'Keine Fotos' },
     values: {
       'Belastete Standorte': 'Belastete Standorte',
       'Naturgefahren': 'Naturgefahren',

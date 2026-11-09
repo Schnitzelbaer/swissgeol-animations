@@ -19,9 +19,13 @@ export function VariantBar() {
   const menuRef = useRef<HTMLDivElement>(null)
 
   const groups = VARIANT_GROUPS.filter((group) => group.pages.test(location.pathname))
+  // Im Button: Varianten ohne Gruppe immer, die übrigen nur, wenn sie vom Standard abweichen
   const active = groups
-    .filter((group) => selection[group.key])
-    .map((group) => `${group.label}: ${group.variants.find((variant) => variant.key === selection[group.key])?.label}`)
+    .filter((group) => group.flat || selection[group.key])
+    .map((group) => {
+      const label = group.variants.find((variant) => variant.key === (selection[group.key] ?? group.variants[0]?.key))?.label
+      return group.flat ? label : `${group.label}: ${label}`
+    })
 
   // Höhe der Leiste für Overlays (Modal), die sonst über ihr liegen würden
   useEffect(() => {
@@ -73,8 +77,8 @@ export function VariantBar() {
                 {groups.map((group) => {
                   const current = selection[group.key] ?? group.variants[0]?.key
                   return (
-                    <div key={group.key} role="group" aria-label={group.label} className={styles.group}>
-                      <div className={styles.groupLabel}>{group.label}</div>
+                    <div key={group.key} role="group" aria-label={group.label} className={`${styles.group} ${group.flat ? styles.flat : ''}`}>
+                      {!group.flat && <div className={styles.groupLabel}>{group.label}</div>}
                       {group.variants.map((variant) => (
                         <button
                           key={variant.key}

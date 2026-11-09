@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { getBorehole } from '../../data/boreholes'
 import { useI18n } from '../../i18n'
-import { legendLabel, legendValue, symbolKey, type LegendTopic } from './boreholeLegends'
+import { viewLabel, viewSymbol, viewValue, type LegendView } from './boreholeLegends'
 import { SymbolIcon } from './SymbolIcon'
 import type { StackedControls } from './MapView'
 import styles from './BoreholePopover.module.css'
@@ -11,7 +11,7 @@ const VISIBLE_ROWS = 5
 
 type Entry = { id: string; name: string; symbol: string; value: string }
 
-function useEntries(ids: string[], topic: LegendTopic): Entry[] {
+function useEntries(ids: string[], view: LegendView): Entry[] {
   const { t } = useI18n()
   return useMemo(
     () =>
@@ -19,10 +19,10 @@ function useEntries(ids: string[], topic: LegendTopic): Entry[] {
         .map((id) => getBorehole(id))
         .filter((borehole) => borehole !== undefined)
         .map((borehole) => {
-          const value = legendValue(borehole, topic)
-          return { id: borehole.id, name: borehole.name, symbol: symbolKey(topic, value), value: legendLabel(t, topic, value) }
+          const value = viewValue(borehole, view)
+          return { id: borehole.id, name: borehole.name, symbol: viewSymbol(view, value), value: viewLabel(t, view, value) }
         }),
-    [ids, topic, t],
+    [ids, view, t],
   )
 }
 
@@ -50,9 +50,9 @@ function RowContent({ entry }: { entry: Entry }) {
 }
 
 /** Vorschau beim Hover: dasselbe Popover, aber flüchtig und nicht klickbar (ohne Pfeile) */
-export function BoreholePreview({ ids, topic }: { ids: string[]; topic: LegendTopic }) {
+export function BoreholePreview({ ids, view }: { ids: string[]; view: LegendView }) {
   const { t } = useI18n()
-  const entries = useEntries(ids, topic)
+  const entries = useEntries(ids, view)
   const shown = entries.length > VISIBLE_ROWS ? entries.slice(0, VISIBLE_ROWS - 1) : entries
   return (
     <div className={styles.popover}>
@@ -71,7 +71,7 @@ export function BoreholePreview({ ids, topic }: { ids: string[]; topic: LegendTo
 
 type Props = {
   ids: string[]
-  topic: LegendTopic
+  view: LegendView
   controls: StackedControls
   onOpen: (id: string) => void
 }
@@ -80,9 +80,9 @@ type Props = {
  * Popover nach Klick auf einen Haufen: bleibt stehen, die Zeilen sind klickbar (Pfeil rechts) und öffnen die Detailseite.
  * Schliesst mit Escape oder Klick auf die Karte.
  */
-export function BoreholePopover({ ids, topic, controls, onOpen }: Props) {
+export function BoreholePopover({ ids, view, controls, onOpen }: Props) {
   const { t } = useI18n()
-  const entries = useEntries(ids, topic)
+  const entries = useEntries(ids, view)
   return (
     <div className={`${styles.popover} ${controls.instant ? styles.instant : ''}`} role="dialog" aria-label={t.boreholes.popoverTitle(entries.length)}>
       <ul className={styles.list} onMouseLeave={() => controls.highlight(null)}>

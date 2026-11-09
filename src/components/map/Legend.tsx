@@ -22,10 +22,12 @@ type Props = {
   onSwitch?: () => void
   /** Lange Listen scrollen (Platz für den Scrollbalken wie in Figma) */
   scrollable?: boolean
+  /** Bedienelement im Inhalt über den Einträgen, z.B. die Segmented Control in Legende v2 */
+  controls?: ReactNode
 }
 
 /** Legende oben links auf der Karte («… Legende Drawer – Integrated») */
-export function Legend({ title, items, width, onSwitch, scrollable }: Props) {
+export function Legend({ title, items, width, onSwitch, scrollable, controls }: Props) {
   const { t } = useI18n()
   const [open, setOpen] = useState(true)
 
@@ -51,14 +53,17 @@ export function Legend({ title, items, width, onSwitch, scrollable }: Props) {
         />
       </header>
       <div className={styles.collapse}>
-        <ul key={title} className={styles.items}>
-          {items.map((item) => (
-            <li key={item.label} className={`${styles.item} ${item.separator ? styles.separator : ''}`}>
-              {typeof item.icon === 'string' ? <img src={item.icon} alt="" /> : item.icon}
-              <span className="body3">{item.label}</span>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.body}>
+          {controls && <div className={styles.controls}>{controls}</div>}
+          <ul key={title} className={styles.items}>
+            {items.map((item) => (
+              <li key={item.label} className={`${styles.item} ${item.separator ? styles.separator : ''}`}>
+                {typeof item.icon === 'string' ? <img src={item.icon} alt="" /> : item.icon}
+                <span className="body3">{item.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   )

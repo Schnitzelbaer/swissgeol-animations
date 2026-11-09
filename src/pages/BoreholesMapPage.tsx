@@ -8,7 +8,9 @@ import { Legend } from '../components/map/Legend'
 import { SymbolIcon } from '../components/map/SymbolIcon'
 import { useBoreholeStack } from '../components/map/boreholeStack'
 import { boreholeStyle } from '../components/map/boreholeStyles'
-import { GROUP_STARTS, LEGEND_TOPICS, LEGEND_VALUES, LEGEND_WIDTH, legendLabel, symbolKey } from '../components/map/boreholeLegends'
+import { CONTENT_KINDS, GROUP_STARTS, LEGEND_TOPICS, LEGEND_WIDTH, viewLabel, viewSymbol, viewValues } from '../components/map/boreholeLegends'
+import { useBoreholeLegendView } from '../components/map/useBoreholeLegendView'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { BOREHOLE_CLUSTERS, BOREHOLES_CENTER, BOREHOLES_RESOLUTION, createBoreholeFeatures } from '../components/map/boreholeGeometries'
 import { useStore } from '../data/store'
 import { useI18n } from '../i18n'
@@ -25,16 +27,26 @@ const BOREHOLE_COUNT = 23000
 export function BoreholesMapPage() {
   const navigate = useNavigate()
   const { t } = useI18n()
-  const { boreholeLegend: topic, setBoreholeLegend } = useStore()
+  const { boreholeLegend: topic, setBoreholeLegend, boreholeContent, setBoreholeContent } = useStore()
+  const view = useBoreholeLegendView()
   const openBorehole = useCallback((id: string) => navigate(`/boreholes/${id}/location`), [navigate])
-  const stacked = useBoreholeStack(topic, openBorehole)
+  const stacked = useBoreholeStack(view, openBorehole)
 
-  const groupStarts = GROUP_STARTS[topic] ?? []
-  const items = LEGEND_VALUES[topic].map((value) => ({
-    icon: <SymbolIcon symbol={symbolKey(topic, value)} />,
-    label: legendLabel(t, topic, value),
+  const groupStarts = view.content ? [] : (GROUP_STARTS[topic] ?? [])
+  const items = viewValues(view).map((value) => ({
+    icon: <SymbolIcon symbol={viewSymbol(view, value)} />,
+    label: viewLabel(t, view, value),
     separator: groupStarts.includes(value),
   }))
+  // Legende v2, «Verfügbare Inhalte»: Segmented Control über den Einträgen wählt den Inhalt
+  const controls = view.content ? (
+    <SegmentedControl
+      aria-label={t.boreholes.contentKindLabel}
+      options={CONTENT_KINDS.map((kind) => ({ value: kind, label: t.boreholes.contentKinds[kind] }))}
+      value={boreholeContent}
+      onChange={setBoreholeContent}
+    />
+  ) : undefined
   const switchLegend = () => setBoreholeLegend(LEGEND_TOPICS[(LEGEND_TOPICS.indexOf(topic) + 1) % LEGEND_TOPICS.length])
 
   return (
@@ -45,10 +57,10 @@ export function BoreholesMapPage() {
         <main className={styles.main} style={{ '--panel-offset': '0px' } as CSSProperties}>
           <MapView
             createFeatures={createBoreholeFeatures}
-            style={boreholeStyle(topic)}
+            style={boreholeStyle(view)}
             center={BOREHOLES_CENTER}
             resolution={BOREHOLES_RESOLUTION}
-            legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable />}
+            legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable controls={controls} />}
             onFeatureClick={openBorehole}
             stacked={stacked}
             clusters={BOREHOLE_CLUSTERS}

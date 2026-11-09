@@ -1,0 +1,48 @@
+/* Graue Schiene mit weissem, gleitendem Feld für die gewählte Option */
+.control {
+  position: relative;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  padding: 2px;
+  background: var(--color-bg-grey);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-4);
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--count));
+  transform: translateX(calc(100% * var(--index)));
+  background: var(--color-white);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform 220ms var(--ease-out);
+}
+
+.option {
+  position: relative;
+  height: 28px;
+  padding: 0 10px;
+  color: var(--text-medium-emphasis);
+  white-space: nowrap;
+  border-radius: 3px;
+  transition: color 150ms ease;
+}
+
+.option:hover {
+  color: var(--text-high-emphasis);
+}
+
+.option[aria-checked='true'] {
+  color: var(--color-primary);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
