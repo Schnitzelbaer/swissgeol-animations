@@ -49,7 +49,7 @@
   outline-offset: 2px;
 }
 
-/* Vorschaubild: 50px-Kreis, Bildausschnitt wie in Figma (77×100, versetzt um -11/-25) */
+/* Vorschaubild: 50px-Kreis, Bildausschnitt der grauen Karte wie in Figma (77×100, versetzt um -11/-25) */
 .thumb {
   position: relative;
   display: block;
@@ -57,9 +57,16 @@
   height: 50px;
   border-radius: 50%;
   overflow: hidden;
+  animation: thumb-in 350ms ease;
 }
 
-.thumbGrey {
+@keyframes thumb-in {
+  from {
+    opacity: 0.4;
+  }
+}
+
+.greyImage {
   position: absolute;
   left: -11px;
   top: -25px;
@@ -68,16 +75,85 @@
   object-fit: cover;
 }
 
-.thumbColor {
+.tileImage {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 350ms ease;
 }
 
-.thumbColor.visible {
-  opacity: 1;
+/* Auswahl der Hintergrundkarte: Karte links neben dem Vorschaubild, im Stil der Zoom-Steuerung */
+.picker {
+  position: relative;
+}
+
+.options {
+  position: absolute;
+  right: calc(100% + 12px);
+  bottom: 0;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: var(--color-bg-grey);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-overlay);
+  animation: options-in 180ms var(--ease-out);
+}
+
+@keyframes options-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 84px;
+  padding: 8px 4px 6px;
+  border-radius: var(--radius-4);
+  color: var(--text-medium-emphasis);
+  transition: background-color 150ms ease;
+}
+
+.option:hover {
+  background: var(--color-hovered);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Rund und gleich gross wie das Vorschaubild (50px), damit der Ausschnitt der grauen Karte passt */
+.optionThumb {
+  position: relative;
+  display: block;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border-default);
+}
+
+.option[aria-checked='true'] .optionThumb {
+  box-shadow:
+    0 0 0 2px var(--color-white),
+    0 0 0 4px var(--color-primary);
+}
+
+.option[aria-checked='true'] .optionLabel {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.optionLabel {
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
 }

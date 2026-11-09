@@ -15,7 +15,8 @@ import Overlay from 'ol/Overlay'
 import Point from 'ol/geom/Point'
 import type { Coordinate } from 'ol/coordinate'
 import type { StyleFunction } from 'ol/style/Style'
-import { MapControls, type Basemap } from './MapControls'
+import { useSearchParams } from 'react-router-dom'
+import { BASEMAPS, MapControls, type Basemap } from './MapControls'
 import styles from './MapView.module.css'
 
 /*
@@ -132,8 +133,12 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const stackedRef = useRef(stacked)
   const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset, clusters, heatmap })
   // Standard ist die farbige Landeskarte; die graue liegt darunter und erscheint beim Umschalten
-  const [basemap, setBasemap] = useState<Basemap>('farbe')
+  // Hintergrund: farbige Landeskarte (Standard), graue Landeskarte oder Luftbild; als ?basemap=grau|luftbild in der URL
+  const [searchParams, setSearchParams] = useSearchParams()
+  const basemapParam = searchParams.get('basemap')
+  const basemap: Basemap = BASEMAPS.includes(basemapParam as Basemap) ? (basemapParam as Basemap) : 'farbe'
   const initialBasemapRef = useRef(basemap)
+  const aerialLayerRef = useRef<TileLayer | null>(null)
 
   // Tooltip und Popover liegen als OpenLayers-Overlays auf der Karte und wandern beim Verschieben mit
   const [tooltipElement] = useState(() => document.createElement('div'))
@@ -187,6 +192,8 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
     const colorLayer = swisstopoLayer('ch.swisstopo.pixelkarte-farbe', initialBasemapRef.current === 'farbe' ? 1 : 0)
     colorLayerRef.current = colorLayer
+    const aerialLayer = swisstopoLayer('ch.swisstopo.swissimage', initialBasemapRef.current === 'luftbild' ? 1 : 0)
+    aerialLayerRef.current = aerialLayer
 
     const initial = initialRef.current
     const source = new VectorSource({ features: initial.createFeatures() })
@@ -238,7 +245,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
 
     const map = new OlMap({
       target: containerRef.current!,
-      layers: [greyLayer, colorLayer, objectLayer, ...clusterLayers],
+      layers: [greyLayer, colorLayer, aerialLayer, objectLayer, ...clusterLayers],
       overlays: [tooltipOverlay, popoverOverlay],
       controls: [new Attribution({ collapsible: false, className: `ol-attribution ${styles.attribution}` })],
       view: new View({
@@ -476,12 +483,25 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     mapRef.current?.getView().animate({ center, resolution, duration: 600 })
   }
 
-  const toggleBasemap = () => {
-    const next = basemap === 'grau' ? 'farbe' : 'grau'
-    setBasemap(next)
-    const layer = colorLayerRef.current
-    if (layer) tween(layer.getOpacity(), next === 'farbe' ? 1 : 0, 350, (value) => layer.setOpacity(value))
-  }
+  // Graue Karte liegt immer zuunterst; farbige Karte und Luftbild blenden darüber ein und aus
+  useEffect(() => {
+    for (const [layer, target] of [
+      [colorLayerRef.current, basemap === 'farbe' ? 1 : 0],
+      [aerialLayerRef.current, basemap === 'luftbild' ? 1 : 0],
+    ] as const) {
+      if (layer && layer.getOpacity() !== target) tween(layer.getOpacity(), target, 350, (value) => layer.setOpacity(value))
+    }
+  }, [basemap])
+
+  const selectBasemap = (next: Basemap) =>
+    setSearchParams(
+      (params) => {
+        if (next === 'farbe') params.delete('basemap')
+        else params.set('basemap', next)
+        return params
+      },
+      { replace: true },
+    )
 
   return (
     <div className={`${styles.root} ${embedded ? styles.embedded : ''}`} style={embedded ? ({ '--panel-offset': '0px' } as CSSProperties) : undefined}>
@@ -492,7 +512,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
         onZoomIn={() => zoomBy(1)}
         onZoomOut={() => zoomBy(-1)}
         onReset={resetView}
-        onToggleBasemap={toggleBasemap}
+        onSelectBasemap={selectBasemap}
       />
       {stacked &&
         tooltipIds.length > 0 &&

@@ -3,6 +3,7 @@ import type { PageClass } from '../data/files'
 import type { TemplateType } from '../data/boreholes'
 import type { Canton } from '../data/swissPlaces'
 import type { ContentKind, LegendTopic } from '../components/map/boreholeLegends'
+import type { Basemap } from '../components/map/MapControls'
 
 export type Lang = 'en' | 'de'
 
@@ -50,8 +51,8 @@ const en = {
     zoomIn: 'Zoom in',
     reset: 'Reset view',
     zoomOut: 'Zoom out',
-    showColour: 'Show colour map',
-    showGrey: 'Show grey map',
+    basemap: 'Background map',
+    basemaps: { farbe: 'Colour map', grau: 'Grey map', luftbild: 'Aerial image' } satisfies Record<Basemap, string>,
   },
   panel: {
     label: 'Asset preview',
@@ -455,8 +456,8 @@ const de: Messages = {
     zoomIn: 'Hineinzoomen',
     reset: 'Ansicht zurücksetzen',
     zoomOut: 'Herauszoomen',
-    showColour: 'Farbige Landeskarte anzeigen',
-    showGrey: 'Graue Landeskarte anzeigen',
+    basemap: 'Hintergrundkarte',
+    basemaps: { farbe: 'Karte farbig', grau: 'Karte grau', luftbild: 'Luftbild' },
   },
   panel: {
     label: 'Asset-Vorschau',
