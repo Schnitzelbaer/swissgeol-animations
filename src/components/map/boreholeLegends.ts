@@ -1,3 +1,4 @@
+import type { Messages } from '../../i18n/messages'
 import { ACCESS, BOREHOLE_TYPES, CONTENTS, LENGTH_CLASSES, PURPOSES, WORKFLOW_STATES, lengthClass, type Borehole, type TemplateType } from '../../data/boreholes'
 
 /** Legenden der Boreholes-Karte in der Reihenfolge von Figma «Alle Legenden» (21008:128368); der Wechsel-Button schaltet durch */
@@ -55,4 +56,9 @@ export function symbolKey(topic: LegendTopic, value: string) {
   if (topic === 'templateType') return TEMPLATE_SYMBOL[value as TemplateType]
   if (value === 'Trinkwasser') return 'Trinkwasser/Trinkwasser'
   return `${FIGMA_TOPIC[topic]}/${value}`
+}
+
+/** Bezeichnung eines Legendenwerts in der aktuellen Sprache */
+export function legendLabel(t: Messages, topic: LegendTopic, value: string) {
+  return topic === 'templateType' ? t.boreholes.templateType[value as TemplateType] : (t.boreholes.values[value] ?? value)
 }

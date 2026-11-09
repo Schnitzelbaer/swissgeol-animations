@@ -1,4 +1,4 @@
-/* Weisse Karte mit Rahmen und Schlagschatten wie die Legende */
+/* Weisse Karte mit Rahmen und Schlagschatten wie die Legende; als Vorschau (Hover) und festgehalten (Klick) gleich */
 .popover {
   width: max-content;
   min-width: 220px;
@@ -11,6 +11,11 @@
   animation: popover-in 200ms var(--ease-out);
 }
 
+/* Festgehalten aus der Vorschau: steht schon da, nur die Pfeile kommen dazu */
+.instant {
+  animation: none;
+}
+
 @keyframes popover-in {
   from {
     opacity: 0;
@@ -18,8 +23,9 @@
   }
 }
 
+/* Fünf Zeilen à 44px plus Rand; die Vorschau ist bei mehr Bohrungen gleich hoch (vier Zeilen und «+ N weitere») */
 .list {
-  max-height: 264px;
+  max-height: 228px;
   margin: 0;
   padding: 4px 0;
   list-style: none;
@@ -32,19 +38,66 @@
   gap: 5px;
   width: 100%;
   min-width: 0;
-  height: 36px;
+  height: 44px;
   padding: 0 12px 0 8px;
   text-align: left;
   color: var(--text-high-emphasis);
+}
+
+.button {
   transition: background-color 150ms ease;
 }
 
-.row:hover,
-.row:focus-visible {
+.button:hover,
+.button:focus-visible {
   background: var(--color-hovered);
   outline: none;
 }
 
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Zweite Zeile: Wert der aktiven Legende, zurückgenommen */
+.value {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.048px;
+  color: #6c7680;
+}
+
+/* Pfeil rechts: zeigt, dass die Zeilen jetzt klickbar sind */
+.arrow {
+  flex: none;
+  margin-left: 8px;
+  color: #6c7680;
+  animation: arrow-in 200ms var(--ease-out);
+  transition:
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.arrowHidden {
+  visibility: hidden;
+}
+
+.button:hover .arrow,
+.button:focus-visible .arrow {
+  color: var(--text-high-emphasis);
+  transform: translateX(2px);
+}
+
+@keyframes arrow-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+}
+
 .more {
-  opacity: 0.8;
+  padding-left: 12px;
+  color: #6c7680;
 }

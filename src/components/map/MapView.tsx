@@ -50,6 +50,8 @@ export type StackedControls = {
   close: () => void
   /** Hebt eine Bohrung aus dem Popover hervor; ohne ID wieder alle */
   highlight: (id: string | null) => void
+  /** Das Popover ersetzt die gleiche Vorschau vom Hover: ohne Einblend-Animation, es steht schon da */
+  instant: boolean
 }
 
 type Props = {
@@ -71,7 +73,9 @@ type Props = {
    * ein Klick auf mehrere öffnet ein Popover, ein Klick auf eines ruft onFeatureClick auf.
    */
   stacked?: {
-    tooltip: (ids: string[]) => ReactNode
+    /** Flüchtige Vorschau beim Hover (nicht klickbar) */
+    preview: (ids: string[]) => ReactNode
+    /** Festgehaltenes Popover nach dem Klick auf einen Haufen */
     popover: (ids: string[], controls: StackedControls) => ReactNode
   }
   /**
@@ -99,11 +103,24 @@ function anchorOf(features: Feature[]): Coordinate {
   return [x, y]
 }
 
-/** Abstand von Tooltip und Popover zum Anker: halbe Höhe des grössten Objekts (Symbol 8px, Badge mehr) plus Luft */
-function offsetOf(features: Feature[], gap: number): [number, number] {
-  const halfHeight = Math.max(8, ...features.map((feature) => (feature.get('halfHeight') as number | undefined) ?? 8))
-  return [0, -(halfHeight + gap)]
+function sameIds(a: string[], b: string[]) {
+  return a.length === b.length && a.every((id) => b.includes(id))
 }
+
+/** Anker unter den getroffenen Objekten, falls oben kein Platz ist */
+function anchorBelowOf(features: Feature[]): Coordinate {
+  const points = features.map((feature) => (feature.getGeometry() as Point).getCoordinates())
+  const x = points.reduce((sum, point) => sum + point[0], 0) / points.length
+  return [x, Math.min(...points.map((point) => point[1]))]
+}
+
+/** Halbe Höhe des grössten Objekts (Symbol 8px, Badge mehr): so weit liegt das Popover vom Anker weg, plus Luft */
+function halfHeightOf(features: Feature[]) {
+  return Math.max(8, ...features.map((feature) => (feature.get('halfHeight') as number | undefined) ?? 8))
+}
+
+/** Luft zwischen Objekt und Vorschau bzw. Popover; beide stehen an derselben Stelle, damit der Klick nichts verschiebt */
+const POPOVER_GAP = 10
 
 export function MapView({ createFeatures, style, center, resolution, legend, panelOffset = 0, selectedId, onFeatureClick, stacked, clusters, heatmap, embedded }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -123,8 +140,10 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const [popoverElement] = useState(() => document.createElement('div'))
   const [tooltipIds, setTooltipIds] = useState<string[]>([])
   const [popoverIds, setPopoverIds] = useState<string[]>([])
+  const [popoverInstant, setPopoverInstant] = useState(false)
   const popoverIdsRef = useRef<string[]>([])
   const hoveredRef = useRef<Feature[]>([])
+  const previewIdsRef = useRef<string[]>([])
   /** Objekte direkt unter dem Zeiger (ohne die übrigen ihrer Gruppe) */
   const hitsRef = useRef<Feature[]>([])
   const tooltipOverlayRef = useRef<Overlay | null>(null)
@@ -265,15 +284,47 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       view.animate({ center: getCenter(extent), resolution: target, duration: 500 })
     }
 
+    const placementRef = new WeakMap<HTMLElement, symbol>()
+    /**
+     * Vorschau bzw. Popover über den Objekten platzieren; reicht der Platz oben nicht und ist unten mehr, darunter.
+     * Die Höhe steht erst nach dem Rendern fest: bis dahin unsichtbar.
+     */
+    const place = (overlay: Overlay, element: HTMLElement, features: Feature[]) => {
+      const halfHeight = halfHeightOf(features)
+      const above = anchorOf(features)
+      overlay.setPositioning('bottom-center')
+      overlay.setOffset([0, -(halfHeight + POPOVER_GAP)])
+      overlay.setPosition(above)
+      element.style.visibility = 'hidden'
+      const token = Symbol()
+      placementRef.set(element, token)
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (placementRef.get(element) !== token) return
+          const pixel = map.getPixelFromCoordinate(above)
+          const pixelBelow = map.getPixelFromCoordinate(anchorBelowOf(features))
+          const mapHeight = map.getSize()?.[1] ?? 0
+          const spaceAbove = pixel ? pixel[1] - halfHeight - POPOVER_GAP : Infinity
+          const spaceBelow = pixelBelow ? mapHeight - pixelBelow[1] - halfHeight - POPOVER_GAP : 0
+          // Unten, wenn oben zu wenig Platz ist und unten mehr
+          if (spaceAbove < element.offsetHeight + 8 && spaceBelow > spaceAbove) {
+            overlay.setPositioning('top-center')
+            overlay.setOffset([0, halfHeight + POPOVER_GAP])
+            overlay.setPosition(anchorBelowOf(features))
+          }
+          element.style.visibility = ''
+        }),
+      )
+    }
     const showTooltip = (features: Feature[]) => {
       if (!stackedRef.current || features.length === 0) {
         tooltipOverlay.setPosition(undefined)
         setTooltipIds([])
         return
       }
-      setTooltipIds(idsOf(features))
-      tooltipOverlay.setOffset(offsetOf(features, 8))
-      tooltipOverlay.setPosition(anchorOf(features))
+      previewIdsRef.current = idsOf(features)
+      setTooltipIds(previewIdsRef.current)
+      place(tooltipOverlay, tooltipElement, features)
     }
 
     map.on('pointermove', (event) => {
@@ -316,12 +367,21 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       }
       if (hits.length > 1 && stackedRef.current) {
         const ids = hits.map((feature) => String(feature.getId()))
+        // Stand die Vorschau derselben Bohrungen schon da, bleibt das Popover genau dort und blendet nicht neu ein
+        const fromPreview = tooltipOverlay.getPosition() !== undefined && sameIds(previewIdsRef.current, ids)
+        const positioning = tooltipOverlay.getPositioning()
         popoverIdsRef.current = ids
         setPopoverIds(ids)
+        setPopoverInstant(fromPreview)
         setHovered(hits)
         showTooltip([])
-        popoverOverlay.setOffset(offsetOf(hits, 10))
-        popoverOverlay.setPosition(anchorOf(hits))
+        if (fromPreview) {
+          popoverOverlay.setPositioning(positioning)
+          popoverOverlay.setOffset(positioning === 'top-center' ? [0, halfHeightOf(hits) + POPOVER_GAP] : [0, -(halfHeightOf(hits) + POPOVER_GAP)])
+          popoverOverlay.setPosition(positioning === 'top-center' ? anchorBelowOf(hits) : anchorOf(hits))
+        } else {
+          place(popoverOverlay, popoverElement, hits)
+        }
         return
       }
       if (popoverIdsRef.current.length) closePopover()
@@ -437,12 +497,12 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       {stacked &&
         tooltipIds.length > 0 &&
         createPortal(
-          <div className={styles.tooltip} role="tooltip">
-            {stacked.tooltip(tooltipIds)}
+          <div className={styles.preview} role="tooltip">
+            {stacked.preview(tooltipIds)}
           </div>,
           tooltipElement,
         )}
-      {stacked && popoverIds.length > 0 && createPortal(stacked.popover(popoverIds, { close: closePopover, highlight }), popoverElement)}
+      {stacked && popoverIds.length > 0 && createPortal(stacked.popover(popoverIds, { close: closePopover, highlight, instant: popoverInstant }), popoverElement)}
     </div>
   )
 }
