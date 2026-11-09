@@ -54,6 +54,11 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* Varianten-Leiste über der App (VariantBar) */
+  --variant-bar-size: 32px;
+}
+
 html,
 body,
 #root {

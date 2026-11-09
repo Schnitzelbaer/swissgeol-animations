@@ -1,6 +1,7 @@
 .overlay {
   position: fixed;
-  inset: 0;
+  /* unter der Varianten-Leiste */
+  inset: var(--variant-bar-height, 0px) 0 0 0;
   z-index: 100;
   display: flex;
   background: rgba(28, 40, 52, 0);

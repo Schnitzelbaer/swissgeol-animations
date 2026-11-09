@@ -1,0 +1,12 @@
+/* Varianten-Leiste oben, darunter die App in der restlichen Höhe */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}

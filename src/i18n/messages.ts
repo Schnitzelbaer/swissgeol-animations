@@ -79,6 +79,15 @@ const en = {
     duplicate: 'Duplicate',
     edit: 'Edit',
   },
+  variants: {
+    prototype: 'Prototype',
+    title: 'Variants',
+    none: 'No variants on this page',
+    copyLink: 'Copy link',
+    copied: 'Link copied',
+    hide: 'Hide variant bar',
+    show: 'Show variant bar',
+  },
   codes: {
     status: { reviewed: 'Reviewed' },
     restriction: { public: 'Public' },
@@ -469,6 +478,15 @@ const de: Messages = {
     export: 'Export',
     duplicate: 'Duplizieren',
     edit: 'Bearbeiten',
+  },
+  variants: {
+    prototype: 'Prototyp',
+    title: 'Varianten',
+    none: 'Keine Varianten auf dieser Seite',
+    copyLink: 'Link kopieren',
+    copied: 'Link kopiert',
+    hide: 'Varianten-Leiste ausblenden',
+    show: 'Varianten-Leiste einblenden',
   },
   codes: {
     status: { reviewed: 'Reviewed' },
