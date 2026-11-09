@@ -2,6 +2,7 @@ import type { FeatureLike } from 'ol/Feature'
 import type { Coordinate } from 'ol/coordinate'
 import type { State } from 'ol/render'
 import { Circle, Fill, Stroke, Style } from 'ol/style'
+import { drawSprite } from './sprites'
 
 // Farben aus den Figma-Vektoren «Vector 5», «Linie» und «Punkt»
 const AREA_FILL = 'rgba(245, 158, 11, 0.3)'
@@ -147,33 +148,36 @@ function circlePath(context: CanvasRenderingContext2D, [x, y]: Coordinate, radiu
  * nur in einfacher Auflösung, auf Retina-Displays wurden die Punkte dadurch unscharf.
  * 16px-Kreis mit 2px-Innenrand wie «Legende Objekte – Assets» und «Punkt» in Figma.
  */
-function pointRenderer(shadows: Shadow[]) {
+function pointRenderer(shadows: Shadow[], key: string) {
   return (coordinates: unknown, state: State) => {
-    const context = state.context
-    const center = coordinates as Coordinate
+    const [x, y] = coordinates as Coordinate
     const ratio = state.pixelRatio
-
-    // Canvas-Schatten gelten in Gerätepixeln; shadowBlur ist die doppelte Standardabweichung
-    context.save()
-    context.fillStyle = POINT_FILL
-    for (const shadow of shadows) {
-      context.shadowColor = `rgba(20, 175, 184, ${shadow.opacity})`
-      context.shadowOffsetY = shadow.offsetY * ratio
-      context.shadowBlur = shadow.blur * 2 * ratio
-      // Spread −1: Der Schatten geht vom 1px kleineren Kreis aus, der Punkt deckt ihn danach ab
-      circlePath(context, center, (POINT_RADIUS - 1) * ratio)
-      context.fill()
-    }
-    context.restore()
-
-    circlePath(context, center, POINT_RADIUS * ratio)
-    context.fillStyle = POINT_FILL
-    context.fill()
-    circlePath(context, center, (POINT_RADIUS - 1) * ratio)
-    context.lineWidth = 2 * ratio
-    context.strokeStyle = POINT_STROKE
-    context.stroke()
+    // Einmal als Sprite gezeichnet (sprites.ts), danach nur kopiert: die Schatten sind sonst beim Zoomen zu teuer
+    drawSprite(state.context, key, x, y, ratio, 22, 22, (context, cx, cy) => drawPoint(context, [cx, cy], ratio, shadows))
   }
+}
+
+function drawPoint(context: CanvasRenderingContext2D, center: Coordinate, ratio: number, shadows: Shadow[]) {
+  // Canvas-Schatten gelten in Gerätepixeln; shadowBlur ist die doppelte Standardabweichung
+  context.save()
+  context.fillStyle = POINT_FILL
+  for (const shadow of shadows) {
+    context.shadowColor = `rgba(20, 175, 184, ${shadow.opacity})`
+    context.shadowOffsetY = shadow.offsetY * ratio
+    context.shadowBlur = shadow.blur * 2 * ratio
+    // Spread −1: Der Schatten geht vom 1px kleineren Kreis aus, der Punkt deckt ihn danach ab
+    circlePath(context, center, (POINT_RADIUS - 1) * ratio)
+    context.fill()
+  }
+  context.restore()
+
+  circlePath(context, center, POINT_RADIUS * ratio)
+  context.fillStyle = POINT_FILL
+  context.fill()
+  circlePath(context, center, (POINT_RADIUS - 1) * ratio)
+  context.lineWidth = 2 * ratio
+  context.strokeStyle = POINT_STROKE
+  context.stroke()
 }
 
 function hitPoint(coordinates: unknown, state: State) {
@@ -182,7 +186,7 @@ function hitPoint(coordinates: unknown, state: State) {
 }
 
 function pointStyle(shadows: Shadow[], zIndex: number) {
-  return new Style({ renderer: pointRenderer(shadows), hitDetectionRenderer: hitPoint, zIndex })
+  return new Style({ renderer: pointRenderer(shadows, shadows === PIN_SHADOWS ? 'pin' : 'point'), hitDetectionRenderer: hitPoint, zIndex })
 }
 
 // Ring um den 16px-Kreis, analog zum Rand der Fläche: pink für die Auswahl, violett für Hover

@@ -7,6 +7,7 @@ import type { StyleFunction } from 'ol/style/Style'
 import { getBorehole } from '../../data/boreholes'
 import { SYMBOLS, type SymbolDefinition } from './boreholeSymbols'
 import { viewKey, viewSymbol, viewValue, type LegendView } from './boreholeLegends'
+import { drawSprite } from './sprites'
 import { HOVER, SELECTED } from './styles'
 
 /*
@@ -71,7 +72,7 @@ export function drawSymbol(context: CanvasRenderingContext2D, symbol: SymbolDefi
   // Weisser Rand aussen um die Form (Figma: 2px Kontur «outside»)
   if (symbol.halo) {
     context.strokeStyle = '#ffffff'
-    context.lineWidth = 2
+    context.lineWidth = symbol.haloWidth ?? 2
     context.stroke(path2d(symbol.halo))
   }
   // Zusätzliche Formen, z.B. die Sektoren bei «Verfügbare Inhalte»
@@ -195,7 +196,9 @@ function badgeStyle(count: number, state: RenderState | 'hidden') {
           ? () => {}
           : (coordinates, renderState) => {
               const [x, y] = coordinates as Coordinate
-              drawBadge(renderState.context, text, x, y, renderState.pixelRatio, ring)
+              // Breite je nach Zahl; erst als Sprite merken, wenn die Schrift Inter geladen ist
+              const halfWidth = text.length * 5 + 40
+              drawSprite(renderState.context, cacheKey, x, y, renderState.pixelRatio, halfWidth, 36, (context, cx, cy) => drawBadge(context, text, cx, cy, renderState.pixelRatio, ring), document.fonts.check(BADGE_FONT))
             },
       hitDetectionRenderer: hitBadge(text),
       zIndex: state === 'selected' ? 5 : state === 'hover' ? 4 : 3,
@@ -242,7 +245,7 @@ export function boreholeStyle(view: LegendView): StyleFunction {
         style = new Style({
           renderer: (coordinates, renderState) => {
             const [x, y] = coordinates as Coordinate
-            drawSymbol(renderState.context, symbol, x, y, renderState.pixelRatio, ring)
+            drawSprite(renderState.context, cacheKey, x, y, renderState.pixelRatio, 26, 26, (context, cx, cy) => drawSymbol(context, symbol, cx, cy, renderState.pixelRatio, ring))
           },
           hitDetectionRenderer: hitSymbol(symbol),
           zIndex: state === 'selected' ? 5 : state === 'hover' ? 4 : 3,

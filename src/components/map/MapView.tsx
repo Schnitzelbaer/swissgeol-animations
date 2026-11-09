@@ -36,13 +36,14 @@ function swisstopoLayer(layer: string, opacity: number) {
   })
 }
 
-function tween(from: number, to: number, duration: number, onUpdate: (value: number) => void) {
+function tween(from: number, to: number, duration: number, onUpdate: (value: number) => void, onDone?: () => void) {
   const start = performance.now()
   const step = (now: number) => {
     const t = Math.min(1, (now - start) / duration)
     const eased = 1 - Math.pow(1 - t, 3)
     onUpdate(from + (to - from) * eased)
     if (t < 1) requestAnimationFrame(step)
+    else onDone?.()
   }
   requestAnimationFrame(step)
 }
@@ -129,6 +130,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const sourceRef = useRef<VectorSource | null>(null)
   const objectLayerRef = useRef<VectorLayer | null>(null)
   const colorLayerRef = useRef<TileLayer | null>(null)
+  const greyLayerRef = useRef<TileLayer | null>(null)
   const onFeatureClickRef = useRef(onFeatureClick)
   const stackedRef = useRef(stacked)
   const initialRef = useRef({ createFeatures, style, center, resolution, panelOffset, clusters, heatmap })
@@ -190,10 +192,15 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
 
   useEffect(() => {
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
+    greyLayerRef.current = greyLayer
     const colorLayer = swisstopoLayer('ch.swisstopo.pixelkarte-farbe', initialBasemapRef.current === 'farbe' ? 1 : 0)
     colorLayerRef.current = colorLayer
     const aerialLayer = swisstopoLayer('ch.swisstopo.swissimage', initialBasemapRef.current === 'luftbild' ? 1 : 0)
     aerialLayerRef.current = aerialLayer
+    // Nur sichtbare Ebenen laden und zeichnen: Deckkraft 0 wird von OpenLayers trotzdem gerendert
+    greyLayer.setVisible(initialBasemapRef.current === 'grau')
+    colorLayer.setVisible(initialBasemapRef.current === 'farbe')
+    aerialLayer.setVisible(initialBasemapRef.current === 'luftbild')
 
     const initial = initialRef.current
     const source = new VectorSource({ features: initial.createFeatures() })
@@ -483,14 +490,34 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     mapRef.current?.getView().animate({ center, resolution, duration: 600 })
   }
 
-  // Graue Karte liegt immer zuunterst; farbige Karte und Luftbild blenden darüber ein und aus
+  // Graue Karte liegt zuunterst; farbige Karte und Luftbild blenden darüber ein und aus. Während des Überblendens sind
+  // alle beteiligten Ebenen aktiv, danach nur noch die sichtbare (verdeckte Ebenen kosten beim Zoomen sonst Zeit).
+  const basemapRef = useRef(basemap)
   useEffect(() => {
-    for (const [layer, target] of [
+    basemapRef.current = basemap
+    const grey = greyLayerRef.current
+    const fades = [
       [colorLayerRef.current, basemap === 'farbe' ? 1 : 0],
       [aerialLayerRef.current, basemap === 'luftbild' ? 1 : 0],
-    ] as const) {
-      if (layer && layer.getOpacity() !== target) tween(layer.getOpacity(), target, 350, (value) => layer.setOpacity(value))
+    ] as const
+    if (fades.every(([layer, target]) => !layer || (layer.getOpacity() === target && layer.getVisible() === (target === 1)))) return
+    grey?.setVisible(true)
+    const settle = () => {
+      if (basemapRef.current !== basemap) return
+      for (const [layer] of fades) if (layer) layer.setVisible(layer.getOpacity() > 0)
+      grey?.setVisible(basemap === 'grau')
     }
+    let pending = 0
+    for (const [layer, target] of fades) {
+      if (!layer || layer.getOpacity() === target) continue
+      layer.setVisible(true)
+      pending += 1
+      tween(layer.getOpacity(), target, 350, (value) => layer.setOpacity(value), () => {
+        pending -= 1
+        if (pending === 0) settle()
+      })
+    }
+    if (pending === 0) settle()
   }, [basemap])
 
   const selectBasemap = (next: Basemap) =>
