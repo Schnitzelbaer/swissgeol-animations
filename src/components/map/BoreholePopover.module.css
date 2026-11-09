@@ -32,14 +32,15 @@
   overflow-y: auto;
 }
 
+/* Text oben bündig (4px), damit das Symbol an der ersten Zeile (Name) ausgerichtet werden kann */
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 5px;
   width: 100%;
   min-width: 0;
   height: 44px;
-  padding: 0 12px 0 8px;
+  padding: 4px 12px 0 8px;
   text-align: left;
   color: var(--text-high-emphasis);
 }
@@ -52,6 +53,12 @@
 .button:focus-visible {
   background: var(--color-hovered);
   outline: none;
+}
+
+/* Symbol (30px) mittig auf der ersten Zeile: Zeilenmitte 10px unter der Textoberkante */
+.icon {
+  display: flex;
+  margin-top: -5px;
 }
 
 .text {
@@ -72,6 +79,8 @@
 /* Pfeil rechts: zeigt, dass die Zeilen jetzt klickbar sind */
 .arrow {
   flex: none;
+  align-self: center;
+  margin-top: -4px;
   margin-left: 8px;
   color: #6c7680;
   animation: arrow-in 200ms var(--ease-out);
@@ -98,6 +107,8 @@
 }
 
 .more {
+  align-items: center;
+  padding-top: 0;
   padding-left: 12px;
   color: #6c7680;
 }

@@ -38,7 +38,9 @@ function Arrow({ hidden }: { hidden?: boolean }) {
 function RowContent({ entry }: { entry: Entry }) {
   return (
     <>
-      <SymbolIcon symbol={entry.symbol} />
+      <span className={styles.icon}>
+        <SymbolIcon symbol={entry.symbol} />
+      </span>
       <span className={styles.text}>
         <span className="body3 ellipsis">{entry.name}</span>
         <span className={`${styles.value} ellipsis`}>{entry.value}</span>

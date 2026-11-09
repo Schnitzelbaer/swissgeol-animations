@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { initialFiles, type AssetFile, type Section } from './files'
-import type { LegendTopic } from '../components/map/boreholeLegends'
+import { LEGEND_TOPICS, type LegendTopic } from '../components/map/boreholeLegends'
 
 /** Dauer der simulierten AI-Analyse (in der echten Anwendung teils über 20 Minuten) */
 export const ANALYSIS_DURATION_MS = 7000
@@ -20,11 +21,31 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null)
 
+const DEFAULT_LEGEND: LegendTopic = 'templateType'
+
+function parseLegend(value: string | null): LegendTopic {
+  return LEGEND_TOPICS.includes(value as LegendTopic) ? (value as LegendTopic) : DEFAULT_LEGEND
+}
+
 /** Hält die Dateien des Assets im Speicher; ein Neuladen der Seite stellt den Ausgangszustand wieder her */
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [files, setFiles] = useState(initialFiles)
   const [analysing, setAnalysing] = useState<Set<string>>(new Set())
-  const [boreholeLegend, setBoreholeLegend] = useState<LegendTopic>('templateType')
+  // Legende der Boreholes-Karte: steht als ?legend=<Thema> in der URL (ausser der Standardlegende), damit jede teilbar ist
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [boreholeLegend, setBoreholeLegend] = useState<LegendTopic>(() => parseLegend(new URLSearchParams(location.search).get('legend')))
+  useEffect(() => {
+    if (!location.pathname.startsWith('/boreholes')) return
+    // window.location statt location: der Sprach-Parameter wird im selben Durchgang nachgetragen
+    const params = new URLSearchParams(window.location.search)
+    const wanted = boreholeLegend === DEFAULT_LEGEND ? null : boreholeLegend
+    if (params.get('legend') === wanted) return
+    if (wanted) params.set('legend', wanted)
+    else params.delete('legend')
+    const search = params.toString()
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : '', hash: location.hash }, { replace: true, state: location.state })
+  }, [boreholeLegend, location, navigate])
   const timers = useRef(new Map<string, number>())
 
   const getFile = useCallback((id: string | null | undefined) => files.find((file) => file.id === id), [files])
