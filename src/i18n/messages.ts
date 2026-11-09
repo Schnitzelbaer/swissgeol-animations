@@ -46,6 +46,8 @@ const en = {
     point: 'Asset point',
     line: 'Asset line',
     polygon: 'Asset polygon',
+    highlightAssets: 'Highlight assets on the map',
+    highlightBoreholes: 'Highlight boreholes on the map',
   },
   map: {
     zoomIn: 'Zoom in',
@@ -451,6 +453,8 @@ const de: Messages = {
     point: 'Asset Punkt',
     line: 'Asset Linie',
     polygon: 'Asset Fläche',
+    highlightAssets: 'Assets auf der Karte hervorheben',
+    highlightBoreholes: 'Bohrungen auf der Karte hervorheben',
   },
   map: {
     zoomIn: 'Hineinzoomen',

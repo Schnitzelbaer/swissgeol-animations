@@ -3,6 +3,8 @@ import { Button } from '../Button'
 import { useI18n } from '../../i18n'
 import styles from './Legend.module.css'
 import changeIcon from '../../assets/icons/change.svg'
+import lightbulbIcon from '../../assets/icons/lightbulb.svg'
+import { useMapPulse } from './mapPulse'
 import chevronUpIcon from '../../assets/icons/chevron-up-legend.svg'
 
 export type LegendItem = {
@@ -26,11 +28,14 @@ type Props = {
   controls?: ReactNode
   /** Eigener Inhalt statt der Einträge, z.B. die Paare mit Radio Buttons in Legende v3.2 */
   content?: ReactNode
+  /** Beschriftung der Glühbirne (erscheint beim Hover über der Legende): lässt alle Objekte auf der Karte aufleuchten */
+  highlightLabel?: string
 }
 
 /** Legende oben links auf der Karte («… Legende Drawer – Integrated») */
-export function Legend({ title, items, width, onSwitch, scrollable, controls, content }: Props) {
+export function Legend({ title, items, width, onSwitch, scrollable, controls, content, highlightLabel }: Props) {
   const { t } = useI18n()
+  const pulse = useMapPulse()
   const [open, setOpen] = useState(true)
 
   return (
@@ -45,6 +50,9 @@ export function Legend({ title, items, width, onSwitch, scrollable, controls, co
           <span key={title} className={`${styles.titleText} body3-bold`}>
             {title}
           </span>
+          {highlightLabel && pulse && (
+            <Button icon={lightbulbIcon} className={styles.highlight} aria-label={highlightLabel} tooltip={highlightLabel} onClick={pulse} />
+          )}
         </div>
         <Button
           icon={chevronUpIcon}

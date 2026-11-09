@@ -67,7 +67,7 @@ export function BoreholesMapPage() {
             style={boreholeStyle(view)}
             center={BOREHOLES_CENTER}
             resolution={BOREHOLES_RESOLUTION}
-            legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable controls={controls} content={content} />}
+            legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable controls={controls} content={content} highlightLabel={t.legend.highlightBoreholes} />}
             onFeatureClick={openBorehole}
             stacked={stacked}
             clusters={BOREHOLE_CLUSTERS}

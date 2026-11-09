@@ -16,7 +16,11 @@ import Point from 'ol/geom/Point'
 import type { Coordinate } from 'ol/coordinate'
 import type { StyleFunction } from 'ol/style/Style'
 import { useSearchParams } from 'react-router-dom'
+import { getVectorContext } from 'ol/render'
+import type RenderEvent from 'ol/render/Event'
+import { Circle, Stroke, Style } from 'ol/style'
 import { BASEMAPS, MapControls, type Basemap } from './MapControls'
+import { MapPulseContext } from './mapPulse'
 import styles from './MapView.module.css'
 
 /*
@@ -97,6 +101,10 @@ type Props = {
 /** Farbverlauf der Heatmap wie in der Live-App: Cyan am Rand über Grün und Gelb zu Rot */
 const HEATMAP_GRADIENT = ['rgba(56, 189, 248, 0)', 'rgba(94, 234, 212, 0.75)', '#4ade80', '#a3e635', '#fde047', '#fb923c', '#ef4444']
 
+/** Glühbirne der Legende: zwei violette Pulse um alle sichtbaren Objekte, je 0.9 s */
+const PULSE_MS = 900
+const PULSE_COUNT = 2
+
 /** Anker über den getroffenen Objekten: mittig, auf Höhe des obersten */
 function anchorOf(features: Feature[]): Coordinate {
   const points = features.map((feature) => (feature.getGeometry() as Point).getCoordinates())
@@ -150,6 +158,8 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const [popoverInstant, setPopoverInstant] = useState(false)
   const popoverIdsRef = useRef<string[]>([])
   const hoveredRef = useRef<Feature[]>([])
+  /** Startzeit des laufenden Pulses (Glühbirne), 0 = kein Puls */
+  const pulseStartRef = useRef(0)
   const previewIdsRef = useRef<string[]>([])
   /** Objekte direkt unter dem Zeiger (ohne die übrigen ihrer Gruppe) */
   const hitsRef = useRef<Feature[]>([])
@@ -249,6 +259,48 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     const popoverOverlay = new Overlay({ element: popoverElement, positioning: 'bottom-center', autoPan: { animation: { duration: 250 }, margin: 24 } })
     tooltipOverlayRef.current = tooltipOverlay
     popoverOverlayRef.current = popoverOverlay
+
+    /*
+     * Puls der Glühbirne: Nach dem Zeichnen der Objektebene (bzw. der Badges) bekommt jedes sichtbare Objekt einen
+     * violetten Ring (Punkte, Symbole, Badges) bzw. eine breite violette Kontur (Flächen, Linien), der wächst und
+     * ausblendet. Die Heatmap pulsiert nicht.
+     */
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const drawPulse = (event: RenderEvent) => {
+      const start = pulseStartRef.current
+      if (!start) return
+      const elapsed = performance.now() - start
+      const map = mapRef.current
+      if (!map) return
+      if (elapsed >= PULSE_MS * PULSE_COUNT) {
+        pulseStartRef.current = 0
+        map.render()
+        return
+      }
+      const phase = reducedMotion ? 0.35 : (elapsed % PULSE_MS) / PULSE_MS
+      const grow = 1 - (1 - phase) ** 2
+      const color = `rgba(139, 92, 246, ${reducedMotion ? 0.8 : 0.9 * (1 - phase) ** 1.2})`
+      const vectorContext = getVectorContext(event)
+      const layer = event.target as VectorLayer<VectorSource>
+      const extent = map.getView().calculateExtent(map.getSize())
+      for (const feature of layer.getSource()?.getFeaturesInExtent(extent) ?? []) {
+        const geometry = feature.getGeometry()
+        if (!geometry) continue
+        // Bohrungen am gleichen Standort: nur das Badge (der «leader») pulsiert
+        if (feature.get('leader') === false) continue
+        if (geometry.getType() === 'Point') {
+          const badge = feature.get('features') || feature.get('members')
+          const base = badge ? 20 : feature.get('kind') ? 11 : 14
+          vectorContext.setStyle(new Style({ image: new Circle({ radius: base + grow * 16, stroke: new Stroke({ color, width: 3 }) }) }))
+        } else {
+          vectorContext.setStyle(new Style({ stroke: new Stroke({ color, width: 6 + grow * 18, lineJoin: 'round', lineCap: 'round' }) }))
+        }
+        vectorContext.drawGeometry(geometry)
+      }
+      map.render()
+    }
+    objectLayer.on('postrender', drawPulse)
+    for (const layer of clusterLayers) if (layer instanceof VectorLayer) layer.on('postrender', drawPulse)
 
     const map = new OlMap({
       target: containerRef.current!,
@@ -417,6 +469,11 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     objectLayerRef.current?.setStyle(style)
   }, [style])
 
+  const pulse = useCallback(() => {
+    pulseStartRef.current = performance.now()
+    mapRef.current?.render()
+  }, [])
+
   // Das Popover hat erst nach dem Rendern seine Grösse: dann die Karte so verschieben, dass es ganz sichtbar ist
   useEffect(() => {
     if (!popoverIds.length) return
@@ -531,25 +588,27 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     )
 
   return (
-    <div className={`${styles.root} ${embedded ? styles.embedded : ''}`} style={embedded ? ({ '--panel-offset': '0px' } as CSSProperties) : undefined}>
-      <div ref={containerRef} className={styles.map} />
-      {legend}
-      <MapControls
-        basemap={basemap}
-        onZoomIn={() => zoomBy(1)}
-        onZoomOut={() => zoomBy(-1)}
-        onReset={resetView}
-        onSelectBasemap={selectBasemap}
-      />
-      {stacked &&
-        tooltipIds.length > 0 &&
-        createPortal(
-          <div className={styles.preview} role="tooltip">
-            {stacked.preview(tooltipIds)}
-          </div>,
-          tooltipElement,
-        )}
-      {stacked && popoverIds.length > 0 && createPortal(stacked.popover(popoverIds, { close: closePopover, highlight, instant: popoverInstant }), popoverElement)}
-    </div>
+    <MapPulseContext.Provider value={pulse}>
+      <div className={`${styles.root} ${embedded ? styles.embedded : ''}`} style={embedded ? ({ '--panel-offset': '0px' } as CSSProperties) : undefined}>
+        <div ref={containerRef} className={styles.map} />
+        {legend}
+        <MapControls
+          basemap={basemap}
+          onZoomIn={() => zoomBy(1)}
+          onZoomOut={() => zoomBy(-1)}
+          onReset={resetView}
+          onSelectBasemap={selectBasemap}
+        />
+        {stacked &&
+          tooltipIds.length > 0 &&
+          createPortal(
+            <div className={styles.preview} role="tooltip">
+              {stacked.preview(tooltipIds)}
+            </div>,
+            tooltipElement,
+          )}
+        {stacked && popoverIds.length > 0 && createPortal(stacked.popover(popoverIds, { close: closePopover, highlight, instant: popoverInstant }), popoverElement)}
+      </div>
+    </MapPulseContext.Provider>
   )
 }

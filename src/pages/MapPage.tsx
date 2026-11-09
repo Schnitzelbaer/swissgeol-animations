@@ -107,6 +107,7 @@ export function MapPage() {
             legend={
               <Legend
                 title={t.legend.title}
+                highlightLabel={t.legend.highlightAssets}
                 width={179}
                 items={[
                   { icon: legendPoint, label: t.legend.point },

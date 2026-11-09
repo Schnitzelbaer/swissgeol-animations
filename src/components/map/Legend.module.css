@@ -120,6 +120,24 @@
   animation: legend-in 250ms var(--ease-out);
 }
 
+/* Glühbirne rechts neben dem Titel: erscheint beim Hover über der Legende oder mit Tastatur-Fokus */
+.highlight {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.legend:hover .highlight,
+.legend:focus-within .highlight {
+  opacity: 1;
+}
+
+/* Ohne Maus (Touch) immer sichtbar */
+@media (hover: none) {
+  .highlight {
+    opacity: 1;
+  }
+}
+
 .scrollable .items {
   animation: legend-in 300ms var(--ease-out);
 }
