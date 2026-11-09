@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { initialFiles, type AssetFile, type Section } from './files'
-import { CONTENT_KINDS, LEGEND_TOPICS, type ContentKind, type LegendTopic } from '../components/map/boreholeLegends'
+import { ALL_LEGEND_TOPICS, CONTENT_KINDS, type ContentKind, type LegendTopic } from '../components/map/boreholeLegends'
 
 /** Dauer der simulierten AI-Analyse (in der echten Anwendung teils über 20 Minuten) */
 export const ANALYSIS_DURATION_MS = 7000
@@ -15,7 +15,8 @@ type Store = {
   analysing: Set<string>
   startAnalysis: (fileIds: string[]) => void
   /** Legende der Boreholes-Karte; bleibt beim Wechsel zur Detailseite und zurück erhalten */
-  boreholeLegend: LegendTopic
+  /** Gewählte Legende; null = erste Legende der aktiven Variante (useBoreholeLegendView) */
+  boreholeLegend: LegendTopic | null
   setBoreholeLegend: (topic: LegendTopic) => void
   /** Legende v2, «Verfügbare Inhalte»: gewählter Inhalt der Segmented Control */
   boreholeContent: ContentKind
@@ -24,14 +25,12 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null)
 
-const DEFAULT_LEGEND: LegendTopic = 'purpose'
-
 function parseContent(value: string | null): ContentKind {
   return CONTENT_KINDS.find((kind) => kind.toLowerCase() === value) ?? CONTENT_KINDS[0]
 }
 
-function parseLegend(value: string | null): LegendTopic {
-  return LEGEND_TOPICS.includes(value as LegendTopic) ? (value as LegendTopic) : DEFAULT_LEGEND
+function parseLegend(value: string | null): LegendTopic | null {
+  return ALL_LEGEND_TOPICS.includes(value as LegendTopic) ? (value as LegendTopic) : null
 }
 
 /** Hält die Dateien des Assets im Speicher; ein Neuladen der Seite stellt den Ausgangszustand wieder her */
@@ -41,7 +40,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Legende der Boreholes-Karte: steht als ?legend=<Thema> in der URL (ausser der Standardlegende), damit jede teilbar ist
   const location = useLocation()
   const navigate = useNavigate()
-  const [boreholeLegend, setBoreholeLegend] = useState<LegendTopic>(() => parseLegend(new URLSearchParams(location.search).get('legend')))
+  const [boreholeLegend, setBoreholeLegend] = useState<LegendTopic | null>(() => parseLegend(new URLSearchParams(location.search).get('legend')))
   // Legende v2: gewählter Inhalt als ?content=dokumente|fotos (Profil ist Standard)
   const [boreholeContent, setBoreholeContent] = useState<ContentKind>(() => parseContent(new URLSearchParams(location.search).get('content')))
   useEffect(() => {
@@ -51,7 +50,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // window.location statt location: Sprache und Varianten werden im selben Durchgang nachgetragen
     const params = new URLSearchParams(window.location.search)
     const before = params.toString()
-    const legend = boreholeLegend === DEFAULT_LEGEND ? null : boreholeLegend
+    const legend = boreholeLegend
     const content = boreholeContent === CONTENT_KINDS[0] ? null : boreholeContent.toLowerCase()
     if (legend) params.set('legend', legend)
     else params.delete('legend')

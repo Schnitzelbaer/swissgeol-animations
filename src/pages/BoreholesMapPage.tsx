@@ -8,7 +8,7 @@ import { Legend } from '../components/map/Legend'
 import { SymbolIcon } from '../components/map/SymbolIcon'
 import { useBoreholeStack } from '../components/map/boreholeStack'
 import { boreholeStyle } from '../components/map/boreholeStyles'
-import { CONTENT_KINDS, GROUP_STARTS, LEGEND_TOPICS, LEGEND_WIDTH, viewLabel, viewSymbol, viewValues } from '../components/map/boreholeLegends'
+import { CONTENT_KINDS, GROUP_STARTS, LEGEND_WIDTH, legendCycle, viewLabel, viewSymbol, viewValues } from '../components/map/boreholeLegends'
 import { useBoreholeLegendView } from '../components/map/useBoreholeLegendView'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { ContentPairs } from '../components/map/ContentPairs'
@@ -29,8 +29,9 @@ const BOREHOLE_COUNT = 23000
 export function BoreholesMapPage() {
   const navigate = useNavigate()
   const { t } = useI18n()
-  const { boreholeLegend: topic, setBoreholeLegend, boreholeContent, setBoreholeContent } = useStore()
+  const { setBoreholeLegend, boreholeContent, setBoreholeContent } = useStore()
   const view = useBoreholeLegendView()
+  const topic = view.topic
   const openBorehole = useCallback((id: string) => navigate(`/boreholes/${id}/location`), [navigate])
   const stacked = useBoreholeStack(view, openBorehole)
 
@@ -40,9 +41,9 @@ export function BoreholesMapPage() {
     label: viewLabel(t, view, value),
     separator: groupStarts.includes(value),
   }))
-  // «Verfügbare Inhalte» in Legende v2.1: Segmented Control über den Einträgen; in v2.2: alle Paare mit Radio Buttons
+  // «Verfügbare Inhalte» in Legende v3.1: Segmented Control über den Einträgen; in v3.2: alle Paare mit Radio Buttons
   const variant = useVariant('legend')
-  const pairs = view.content && variant === 'v2-2'
+  const pairs = view.content && variant === 'v3-2'
   const content = pairs ? <ContentPairs value={boreholeContent} onChange={setBoreholeContent} /> : undefined
   const controls = view.content && !pairs ? (
     <SegmentedControl
@@ -52,7 +53,8 @@ export function BoreholesMapPage() {
       onChange={setBoreholeContent}
     />
   ) : undefined
-  const switchLegend = () => setBoreholeLegend(LEGEND_TOPICS[(LEGEND_TOPICS.indexOf(topic) + 1) % LEGEND_TOPICS.length])
+  const cycle = legendCycle(view)
+  const switchLegend = () => setBoreholeLegend(cycle[(cycle.indexOf(topic) + 1) % cycle.length])
 
   return (
     <div className={styles.app}>

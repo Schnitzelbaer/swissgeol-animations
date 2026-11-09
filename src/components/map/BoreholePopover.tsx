@@ -49,8 +49,30 @@ function RowContent({ entry }: { entry: Entry }) {
   )
 }
 
+/** Höchstens so viele Namen im dunklen Tooltip der Variante «Legende v1», danach «+ N weitere» */
+const TOOLTIP_LIMIT = 8
+
+/** Variante «Legende v1» (Stand vor dem Feedback): dunkler Tooltip mit den Namen statt der Popover-Vorschau */
+function ClassicTooltip({ ids }: { ids: string[] }) {
+  const { t } = useI18n()
+  const names = ids.map((id) => getBorehole(id)?.name ?? id)
+  return (
+    <div className={styles.tooltip}>
+      {names.slice(0, TOOLTIP_LIMIT).map((name, index) => (
+        <div key={`${name}-${index}`}>{name}</div>
+      ))}
+      {names.length > TOOLTIP_LIMIT && <div className={styles.tooltipMore}>{t.boreholes.tooltipMore(names.length - TOOLTIP_LIMIT)}</div>}
+    </div>
+  )
+}
+
 /** Vorschau beim Hover: dasselbe Popover, aber flüchtig und nicht klickbar (ohne Pfeile) */
 export function BoreholePreview({ ids, view }: { ids: string[]; view: LegendView }) {
+  if (view.classic) return <ClassicTooltip ids={ids} />
+  return <PopoverPreview ids={ids} view={view} />
+}
+
+function PopoverPreview({ ids, view }: { ids: string[]; view: LegendView }) {
   const { t } = useI18n()
   const entries = useEntries(ids, view)
   const shown = entries.length > VISIBLE_ROWS ? entries.slice(0, VISIBLE_ROWS - 1) : entries
@@ -83,6 +105,28 @@ type Props = {
 export function BoreholePopover({ ids, view, controls, onOpen }: Props) {
   const { t } = useI18n()
   const entries = useEntries(ids, view)
+  // Variante «Legende v1»: Popover wie vor dem Feedback, eine Zeile pro Bohrung, ohne Wert und Pfeil, blendet immer ein
+  if (view.classic)
+    return (
+      <div className={styles.popover} role="dialog" aria-label={t.boreholes.popoverTitle(entries.length)}>
+        <ul className={styles.classicList} onMouseLeave={() => controls.highlight(null)}>
+          {entries.map((entry) => (
+            <li key={entry.id}>
+              <button
+                type="button"
+                className={styles.classicRow}
+                onMouseEnter={() => controls.highlight(entry.id)}
+                onFocus={() => controls.highlight(entry.id)}
+                onClick={() => onOpen(entry.id)}
+              >
+                <SymbolIcon symbol={entry.symbol} />
+                <span className="body3 ellipsis">{entry.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
   return (
     <div className={`${styles.popover} ${controls.instant ? styles.instant : ''}`} role="dialog" aria-label={t.boreholes.popoverTitle(entries.length)}>
       <ul className={styles.list} onMouseLeave={() => controls.highlight(null)}>

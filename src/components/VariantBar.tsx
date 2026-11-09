@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { useVariants } from '../variants'
-import { VARIANT_GROUPS } from '../variants/registry'
+import { VARIANT_GROUPS, defaultVariantOf } from '../variants/registry'
 import styles from './VariantBar.module.css'
 
 /**
@@ -23,7 +23,7 @@ export function VariantBar() {
   const active = groups
     .filter((group) => group.flat || selection[group.key])
     .map((group) => {
-      const label = group.variants.find((variant) => variant.key === (selection[group.key] ?? group.variants[0]?.key))?.label
+      const label = group.variants.find((variant) => variant.key === (selection[group.key] ?? defaultVariantOf(group)))?.label
       return group.flat ? label : `${group.label}: ${label}`
     })
 
@@ -75,7 +75,7 @@ export function VariantBar() {
               <div className={styles.menu} role="menu">
                 {groups.length === 0 && <div className={styles.empty}>{t.variants.none}</div>}
                 {groups.map((group) => {
-                  const current = selection[group.key] ?? group.variants[0]?.key
+                  const current = selection[group.key] ?? defaultVariantOf(group)
                   return (
                     <div key={group.key} role="group" aria-label={group.label} className={`${styles.group} ${group.flat ? styles.flat : ''}`}>
                       {!group.flat && <div className={styles.groupLabel}>{group.label}</div>}

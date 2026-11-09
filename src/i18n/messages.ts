@@ -248,6 +248,7 @@ const en = {
     },
     count: (count: number) => `${groupDigits(count, ',')} boreholes`,
     legends: {
+      templateType: 'Template type',
       purpose: 'Drilling purpose',
       access: 'Access',
       boreholeType: 'Borehole type',
@@ -650,6 +651,7 @@ const de: Messages = {
     },
     count: (count) => `${groupDigits(count, '’')} Boreholes`,
     legends: {
+      templateType: 'Template Typ',
       purpose: 'Bohrzweck',
       access: 'Freigabe',
       boreholeType: 'Bohrtyp',

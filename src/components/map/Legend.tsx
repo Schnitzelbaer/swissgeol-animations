@@ -22,9 +22,9 @@ type Props = {
   onSwitch?: () => void
   /** Lange Listen scrollen (Platz für den Scrollbalken wie in Figma) */
   scrollable?: boolean
-  /** Bedienelement im Inhalt über den Einträgen, z.B. die Segmented Control in Legende v2.1 */
+  /** Bedienelement im Inhalt über den Einträgen, z.B. die Segmented Control in Legende v3.1 */
   controls?: ReactNode
-  /** Eigener Inhalt statt der Einträge, z.B. die Paare mit Radio Buttons in Legende v2.2 */
+  /** Eigener Inhalt statt der Einträge, z.B. die Paare mit Radio Buttons in Legende v3.2 */
   content?: ReactNode
 }
 

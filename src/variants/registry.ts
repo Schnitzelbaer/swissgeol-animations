@@ -1,5 +1,5 @@
 // Varianten des Prototyps, gruppiert nach Thema (z.B. Legende, Popover). Pro Gruppe ist genau eine Variante aktiv;
-// die erste ist der Standard (heutiger Stand) und steht nicht in der URL. Die übrigen stehen als ?v-<Gruppe>=<Variante>
+// der Standard (`defaultVariant`, sonst die erste) steht nicht in der URL. Die übrigen stehen als ?v-<Gruppe>=<Variante>
 // in der URL, so hat jede Kombination einen eigenen, teilbaren Link. Die Varianten-Leiste zeigt nur die Gruppen,
 // deren `pages` zur aktuellen Seite passt.
 //
@@ -30,8 +30,14 @@ export type VariantGroup = {
   flat?: boolean
   /** Seiten, auf denen die Gruppe wirkt (Pfad der URL) */
   pages: RegExp
-  /** Erste Variante = Standard */
+  /** Varianten in der Reihenfolge des Dropdowns */
   variants: Variant[]
+  /** Standard ohne URL-Parameter; ohne Angabe die erste Variante */
+  defaultVariant?: string
+}
+
+export function defaultVariantOf(group: VariantGroup) {
+  return group.defaultVariant ?? group.variants[0]?.key
 }
 
 export const VARIANT_GROUPS: VariantGroup[] = [
@@ -40,11 +46,13 @@ export const VARIANT_GROUPS: VariantGroup[] = [
     label: 'Legende',
     flat: true,
     pages: /^\/boreholes/,
-    // Schlüssel v2 bleibt für «Legende v2.1», damit bestehende Links (?v-legend=v2) weiter passen
+    // v1 = Stand vor dem Feedback; Standard bleibt v2 (aktuelle Symbolisierung), damit Links ohne Parameter gleich bleiben
+    defaultVariant: 'v2',
     variants: [
       { key: 'v1', label: 'Legende v1' },
-      { key: 'v2', label: 'Legende v2.1' },
-      { key: 'v2-2', label: 'Legende v2.2' },
+      { key: 'v2', label: 'Legende v2' },
+      { key: 'v3-1', label: 'Legende v3.1' },
+      { key: 'v3-2', label: 'Legende v3.2' },
     ],
   },
 ]

@@ -1,15 +1,25 @@
 import { useMemo } from 'react'
 import { useStore } from '../../data/store'
 import { useVariant } from '../../variants'
-import type { LegendView } from './boreholeLegends'
+import { LEGEND_TOPICS, LEGEND_TOPICS_V1, type LegendView } from './boreholeLegends'
 
 /**
- * Aktuelle Ansicht der Boreholes-Legende: Thema aus dem Store. In Legende v2.1 und v2.2 (Varianten-Leiste) zeigt
- * «Verfügbare Inhalte» nur den gewählten Inhalt als vorhanden / nicht vorhanden; gewählt wird er in v2.1 mit der
- * Segmented Control, in v2.2 mit Radio Buttons vor den Paaren.
+ * Aktuelle Ansicht der Boreholes-Legende je nach Variante (Varianten-Leiste):
+ * - «Legende v1»: Stand vor dem Feedback (alte Symbole, Template Typ, dunkler Tooltip, altes Popover)
+ * - «Legende v2»: aktuelle Symbolisierung, «Verfügbare Inhalte» mit farbigen Sektoren
+ * - «Legende v3.1» / «v3.2»: «Verfügbare Inhalte» zeigt nur den gewählten Inhalt als vorhanden / nicht vorhanden,
+ *   gewählt mit Segmented Control (v3.1) bzw. Radio Buttons (v3.2)
+ * Ohne gewählte Legende (oder wenn sie in der Variante fehlt) gilt die erste der Variante.
  */
 export function useBoreholeLegendView(): LegendView {
-  const { boreholeLegend: topic, boreholeContent } = useStore()
+  const { boreholeLegend, boreholeContent } = useStore()
   const variant = useVariant('legend')
-  return useMemo(() => (topic === 'contents' && (variant === 'v2' || variant === 'v2-2') ? { topic, content: boreholeContent } : { topic }), [topic, boreholeContent, variant])
+  return useMemo(() => {
+    const classic = variant === 'v1'
+    const cycle = classic ? LEGEND_TOPICS_V1 : LEGEND_TOPICS
+    const topic = boreholeLegend && cycle.includes(boreholeLegend) ? boreholeLegend : cycle[0]
+    if (classic) return { topic, classic }
+    if (topic === 'contents' && (variant === 'v3-1' || variant === 'v3-2')) return { topic, content: boreholeContent }
+    return { topic }
+  }, [boreholeLegend, boreholeContent, variant])
 }

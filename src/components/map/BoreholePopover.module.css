@@ -112,3 +112,56 @@
   padding-left: 12px;
   color: #6c7680;
 }
+
+/* Variante «Legende v1» (Stand vor dem Feedback): dunkler Tooltip im Stil von «Tooltip – Top» */
+.tooltip {
+  padding: 5px 8px;
+  background: var(--text-high-emphasis);
+  color: var(--color-white);
+  border-radius: var(--radius-4);
+  filter: drop-shadow(4px 4px 1px rgba(0, 0, 0, 0.12));
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0.048px;
+  white-space: nowrap;
+  animation: tooltip-in 150ms ease;
+}
+
+.tooltipMore {
+  opacity: 0.8;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Variante «Legende v1»: Popover mit einer Zeile pro Bohrung */
+.classicList {
+  max-height: 264px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.classicRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px 0 8px;
+  text-align: left;
+  color: var(--text-high-emphasis);
+  transition: background-color 150ms ease;
+}
+
+.classicRow:hover,
+.classicRow:focus-visible {
+  background: var(--color-hovered);
+  outline: none;
+}

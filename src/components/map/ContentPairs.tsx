@@ -9,7 +9,7 @@ type Props = {
 }
 
 /**
- * Legende v2.2, «Verfügbare Inhalte»: alle drei Paare vorhanden / nicht vorhanden wie in Figma «Legende v1»,
+ * Legende v3.2, «Verfügbare Inhalte»: alle drei Paare vorhanden / nicht vorhanden wie in Figma «Legende v1»,
  * davor je ein Radio Button. Einer ist immer gewählt; die Karte zeigt den gewählten Inhalt.
  */
 export function ContentPairs({ value, onChange }: Props) {

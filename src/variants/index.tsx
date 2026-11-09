@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { VARIANT_GROUPS } from './registry'
+import { VARIANT_GROUPS, defaultVariantOf } from './registry'
 
 const PARAM_PREFIX = 'v-'
 const BAR_STORAGE_KEY = 'swissgeol-variant-bar'
@@ -18,7 +18,8 @@ type Variants = {
 const VariantsContext = createContext<Variants | null>(null)
 
 function defaultOf(group: string) {
-  return VARIANT_GROUPS.find((entry) => entry.key === group)?.variants[0]?.key
+  const entry = VARIANT_GROUPS.find((candidate) => candidate.key === group)
+  return entry ? defaultVariantOf(entry) : undefined
 }
 
 /** Gültige Abweichungen vom Standard aus der URL */
@@ -27,7 +28,7 @@ function parseSelection(search: string): Selection {
   const selection: Selection = {}
   for (const group of VARIANT_GROUPS) {
     const value = params.get(PARAM_PREFIX + group.key)
-    if (value && value !== group.variants[0]?.key && group.variants.some((variant) => variant.key === value)) selection[group.key] = value
+    if (value && value !== defaultVariantOf(group) && group.variants.some((variant) => variant.key === value)) selection[group.key] = value
   }
   return selection
 }
@@ -91,7 +92,7 @@ export function useVariants() {
   return context
 }
 
-/** Aktive Variante einer Gruppe (Schlüssel); ohne Auswahl die erste der Gruppe */
+/** Aktive Variante einer Gruppe (Schlüssel); ohne Auswahl der Standard der Gruppe */
 export function useVariant(group: string) {
   const { selection } = useVariants()
   return selection[group] ?? defaultOf(group)
