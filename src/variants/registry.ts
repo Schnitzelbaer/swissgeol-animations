@@ -40,9 +40,11 @@ export const VARIANT_GROUPS: VariantGroup[] = [
     label: 'Legende',
     flat: true,
     pages: /^\/boreholes/,
+    // Schlüssel v2 bleibt für «Legende v2.1», damit bestehende Links (?v-legend=v2) weiter passen
     variants: [
       { key: 'v1', label: 'Legende v1' },
-      { key: 'v2', label: 'Legende v2' },
+      { key: 'v2', label: 'Legende v2.1' },
+      { key: 'v2-2', label: 'Legende v2.2' },
     ],
   },
 ]

@@ -42,16 +42,18 @@ export function drawSymbol(context: CanvasRenderingContext2D, symbol: SymbolDefi
   }
 
   // Schlagschatten wie in Figma (Versatz 2, stdDeviation 3, Spread −1): Canvas-Schatten gelten in Gerätepixeln
-  context.save()
-  context.shadowColor = symbol.shadow
-  context.shadowOffsetY = 2 * ratio
-  context.shadowBlur = 6 * ratio
-  context.translate(15, 15)
-  context.scale(0.875, 0.875)
-  context.translate(-15, -15)
-  context.fillStyle = symbol.fill
-  context.fill(shape)
-  context.restore()
+  if (symbol.shadow) {
+    context.save()
+    context.shadowColor = symbol.shadow
+    context.shadowOffsetY = 2 * ratio
+    context.shadowBlur = 6 * ratio
+    context.translate(15, 15)
+    context.scale(0.875, 0.875)
+    context.translate(-15, -15)
+    context.fillStyle = symbol.fill
+    context.fill(shape)
+    context.restore()
+  }
 
   context.fillStyle = symbol.fill
   context.fill(shape)
@@ -65,6 +67,12 @@ export function drawSymbol(context: CanvasRenderingContext2D, symbol: SymbolDefi
     context.restore()
   } else {
     context.stroke(stroke)
+  }
+  // Weisser Rand aussen um die Form (Figma: 2px Kontur «outside»)
+  if (symbol.halo) {
+    context.strokeStyle = '#ffffff'
+    context.lineWidth = 2
+    context.stroke(path2d(symbol.halo))
   }
   // Zusätzliche Formen, z.B. die Sektoren bei «Verfügbare Inhalte»
   for (const extra of symbol.extras ?? []) {

@@ -24,7 +24,7 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null)
 
-const DEFAULT_LEGEND: LegendTopic = 'templateType'
+const DEFAULT_LEGEND: LegendTopic = 'purpose'
 
 function parseContent(value: string | null): ContentKind {
   return CONTENT_KINDS.find((kind) => kind.toLowerCase() === value) ?? CONTENT_KINDS[0]

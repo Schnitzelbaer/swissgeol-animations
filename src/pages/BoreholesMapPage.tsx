@@ -11,6 +11,8 @@ import { boreholeStyle } from '../components/map/boreholeStyles'
 import { CONTENT_KINDS, GROUP_STARTS, LEGEND_TOPICS, LEGEND_WIDTH, viewLabel, viewSymbol, viewValues } from '../components/map/boreholeLegends'
 import { useBoreholeLegendView } from '../components/map/useBoreholeLegendView'
 import { SegmentedControl } from '../components/SegmentedControl'
+import { ContentPairs } from '../components/map/ContentPairs'
+import { useVariant } from '../variants'
 import { BOREHOLE_CLUSTERS, BOREHOLES_CENTER, BOREHOLES_RESOLUTION, createBoreholeFeatures } from '../components/map/boreholeGeometries'
 import { useStore } from '../data/store'
 import { useI18n } from '../i18n'
@@ -38,8 +40,11 @@ export function BoreholesMapPage() {
     label: viewLabel(t, view, value),
     separator: groupStarts.includes(value),
   }))
-  // Legende v2, «Verfügbare Inhalte»: Segmented Control über den Einträgen wählt den Inhalt
-  const controls = view.content ? (
+  // «Verfügbare Inhalte» in Legende v2.1: Segmented Control über den Einträgen; in v2.2: alle Paare mit Radio Buttons
+  const variant = useVariant('legend')
+  const pairs = view.content && variant === 'v2-2'
+  const content = pairs ? <ContentPairs value={boreholeContent} onChange={setBoreholeContent} /> : undefined
+  const controls = view.content && !pairs ? (
     <SegmentedControl
       aria-label={t.boreholes.contentKindLabel}
       options={CONTENT_KINDS.map((kind) => ({ value: kind, label: t.boreholes.contentKinds[kind] }))}
@@ -60,7 +65,7 @@ export function BoreholesMapPage() {
             style={boreholeStyle(view)}
             center={BOREHOLES_CENTER}
             resolution={BOREHOLES_RESOLUTION}
-            legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable controls={controls} />}
+            legend={<Legend title={t.boreholes.legends[topic]} width={LEGEND_WIDTH[topic]} items={items} onSwitch={switchLegend} scrollable controls={controls} content={content} />}
             onFeatureClick={openBorehole}
             stacked={stacked}
             clusters={BOREHOLE_CLUSTERS}

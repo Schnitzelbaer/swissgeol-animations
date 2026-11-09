@@ -1,0 +1,74 @@
+/* Paare untereinander, getrennt durch eine Linie wie die Gruppen der übrigen Legenden */
+.pairs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 16px 9px;
+}
+
+.pair {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.pair + .pair {
+  margin-top: 13px;
+}
+
+.pair + .pair::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -7px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+/* Radio Button 16px auf Höhe der ersten Zeile (Symbol 30px) */
+.radio {
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 7px 0 0;
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: 50%;
+  background: var(--color-white);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.pair:hover .radio {
+  border-color: var(--color-primary);
+}
+
+.radio:checked {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 4px var(--color-white);
+  background: var(--color-primary);
+}
+
+.radio:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

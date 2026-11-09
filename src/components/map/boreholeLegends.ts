@@ -1,15 +1,15 @@
 import type { Messages } from '../../i18n/messages'
-import { ACCESS, BOREHOLE_TYPES, CONTENTS, LENGTH_CLASSES, PURPOSES, WORKFLOW_STATES, lengthClass, type Borehole, type TemplateType } from '../../data/boreholes'
+import { ACCESS, BOREHOLE_TYPES, CONTENTS, LENGTH_CLASSES, PURPOSES, WORKFLOW_STATES, lengthClass, type Borehole } from '../../data/boreholes'
 
-/** Legenden der Boreholes-Karte in der Reihenfolge von Figma «Alle Legenden» (21008:128368); der Wechsel-Button schaltet durch */
-export const LEGEND_TOPICS = ['templateType', 'purpose', 'boreholeType', 'access', 'workflow', 'length', 'contents'] as const
+/**
+ * Legenden der Boreholes-Karte; der Wechsel-Button schaltet durch. Reihenfolge wie bisher aus Figma «Alle Legenden»
+ * (21008:128368), ohne «Template Typ» (in Figma «Legende v1/v2» 21051:59689/59690 entfallen).
+ */
+export const LEGEND_TOPICS = ['purpose', 'boreholeType', 'access', 'workflow', 'length', 'contents'] as const
 export type LegendTopic = (typeof LEGEND_TOPICS)[number]
-
-const TEMPLATE_TYPES: TemplateType[] = ['general', 'geothermal', 'geotechnics', 'hydrogeology']
 
 /** Werte pro Legende in Figma-Reihenfolge */
 export const LEGEND_VALUES: Record<LegendTopic, readonly string[]> = {
-  templateType: TEMPLATE_TYPES,
   purpose: PURPOSES,
   access: ACCESS,
   boreholeType: BOREHOLE_TYPES,
@@ -27,16 +27,9 @@ export const GROUP_STARTS: Partial<Record<LegendTopic, readonly string[]>> = {
 }
 
 /** Mindestbreite der Legende aus Figma; längere Übersetzungen machen sie breiter */
-export const LEGEND_WIDTH: Record<LegendTopic, number> = { templateType: 212, purpose: 293, access: 179, boreholeType: 187, workflow: 233, length: 218, contents: 247 }
+export const LEGEND_WIDTH: Record<LegendTopic, number> = { purpose: 293, access: 179, boreholeType: 187, workflow: 233, length: 218, contents: 247 }
 
-const TEMPLATE_SYMBOL: Record<TemplateType, string> = {
-  general: 'Template Typ/Allgemein',
-  geothermal: 'Template Typ/Erdsonde',
-  geotechnics: 'Template Typ/Baugrund',
-  hydrogeology: 'Template Typ/Hydro',
-}
-
-const FIGMA_TOPIC: Record<Exclude<LegendTopic, 'templateType'>, string> = {
+const FIGMA_TOPIC: Record<LegendTopic, string> = {
   purpose: 'Bohrzweck',
   access: 'Freigabe',
   boreholeType: 'Bohrtyp',
@@ -46,21 +39,18 @@ const FIGMA_TOPIC: Record<Exclude<LegendTopic, 'templateType'>, string> = {
 }
 
 export function legendValue(borehole: Borehole, topic: LegendTopic): string {
-  if (topic === 'templateType') return borehole.type
   if (topic === 'length') return lengthClass(borehole.lengthM)
   return borehole[topic]
 }
 
-/** Schlüssel in SYMBOLS (Figma-Variante «topic/type»); Trinkwasser ist in Figma ein eigenes Topic */
+/** Schlüssel in SYMBOLS: «Legende/Wert» wie die Beschriftung in Figma */
 export function symbolKey(topic: LegendTopic, value: string) {
-  if (topic === 'templateType') return TEMPLATE_SYMBOL[value as TemplateType]
-  if (value === 'Trinkwasser') return 'Trinkwasser/Trinkwasser'
   return `${FIGMA_TOPIC[topic]}/${value}`
 }
 
 /** Bezeichnung eines Legendenwerts in der aktuellen Sprache */
-export function legendLabel(t: Messages, topic: LegendTopic, value: string) {
-  return topic === 'templateType' ? t.boreholes.templateType[value as TemplateType] : (t.boreholes.values[value] ?? value)
+export function legendLabel(t: Messages, _topic: LegendTopic, value: string) {
+  return t.boreholes.values[value] ?? value
 }
 
 /* Legende v2 (Varianten-Leiste): «Verfügbare Inhalte» zeigt einen Inhalt auf einmal als vorhanden / nicht vorhanden */

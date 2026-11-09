@@ -16,7 +16,7 @@ export const PURPOSES = [
 ] as const
 export const ACCESS = ['Öffentlich', 'Gesperrt'] as const
 export const BOREHOLE_TYPES = ['Bohrung', 'Virtuelle Bohrung', 'Rammsondierung', 'Baggerschlitz', 'Aufschluss', 'Anderer', 'Keine Angabe'] as const
-export const WORKFLOW_STATES = ['In Bearbeitung', 'In Überprüfung', 'In Validierung', 'Publikation', 'Änderung angefordert'] as const
+export const WORKFLOW_STATES = ['Draft', 'Review', 'Reviewed', 'Published', 'Änderung angefordert'] as const
 /** Klassen der Legende «Bohrlochlänge» (Figma 21008:129420) */
 export const LENGTH_CLASSES = ['<1 m', '1-10 m', '10-20 m', '20-100 m', '100-250 m', '250-500 m', '500-1000 m', '>1000 m', 'Keine Angabe'] as const
 /** Werte der Legende «Verfügbare Inhalte» (Figma 21008:129504) */
@@ -123,30 +123,30 @@ const figmaBoreholes: FigmaBorehole[] = [
 
 // Werte der übrigen Legenden für die Figma-Bohrungen (Frames 7558:31782, 8269:20137, 8269:20520, 8269:20953)
 const FIGMA_VALUES: [Purpose, Access, BoreholeType, WorkflowState][] = [
-  ['Belastete Standorte', 'Öffentlich', 'Virtuelle Bohrung', 'Publikation'],
-  ['Geothermie Produktion', 'Gesperrt', 'Bohrung', 'Publikation'],
-  ['Erdwärmesonde', 'Öffentlich', 'Rammsondierung', 'Publikation'],
-  ['Thermalwasser', 'Öffentlich', 'Bohrung', 'Publikation'],
-  ['Belastete Standorte', 'Öffentlich', 'Keine Angabe', 'In Validierung'],
-  ['Trinkwasser', 'Gesperrt', 'Virtuelle Bohrung', 'Publikation'],
-  ['CCS Exploration', 'Öffentlich', 'Bohrung', 'In Validierung'],
+  ['Belastete Standorte', 'Öffentlich', 'Virtuelle Bohrung', 'Published'],
+  ['Geothermie Produktion', 'Gesperrt', 'Bohrung', 'Published'],
+  ['Erdwärmesonde', 'Öffentlich', 'Rammsondierung', 'Published'],
+  ['Thermalwasser', 'Öffentlich', 'Bohrung', 'Published'],
+  ['Belastete Standorte', 'Öffentlich', 'Keine Angabe', 'Reviewed'],
+  ['Trinkwasser', 'Gesperrt', 'Virtuelle Bohrung', 'Published'],
+  ['CCS Exploration', 'Öffentlich', 'Bohrung', 'Reviewed'],
   ['Naturgefahren', 'Öffentlich', 'Bohrung', 'Änderung angefordert'],
-  ['Geotechnik', 'Öffentlich', 'Bohrung', 'In Überprüfung'],
-  ['CCS Injektion', 'Öffentlich', 'Keine Angabe', 'Publikation'],
-  ['CCS Injektion', 'Gesperrt', 'Anderer', 'Publikation'],
-  ['Geothermie Injektion', 'Gesperrt', 'Baggerschlitz', 'Publikation'],
-  ['Geothermie Produktion', 'Gesperrt', 'Virtuelle Bohrung', 'Publikation'],
-  ['Naturgefahren', 'Gesperrt', 'Baggerschlitz', 'In Überprüfung'],
-  ['Tunnel Exploration', 'Öffentlich', 'Rammsondierung', 'Publikation'],
-  ['Wissenschaftliche Exploration', 'Öffentlich', 'Bohrung', 'Publikation'],
-  ['Belastete Standorte', 'Öffentlich', 'Bohrung', 'Publikation'],
-  ['Mineralische Rohstoffe', 'Öffentlich', 'Aufschluss', 'Publikation'],
-  ['Keine Angabe', 'Öffentlich', 'Keine Angabe', 'Publikation'],
-  ['Wissenschaftliche Exploration', 'Öffentlich', 'Bohrung', 'In Bearbeitung'],
+  ['Geotechnik', 'Öffentlich', 'Bohrung', 'Review'],
+  ['CCS Injektion', 'Öffentlich', 'Keine Angabe', 'Published'],
+  ['CCS Injektion', 'Gesperrt', 'Anderer', 'Published'],
+  ['Geothermie Injektion', 'Gesperrt', 'Baggerschlitz', 'Published'],
+  ['Geothermie Produktion', 'Gesperrt', 'Virtuelle Bohrung', 'Published'],
+  ['Naturgefahren', 'Gesperrt', 'Baggerschlitz', 'Review'],
+  ['Tunnel Exploration', 'Öffentlich', 'Rammsondierung', 'Published'],
+  ['Wissenschaftliche Exploration', 'Öffentlich', 'Bohrung', 'Published'],
+  ['Belastete Standorte', 'Öffentlich', 'Bohrung', 'Published'],
+  ['Mineralische Rohstoffe', 'Öffentlich', 'Aufschluss', 'Published'],
+  ['Keine Angabe', 'Öffentlich', 'Keine Angabe', 'Published'],
+  ['Wissenschaftliche Exploration', 'Öffentlich', 'Bohrung', 'Draft'],
   ['Kohlenwasserstoff Produktion', 'Öffentlich', 'Bohrung', 'Änderung angefordert'],
-  ['Naturgefahren', 'Öffentlich', 'Aufschluss', 'In Bearbeitung'],
-  ['Grundwasser', 'Öffentlich', 'Aufschluss', 'In Bearbeitung'],
-  ['Anderer', 'Gesperrt', 'Bohrung', 'In Bearbeitung'],
+  ['Naturgefahren', 'Öffentlich', 'Aufschluss', 'Draft'],
+  ['Grundwasser', 'Öffentlich', 'Aufschluss', 'Draft'],
+  ['Anderer', 'Gesperrt', 'Bohrung', 'Draft'],
 ]
 
 /** Deterministischer Zufall (mulberry32), damit die erzeugten Bohrungen bei jedem Laden gleich sind */
@@ -225,7 +225,7 @@ function generateBoreholes(): BoreholeBase[] {
           ? [['Bohrung', 45], ['Rammsondierung', 25], ['Baggerschlitz', 12], ['Aufschluss', 6], ['Virtuelle Bohrung', 2], ['Anderer', 5], ['Keine Angabe', 5]]
           : [['Bohrung', 70], ['Rammsondierung', 4], ['Baggerschlitz', 4], ['Aufschluss', 6], ['Virtuelle Bohrung', 5], ['Anderer', 5], ['Keine Angabe', 6]],
       ),
-      workflow: weighted<WorkflowState>([['Publikation', 50], ['In Bearbeitung', 20], ['In Überprüfung', 12], ['In Validierung', 12], ['Änderung angefordert', 6]]),
+      workflow: weighted<WorkflowState>([['Published', 50], ['Draft', 20], ['Review', 12], ['Reviewed', 12], ['Änderung angefordert', 6]]),
       lonLat: [lon, lat],
       locationPrecision: pick([0.5, 1, 1, 2, 5, 10]),
       referenceOffset: pick([0, 0, 0.2, 0.5, 0.8]),
@@ -277,12 +277,12 @@ function year2() {
  */
 const SURSEE: BoreholeBase[] = [
   {
-    id: '17401', name: 'RB 1 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Rammsondierung', workflow: 'Publikation',
+    id: '17401', name: 'RB 1 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Rammsondierung', workflow: 'Published',
     lonLat: [8.1092, 47.1708], locationPrecision: 1, referenceOffset: 0,
     identifiers: ids('17401', [{ type: 'ID GeODin-Shortname', codes: [{ code: '6SUR23R001' }] }]),
   },
   {
-    id: '17402', name: 'KB 2 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Bohrung', workflow: 'In Bearbeitung',
+    id: '17402', name: 'KB 2 Rathausplatz', type: 'geotechnics', purpose: 'Geotechnik', access: 'Öffentlich', boreholeType: 'Bohrung', workflow: 'Draft',
     lonLat: [8.1092, 47.1708], locationPrecision: 1, referenceOffset: 0.2,
     identifiers: ids('17402', [{ type: 'ID GeODin-Shortname', codes: [{ code: '6SUR23K002' }] }]),
   },
