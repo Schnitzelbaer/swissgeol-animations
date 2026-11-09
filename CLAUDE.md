@@ -11,7 +11,7 @@ Vite + React + TypeScript. Ziel: swissgeol-Assets (UI, Karten, Komponenten) nach
 
 - Figma-Datei «swissgeol», Key `cEiOoOazAQZqpRY92ZhBeO`. Das Figma-Design hat Vorrang vor der Live-Version (assets.swissgeol.ch).
 - Asset-Vorschau: Node `20842:123706` («Desktop - 1», 1440×1024).
-- Boreholes-Startseite: Node `7558:31771`; Detailseiten in der Seite «Detail» (Boreholes), Section «Detail-Pages»: Standort `7568:60709`, ID's `18334:115379`. App-Dropdown beim Logo: Section `19565:117659`. Legenden und Kartensymbole: Section `8269:20012`, Frame «Alle Legenden» `21008:128368` (Reihenfolge und Stand der sieben Legenden).
+- Boreholes-Startseite: Node `7558:31771`; Detailseiten in der Seite «Detail» (Boreholes), Section «Detail-Pages»: Standort `7568:60709`, ID's `18334:115379`. App-Dropdown beim Logo: Section `19565:117659`. Legenden und Kartensymbole: Section `8269:20012`, Frame «Alle Legenden» `21008:128368` (Reihenfolge). Aktuelle Symbolisierung: Frames «Legende v1» `21051:59689` und «Legende v2» `21051:59690` (im Prototyp vertauscht benannt, siehe Varianten).
 - Hover/Auswahl auf der Karte nach den Komponenten in «Map Interactions» (Assets): Hover violetter Rand `#8b5cf6`, Auswahl pinker Rand `#ec4899`, je 6px um die Geometrie.
 - Weitere Screens / Funktionalitäten (Inhaltsverzeichnis, PDF-Viewer, Bearbeiten, Klassifizierung): Section `20844:32515`. Die Post-its dort beschreiben das Verhalten.
 - Icons und Grafiken stammen aus Figma (`src/assets/`). Achtung: Der Figma-Export liefert Icons in der Grundfarbe der Komponente und ignoriert Farb-Overrides der Instanzen. Farben deshalb mit dem Figma-Screenshot abgleichen und im SVG anpassen.
