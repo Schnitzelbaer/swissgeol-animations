@@ -94,10 +94,7 @@ export function VariantBar() {
                           <svg className={styles.check} width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                             <path d="M3 7.2 5.8 10 11 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
-                          <span className={styles.optionText}>
-                            <span>{variant.label}</span>
-                            {variant.description && <span className={styles.description}>{variant.description}</span>}
-                          </span>
+                          <span>{variant.label}</span>
                         </button>
                       ))}
                     </div>

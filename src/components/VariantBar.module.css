@@ -122,7 +122,7 @@
 
 .option {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   width: 100%;
   padding: 6px 10px 6px 14px;
@@ -137,7 +137,6 @@
 
 .check {
   flex: none;
-  margin-top: 1px;
   visibility: hidden;
 }
 
@@ -145,16 +144,7 @@
   visibility: visible;
 }
 
-.optionText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
 
-.description {
-  color: #8a8a8a;
-}
 
 /* Lasche bei ausgeblendeter Leiste: klein oben in der Mitte, wächst beim Hover, Klick blendet die Leiste ein */
 .tab {
