@@ -53,7 +53,7 @@ export const VARIANT_GROUPS: VariantGroup[] = [
       { key: 'v2', label: 'Legende v2' },
       { key: 'v3-1', label: 'Legende v3.1' },
       { key: 'v3-2', label: 'Legende v3.2' },
-      { key: 'v4', label: 'Legende v4' },
+      { key: 'v4', label: 'Legende v4 – Final' },
     ],
   },
 ]
