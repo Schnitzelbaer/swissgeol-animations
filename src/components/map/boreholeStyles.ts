@@ -182,14 +182,18 @@ function hitBadge(text: string) {
   }
 }
 
-type RenderState = 'selected' | 'hover' | 'default'
+/** active = Bohrungen eines festgehaltenen Popovers (Legende v4): pink wie die Auswahl, unter dem Hover */
+type RenderState = 'selected' | 'hover' | 'active' | 'default'
+
+const ringOf = (state: RenderState) => (state === 'selected' || state === 'active' ? SELECTED : state === 'hover' ? HOVER : undefined)
+const zIndexOf = (state: RenderState) => ({ selected: 6, hover: 5, active: 4, default: 3 })[state]
 
 function badgeStyle(count: number, state: RenderState | 'hidden') {
   const cacheKey = `badge|${count}|${state}`
   let style = styles.get(cacheKey)
   if (!style) {
     const text = String(count)
-    const ring = state === 'selected' ? SELECTED : state === 'hover' ? HOVER : undefined
+    const ring = state === 'hidden' ? undefined : ringOf(state)
     style = new Style({
       renderer:
         state === 'hidden'
@@ -201,14 +205,15 @@ function badgeStyle(count: number, state: RenderState | 'hidden') {
               drawSprite(renderState.context, cacheKey, x, y, renderState.pixelRatio, halfWidth, 36, (context, cx, cy) => drawBadge(context, text, cx, cy, renderState.pixelRatio, ring), document.fonts.check(BADGE_FONT))
             },
       hitDetectionRenderer: hitBadge(text),
-      zIndex: state === 'selected' ? 5 : state === 'hover' ? 4 : 3,
+      zIndex: state === 'hidden' ? 3 : zIndexOf(state),
     })
     styles.set(cacheKey, style)
   }
   return style
 }
 
-const stateOf = (feature: FeatureLike): RenderState => (feature.get('selected') === true ? 'selected' : feature.get('hover') === true ? 'hover' : 'default')
+const stateOf = (feature: FeatureLike): RenderState =>
+  feature.get('selected') === true ? 'selected' : feature.get('hover') === true ? 'hover' : feature.get('active') === true ? 'active' : 'default'
 
 const styles = new Map<string, Style>()
 
@@ -233,7 +238,8 @@ export function boreholeStyle(view: LegendView): StyleFunction {
       if (members) {
         if (feature.get('leader') !== true) return badgeStyle(members.length, 'hidden')
         const states = members.map(stateOf)
-        return badgeStyle(members.length, states.includes('selected') ? 'selected' : states.includes('hover') ? 'hover' : 'default')
+        const badgeState = (['selected', 'hover', 'active'] as const).find((state) => states.includes(state)) ?? 'default'
+        return badgeStyle(members.length, badgeState)
       }
       const key = viewSymbol(view, viewValue(borehole, view))
       const state = stateOf(feature)
@@ -241,14 +247,14 @@ export function boreholeStyle(view: LegendView): StyleFunction {
       let style = styles.get(cacheKey)
       if (!style) {
         const symbol = SYMBOLS[key]
-        const ring = state === 'selected' ? SELECTED : state === 'hover' ? HOVER : undefined
+        const ring = ringOf(state)
         style = new Style({
           renderer: (coordinates, renderState) => {
             const [x, y] = coordinates as Coordinate
             drawSprite(renderState.context, cacheKey, x, y, renderState.pixelRatio, 26, 26, (context, cx, cy) => drawSymbol(context, symbol, cx, cy, renderState.pixelRatio, ring))
           },
           hitDetectionRenderer: hitSymbol(symbol),
-          zIndex: state === 'selected' ? 5 : state === 'hover' ? 4 : 3,
+          zIndex: zIndexOf(state),
         })
         styles.set(cacheKey, style)
       }

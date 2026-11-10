@@ -9,6 +9,7 @@ export function useBoreholeStack(view: LegendView, onOpen: (id: string) => void)
     () => ({
       preview: (ids: string[]) => <BoreholePreview ids={ids} view={view} />,
       popover: (ids: string[], controls: StackedControls) => <BoreholePopover ids={ids} view={view} controls={controls} onOpen={onOpen} />,
+      activeOnPin: view.v4 === true,
     }),
     [view, onOpen],
   )

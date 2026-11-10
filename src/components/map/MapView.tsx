@@ -83,6 +83,8 @@ type Props = {
     preview: (ids: string[]) => ReactNode
     /** Festgehaltenes Popover nach dem Klick auf einen Haufen */
     popover: (ids: string[], controls: StackedControls) => ReactNode
+    /** Festgehaltener Haufen pink (aktiv) statt violett; Hover über eine Zeile markiert diese Bohrung violett (Legende v4) */
+    activeOnPin?: boolean
   }
   /**
    * Ab dieser Auflösung (m/px, also weiter herausgezoomt) nur noch Badges: nahe Objekte werden zusammengefasst,
@@ -193,12 +195,21 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     [withGroups],
   )
 
+  /** Bohrungen des festgehaltenen Popovers, pink markiert (activeOnPin) */
+  const activeRef = useRef<Feature[]>([])
+  const setActive = useCallback((features: Feature[]) => {
+    for (const feature of activeRef.current) if (!features.includes(feature)) feature.set('active', false)
+    for (const feature of features) feature.set('active', true)
+    activeRef.current = features
+  }, [])
+
   const closePopover = useCallback(() => {
     popoverIdsRef.current = []
     setPopoverIds([])
     popoverOverlayRef.current?.setPosition(undefined)
     setHovered([])
-  }, [setHovered])
+    setActive([])
+  }, [setHovered, setActive])
 
   useEffect(() => {
     const greyLayer = swisstopoLayer('ch.swisstopo.pixelkarte-grau', 1)
@@ -439,7 +450,13 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
         popoverIdsRef.current = ids
         setPopoverIds(ids)
         setPopoverInstant(fromPreview)
-        setHovered(hits)
+        // Legende v4: der angeklickte Haufen wechselt von Violett (Hover) zu Pink (aktiv)
+        if (stackedRef.current.activeOnPin) {
+          setActive(hits)
+          setHovered([])
+        } else {
+          setHovered(hits)
+        }
         showTooltip([])
         if (fromPreview) {
           popoverOverlay.setPositioning(positioning)
@@ -462,7 +479,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       map.setTarget(undefined)
       mapRef.current = null
     }
-  }, [tooltipElement, popoverElement, setHovered, closePopover])
+  }, [tooltipElement, popoverElement, setHovered, setActive, closePopover])
 
   // Anderer Stil, z.B. nach dem Wechsel der Legende
   useEffect(() => {
@@ -495,7 +512,9 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
 
   const highlight = useCallback(
     (id: string | null) => {
-      const features = (sourceRef.current?.getFeatures() ?? []).filter((feature) => (id ? feature.getId() === id : popoverIdsRef.current.includes(String(feature.getId()))))
+      // Mit activeOnPin bleibt der Haufen pink; nur die Zeile unter der Maus wird zusätzlich violett
+      const fallback = stackedRef.current?.activeOnPin ? [] : popoverIdsRef.current
+      const features = (sourceRef.current?.getFeatures() ?? []).filter((feature) => (id ? feature.getId() === id : fallback.includes(String(feature.getId()))))
       setHovered(features)
     },
     [setHovered],
