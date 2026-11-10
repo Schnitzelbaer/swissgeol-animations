@@ -131,6 +131,11 @@
   opacity: 1;
 }
 
+/* Legende v4: immer sichtbar */
+.highlightAlways {
+  opacity: 1;
+}
+
 /* Ohne Maus (Touch) immer sichtbar */
 @media (hover: none) {
   .highlight {

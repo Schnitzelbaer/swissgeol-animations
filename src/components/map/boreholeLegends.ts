@@ -88,7 +88,13 @@ const MISSING = 'nicht vorhanden'
  * Was die Karte gerade zeigt: das Thema der Legende, in Legende v3.x bei «Verfügbare Inhalte» zusätzlich den gewählten
  * Inhalt; `classic` = Variante «Legende v1» (alte Symbole, Tooltip und Popover von vor dem Feedback).
  */
-export type LegendView = { topic: LegendTopic; content?: ContentKind; classic?: boolean }
+export type LegendView = {
+  topic: LegendTopic
+  content?: ContentKind
+  classic?: boolean
+  /** Legende v4: Vorschau einer einzelnen Bohrung zeigt schon den Pfeil (ein Klick öffnet direkt die Detailseite) */
+  singleArrow?: boolean
+}
 
 /** Legenden, durch die der Wechsel-Button in dieser Ansicht schaltet */
 export function legendCycle(view: LegendView) {

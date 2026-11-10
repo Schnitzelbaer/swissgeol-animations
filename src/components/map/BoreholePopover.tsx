@@ -82,7 +82,8 @@ function PopoverPreview({ ids, view }: { ids: string[]; view: LegendView }) {
         {shown.map((entry) => (
           <li key={entry.id} className={styles.row}>
             <RowContent entry={entry} />
-            <Arrow hidden />
+            {/* Legende v4: bei einer einzelnen Bohrung führt der Klick direkt zur Detailseite, darum schon der Pfeil */}
+            <Arrow hidden={!(view.singleArrow && entries.length === 1)} />
           </li>
         ))}
         {entries.length > shown.length && <li className={`${styles.row} ${styles.more} body3`}>{t.boreholes.tooltipMore(entries.length - shown.length)}</li>}

@@ -30,10 +30,12 @@ type Props = {
   content?: ReactNode
   /** Beschriftung der Glühbirne (erscheint beim Hover über der Legende): lässt alle Objekte auf der Karte aufleuchten */
   highlightLabel?: string
+  /** Glühbirne immer zeigen statt nur beim Hover (Legende v4) */
+  highlightAlways?: boolean
 }
 
 /** Legende oben links auf der Karte («… Legende Drawer – Integrated») */
-export function Legend({ title, items, width, onSwitch, scrollable, controls, content, highlightLabel }: Props) {
+export function Legend({ title, items, width, onSwitch, scrollable, controls, content, highlightLabel, highlightAlways }: Props) {
   const { t } = useI18n()
   const pulse = useMapPulse()
   const [open, setOpen] = useState(true)
@@ -51,7 +53,7 @@ export function Legend({ title, items, width, onSwitch, scrollable, controls, co
             {title}
           </span>
           {highlightLabel && pulse && (
-            <Button icon={lightbulbIcon} className={styles.highlight} aria-label={highlightLabel} tooltip={highlightLabel} onClick={pulse} />
+            <Button icon={lightbulbIcon} className={`${styles.highlight} ${highlightAlways ? styles.highlightAlways : ''}`} aria-label={highlightLabel} tooltip={highlightLabel} onClick={pulse} />
           )}
         </div>
         <Button
