@@ -8,6 +8,7 @@
 // «Verfügbare Inhalte/*» = Kombinationen mit farbigen Sektoren (Legende v1).
 
 import { SYMBOLS_V1 } from './boreholeSymbolsV1'
+import { SYMBOLS_V4 } from './boreholeSymbolsV4'
 
 /** Zusätzliche Formen über dem Symbol, z.B. die Sektoren bei «Verfügbare Inhalte» */
 export type SymbolExtra = { path: string; fill?: string; stroke?: string; strokeWidth?: number }
@@ -90,3 +91,6 @@ export const SYMBOLS: Record<string, SymbolDefinition> = {
 
 // Variante «Legende v1» (Stand vor dem Feedback): alte Symbole unter dem Präfix «v1/»
 for (const [key, symbol] of Object.entries(SYMBOLS_V1)) SYMBOLS[`v1/${key}`] = symbol
+
+// Variante «Legende v4»: eigener Bohrzweck unter dem Präfix «v4/»
+for (const [key, symbol] of Object.entries(SYMBOLS_V4)) SYMBOLS[`v4/${key}`] = symbol

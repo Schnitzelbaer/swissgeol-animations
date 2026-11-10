@@ -31,6 +31,18 @@ export const GROUP_STARTS: Partial<Record<LegendTopic, readonly string[]>> = {
   contents: ['Keine'],
 }
 
+/** Legende v4 (Figma 21082:60856): Naturgefahren gehört zu Geotechnik, CCS ist eine eigene Gruppe */
+const GROUP_STARTS_V4: Partial<Record<LegendTopic, readonly string[]>> = {
+  ...GROUP_STARTS,
+  purpose: ['Naturgefahren', 'Hydrogeologie', 'Geothermie Exploration', 'CCS Exploration', 'Mineralische Rohstoffe', 'Wissenschaftliche Exploration', 'Anderer'],
+}
+
+/** Trennlinien der Legende in dieser Ansicht */
+export function groupStarts(view: LegendView): readonly string[] {
+  if (view.content) return []
+  return (view.v4 ? GROUP_STARTS_V4 : GROUP_STARTS)[view.topic] ?? []
+}
+
 /** Mindestbreite der Legende aus Figma; längere Übersetzungen machen sie breiter */
 export const LEGEND_WIDTH: Record<LegendTopic, number> = { templateType: 212, purpose: 293, access: 179, boreholeType: 187, workflow: 233, length: 218, contents: 247 }
 
@@ -94,6 +106,8 @@ export type LegendView = {
   classic?: boolean
   /** Legende v4: Vorschau einer einzelnen Bohrung zeigt schon den Pfeil (ein Klick öffnet direkt die Detailseite) */
   singleArrow?: boolean
+  /** Legende v4: eigener Bohrzweck (Symbole «v4/Bohrzweck/*», andere Gruppen) */
+  v4?: boolean
 }
 
 /** Legenden, durch die der Wechsel-Button in dieser Ansicht schaltet */
@@ -107,7 +121,7 @@ export function hasContent(borehole: Borehole, kind: ContentKind) {
 
 /** Eindeutiger Schlüssel einer Ansicht (Cache der Kartenstile) */
 export function viewKey(view: LegendView) {
-  return `${view.classic ? 'v1:' : ''}${view.content ? `${view.topic}:${view.content}` : view.topic}`
+  return `${view.classic ? 'v1:' : view.v4 ? 'v4:' : ''}${view.content ? `${view.topic}:${view.content}` : view.topic}`
 }
 
 /** Werte der Legende in ihrer Reihenfolge */
@@ -123,7 +137,9 @@ export function viewValue(borehole: Borehole, view: LegendView) {
 /** Symbol eines Werts: vorhanden in der Farbe des Inhalts, nicht vorhanden grau */
 export function viewSymbol(view: LegendView, value: string) {
   if (view.content) return value === PRESENT ? `Inhalt/${view.content}` : 'Inhalt/Nicht vorhanden'
-  return view.classic ? symbolKeyV1(view.topic, value) : symbolKey(view.topic, value)
+  if (view.classic) return symbolKeyV1(view.topic, value)
+  if (view.v4 && view.topic === 'purpose') return `v4/${symbolKey(view.topic, value)}`
+  return symbolKey(view.topic, value)
 }
 
 export function viewLabel(t: Messages, view: LegendView, value: string) {

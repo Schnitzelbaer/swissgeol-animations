@@ -8,7 +8,7 @@ import { Legend } from '../components/map/Legend'
 import { SymbolIcon } from '../components/map/SymbolIcon'
 import { useBoreholeStack } from '../components/map/boreholeStack'
 import { boreholeStyle } from '../components/map/boreholeStyles'
-import { CONTENT_KINDS, GROUP_STARTS, LEGEND_WIDTH, legendCycle, viewLabel, viewSymbol, viewValues } from '../components/map/boreholeLegends'
+import { CONTENT_KINDS, LEGEND_WIDTH, groupStarts, legendCycle, viewLabel, viewSymbol, viewValues } from '../components/map/boreholeLegends'
 import { useBoreholeLegendView } from '../components/map/useBoreholeLegendView'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { ContentPairs } from '../components/map/ContentPairs'
@@ -35,11 +35,11 @@ export function BoreholesMapPage() {
   const openBorehole = useCallback((id: string) => navigate(`/boreholes/${id}/location`), [navigate])
   const stacked = useBoreholeStack(view, openBorehole)
 
-  const groupStarts = view.content ? [] : (GROUP_STARTS[topic] ?? [])
+  const starts = groupStarts(view)
   const items = viewValues(view).map((value) => ({
     icon: <SymbolIcon symbol={viewSymbol(view, value)} />,
     label: viewLabel(t, view, value),
-    separator: groupStarts.includes(value),
+    separator: starts.includes(value),
   }))
   // «Verfügbare Inhalte» in Legende v3.1: Segmented Control über den Einträgen; in v3.2: alle Paare mit Radio Buttons
   const variant = useVariant('legend')
