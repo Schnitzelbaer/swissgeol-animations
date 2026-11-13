@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { Button } from '../Button'
 import { Chip } from '../Chip'
+import { WithTooltip } from '../Tooltip'
 import { Section } from './Section'
 import { DocumentCard } from './DocumentCard'
 import type { Asset } from '../../data/assets'
@@ -48,7 +49,8 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
   const scrollRef = useRef<HTMLDivElement>(null)
   const { lang, t } = useI18n()
   const { files } = useStore()
-  const assetFiles = files.filter((file) => file.assetId === asset.id)
+  // PDFs zuerst, danach die übrigen Formate (sonst Reihenfolge wie erfasst)
+  const assetFiles = files.filter((file) => file.assetId === asset.id).sort((a, b) => Number(b.format === 'PDF') - Number(a.format === 'PDF'))
   const documents = assetFiles.filter((file) => !file.legal)
   const legal = assetFiles.filter((file) => file.legal)
 
@@ -63,25 +65,29 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
         <h2 key={asset.id} className={`${styles.assetTitle} body2-bold ellipsis`}>
           {asset.title}
         </h2>
+        {/* Status und Freigabe stehen als Chips im Titel; der Tooltip nennt die Bezeichnung */}
+        <div key={`chips-${asset.id}`} className={styles.titleChips}>
+          <WithTooltip content={t.panel.status}>
+            {(handlers) => (
+              <span {...handlers} aria-label={`${t.panel.status}: ${t.codes.status[asset.status]}`}>
+                <Chip tone="success">{t.codes.status[asset.status]}</Chip>
+              </span>
+            )}
+          </WithTooltip>
+          <WithTooltip content={t.panel.restriction}>
+            {(handlers) => (
+              <span {...handlers} aria-label={`${t.panel.restriction}: ${t.codes.restriction[asset.restriction]}`}>
+                <Chip tone="neutral">{t.codes.restriction[asset.restriction]}</Chip>
+              </span>
+            )}
+          </WithTooltip>
+        </div>
         <Button icon={closeIcon} aria-label={t.panel.close} onClick={onClose} />
       </header>
 
       <div ref={scrollRef} className={styles.scroll}>
         {/* key: Beim Wechsel des Assets blendet der Inhalt neu ein */}
         <div key={asset.id} className={styles.content}>
-          <div className={styles.statusRow}>
-            <div className={styles.statusCard}>
-              <span className="body3-medium">{t.panel.status}</span>
-              <Chip tone="success">{t.codes.status[asset.status]}</Chip>
-            </div>
-            <div className={styles.statusCard}>
-              <span className="body3-medium">{t.panel.restriction}</span>
-              <Chip tone="neutral">{t.codes.restriction[asset.restriction]}</Chip>
-            </div>
-          </div>
-
-          <hr className={styles.divider} />
-
           <div className={styles.group} style={{ gap: 16 }}>
             <Section title={t.panel.documents} flush>
               {documents.length === 0 && <p className={`${styles.emptyDocuments} body3`}>{t.panel.noDocuments}</p>}
