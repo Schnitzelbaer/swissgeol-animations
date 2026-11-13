@@ -109,6 +109,7 @@ export function MapPage() {
                 title={t.legend.title}
                 highlightLabel={t.legend.highlightAssets}
                 width={179}
+                collapsible={false}
                 items={[
                   { icon: legendPoint, label: t.legend.point },
                   { icon: legendLine, label: t.legend.line },

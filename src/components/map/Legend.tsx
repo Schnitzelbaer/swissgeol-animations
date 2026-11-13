@@ -38,10 +38,12 @@ type Props = {
    * blenden über, die Höhe passt sich animiert an; die Glühbirne entfällt, weil die Heatmap nicht pulsiert.
    */
   alternate?: { active: boolean; title: string; content: ReactNode }
+  /** Zuklapp-Button (Pfeil rechts im Kopf); Assets ohne, ihre Legenden sind kurz genug */
+  collapsible?: boolean
 }
 
 /** Legende oben links auf der Karte («… Legende Drawer – Integrated») */
-export function Legend({ title: mainTitle, items, width, onSwitch, scrollable, controls, content, highlightLabel, highlightAlways, alternate }: Props) {
+export function Legend({ title: mainTitle, items, width, onSwitch, scrollable, controls, content, highlightLabel, highlightAlways, alternate, collapsible = true }: Props) {
   const { t } = useI18n()
   const pulse = useMapPulse()
   const [open, setOpen] = useState(true)
@@ -80,13 +82,15 @@ export function Legend({ title: mainTitle, items, width, onSwitch, scrollable, c
             <Button icon={lightbulbIcon} className={`${styles.highlight} ${highlightAlways ? styles.highlightAlways : ''}`} aria-label={highlightLabel} tooltip={highlightLabel} onClick={pulse} />
           )}
         </div>
-        <Button
-          icon={chevronUpIcon}
-          className={styles.toggle}
-          aria-label={open ? t.legend.collapse : t.legend.expand}
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        />
+        {collapsible && (
+          <Button
+            icon={chevronUpIcon}
+            className={styles.toggle}
+            aria-label={open ? t.legend.collapse : t.legend.expand}
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          />
+        )}
       </header>
       <div className={styles.collapse}>
         <div className={styles.body}>
