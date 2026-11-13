@@ -17,7 +17,7 @@ import styles from './EditPage.module.css'
 import backIcon from '../assets/icons/back.svg'
 import duplicateIcon from '../assets/icons/header-duplicate.svg'
 import exportIcon from '../assets/icons/header-export.svg'
-import trashIcon from '../assets/icons/header-trash.svg'
+import { AssetMoreMenu } from '../components/edit/AssetMoreMenu'
 import discardIcon from '../assets/icons/trash-discard.svg'
 import saveIcon from '../assets/icons/save.svg'
 import sidebarIcon from '../assets/icons/sidebar-toggle.svg'
@@ -148,9 +148,10 @@ export function EditPage() {
           </span>
         </div>
         <div className={styles.detailActions}>
+          {/* «Delete asset» liegt im Kontextmenü links von «Duplicate» */}
+          <AssetMoreMenu />
           <Button variant="secondary" label={t.edit.duplicate} icon={duplicateIcon} iconPosition="right" />
           <Button variant="secondary" label={t.edit.export} icon={exportIcon} iconPosition="right" />
-          <Button variant="secondary" label={t.edit.deleteAsset} icon={trashIcon} iconPosition="right" />
         </div>
       </div>
 

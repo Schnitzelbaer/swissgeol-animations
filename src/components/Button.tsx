@@ -2,7 +2,7 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 import { useTooltip } from './Tooltip'
 import styles from './Button.module.css'
 
-type Variant = 'tertiary' | 'tertiary-dark' | 'secondary' | 'secondary-solid' | 'primary' | 'disabled'
+type Variant = 'tertiary' | 'tertiary-dark' | 'tertiary-destructive' | 'secondary' | 'secondary-solid' | 'primary' | 'disabled'
 
 type CommonProps = {
   variant?: Variant

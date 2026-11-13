@@ -1,0 +1,37 @@
+.anchor {
+  position: relative;
+}
+
+.active {
+  background: var(--color-primary-tint);
+}
+
+/* Menü linksbündig unter dem Button, Stil wie die übrigen Dropdowns */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+  width: max-content;
+  padding: 4px;
+  background: var(--color-white);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-overlay);
+  animation: menu-in 150ms var(--ease-out);
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.item {
+  justify-content: space-between;
+  width: 100%;
+}

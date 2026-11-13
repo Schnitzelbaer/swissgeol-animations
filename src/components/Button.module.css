@@ -71,6 +71,19 @@
   background: var(--color-primary-tint);
 }
 
+/* Tertiär destruktiv: rot, transparent, Hover als roter Schleier (z.B. «Delete asset» im Kontextmenü) */
+.tertiary-destructive {
+  color: #d8232a;
+}
+
+.tertiary-destructive:hover {
+  background: rgba(216, 35, 42, 0.08);
+}
+
+.tertiary-destructive:focus-visible {
+  outline-color: #d8232a;
+}
+
 /*
  * Tertiär auf dunklem Grund (neu, nicht im Designsystem): transparent mit weissem Icon und Text,
  * Hover/Gedrückt als leichter weisser Schleier, Fokus weiss. Für den dunklen Kopf des Datei-Viewers.
