@@ -17,7 +17,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
 }
 
 .file {
@@ -51,23 +50,35 @@
   color: var(--text-high-emphasis);
 }
 
-/* Download und Auge erscheinen erst beim Hover über dem Dokument (oder mit Tastatur-Fokus darin);
-   der Platz bleibt reserviert, damit der Dateiname nicht springt. Ohne Hover (Touch) immer sichtbar. */
+/* Download und Auge erscheinen erst beim Hover über dem Dokument (oder mit Tastatur-Fokus darin). Ohne Hover nimmt
+   der Dateiname die ganze Breite ein; die Buttons schieben sich herein und kürzen ihn. Breite: 12px Abstand + 2 × 36px
+   + 4px. Ohne Hover (Touch) immer sichtbar. */
 .actions {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  box-sizing: content-box;
+  max-width: 0;
+  padding-left: 0;
+  overflow: hidden;
   opacity: 0;
-  transition: opacity 150ms ease;
+  transition:
+    max-width 200ms var(--ease-out),
+    padding-left 200ms var(--ease-out),
+    opacity 150ms ease;
 }
 
 .item:hover .actions,
 .item:has(:focus-visible) .actions {
+  max-width: 76px;
+  padding-left: 12px;
   opacity: 1;
 }
 
 @media (hover: none) {
   .actions {
+    max-width: 76px;
+    padding-left: 12px;
     opacity: 1;
   }
 }
