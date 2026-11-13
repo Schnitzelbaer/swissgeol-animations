@@ -51,10 +51,25 @@
   color: var(--text-high-emphasis);
 }
 
+/* Download und Auge erscheinen erst beim Hover über dem Dokument (oder mit Tastatur-Fokus darin);
+   der Platz bleibt reserviert, damit der Dateiname nicht springt. Ohne Hover (Touch) immer sichtbar. */
 .actions {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.item:hover .actions,
+.item:has(:focus-visible) .actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
 }
 
 .meta {
