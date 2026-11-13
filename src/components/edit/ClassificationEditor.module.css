@@ -184,6 +184,25 @@
   flex-shrink: 0;
 }
 
+/* Papierkorb nur beim Hover über der Karte, bei aufgeklappter oder gezogener Karte und mit Tastatur-Fokus darin */
+.delete {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.card:hover .delete,
+.expanded .delete,
+.dragging .delete,
+.card:has(:focus-visible) .delete {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .delete {
+    opacity: 1;
+  }
+}
+
 .chevron img {
   transform: rotate(180deg);
   transition: transform 300ms var(--ease-out);

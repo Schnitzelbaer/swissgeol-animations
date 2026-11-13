@@ -76,7 +76,7 @@ function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelet
           </span>
         </button>
         <div className={styles.cardActions}>
-          <Button icon={trashIcon} aria-label={t.classification.deleteSection} tooltip={t.classification.deleteSection} onClick={onDelete} />
+          <Button icon={trashIcon} className={styles.delete} aria-label={t.classification.deleteSection} tooltip={t.classification.deleteSection} onClick={onDelete} />
           <Button icon={chevronUpIcon} className={styles.chevron} aria-label={expanded ? t.classification.collapse : t.classification.expand} onClick={onToggle} />
         </div>
       </div>
