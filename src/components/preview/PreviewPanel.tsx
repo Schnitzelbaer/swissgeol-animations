@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { Button } from '../Button'
 import { Chip } from '../Chip'
-import { WithTooltip } from '../Tooltip'
+import { TruncatedText, WithTooltip } from '../Tooltip'
 import { Section } from './Section'
 import { DocumentCard } from './DocumentCard'
 import type { Asset } from '../../data/assets'
@@ -62,8 +62,9 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
   return (
     <aside className={`${styles.panel} ${open ? styles.open : ''}`} aria-label={t.panel.label} inert={!open}>
       <header className={styles.title}>
-        <h2 key={asset.id} className={`${styles.assetTitle} body2-bold ellipsis`}>
-          {asset.title}
+        {/* Abgeschnittener Titel erscheint beim Hover vollständig als Tooltip */}
+        <h2 key={asset.id} className={`${styles.assetTitle} body2-bold`}>
+          <TruncatedText text={asset.title} className={styles.assetTitleText} />
         </h2>
         {/* Status und Freigabe stehen als Chips im Titel; der Tooltip nennt die Bezeichnung */}
         <div key={`chips-${asset.id}`} className={styles.titleChips}>

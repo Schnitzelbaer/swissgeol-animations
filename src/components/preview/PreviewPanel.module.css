@@ -85,6 +85,10 @@
   animation: content-in 350ms var(--ease-out);
 }
 
+.assetTitleText {
+  display: block;
+}
+
 @keyframes content-in {
   from {
     opacity: 0;
