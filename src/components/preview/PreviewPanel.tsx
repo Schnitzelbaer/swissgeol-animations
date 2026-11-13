@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { Button } from '../Button'
 import { Chip } from '../Chip'
-import { TruncatedText, WithTooltip } from '../Tooltip'
+import { TruncatedText } from '../Tooltip'
 import { Section } from './Section'
 import { DocumentCard } from './DocumentCard'
 import type { Asset } from '../../data/assets'
@@ -66,23 +66,6 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
         <h2 key={asset.id} className={`${styles.assetTitle} body2-bold`}>
           <TruncatedText text={asset.title} className={styles.assetTitleText} />
         </h2>
-        {/* Status und Freigabe stehen als Chips im Titel; der Tooltip nennt die Bezeichnung */}
-        <div key={`chips-${asset.id}`} className={styles.titleChips}>
-          <WithTooltip content={t.panel.status}>
-            {(handlers) => (
-              <span {...handlers} aria-label={`${t.panel.status}: ${t.codes.status[asset.status]}`}>
-                <Chip tone="success">{t.codes.status[asset.status]}</Chip>
-              </span>
-            )}
-          </WithTooltip>
-          <WithTooltip content={t.panel.restriction}>
-            {(handlers) => (
-              <span {...handlers} aria-label={`${t.panel.restriction}: ${t.codes.restriction[asset.restriction]}`}>
-                <Chip tone="neutral">{t.codes.restriction[asset.restriction]}</Chip>
-              </span>
-            )}
-          </WithTooltip>
-        </div>
         <Button icon={closeIcon} aria-label={t.panel.close} onClick={onClose} />
       </header>
 
@@ -119,6 +102,17 @@ export function PreviewPanel({ asset, open, onClose, onOpenDocument, openTocs, o
           <hr className={styles.divider} />
 
           <div className={styles.group} style={{ gap: 12 }}>
+            {/* Status und Freigabe über den Codelisten (Thema, Typ, Sprache) */}
+            <div className={styles.statusRow}>
+              <div className={styles.statusCard}>
+                <span className="body3-medium">{t.panel.status}</span>
+                <Chip tone="success">{t.codes.status[asset.status]}</Chip>
+              </div>
+              <div className={styles.statusCard}>
+                <span className="body3-medium">{t.panel.restriction}</span>
+                <Chip tone="neutral">{t.codes.restriction[asset.restriction]}</Chip>
+              </div>
+            </div>
             <Section title={t.panel.topic}>
               <Chips items={asset.topics.map((topic) => t.codes.topic[topic])} />
             </Section>

@@ -23,7 +23,8 @@ type Props = {
 export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleToc, onOpen }: Props) {
   const { t } = useI18n()
   const groups = groupSections(file.sections ?? [])
-  const classLabels = groups.map((group) => t.pageClassGroup[group.type])
+  // Ohne «Title page»: Jedes Dokument hat eine Titelseite, der Chip sagt nichts aus (im Inhaltsverzeichnis bleibt sie)
+  const classLabels = groups.filter((group) => group.type !== 'Titelblatt').map((group) => t.pageClassGroup[group.type])
   const languages = fileLanguages(file)
   const meta = [file.size, file.pages ? t.document.pages(file.pages) : null, languages.length ? languages.join(', ') : null].filter(Boolean) as string[]
   const withToc = showToc && groups.length > 0
@@ -59,7 +60,7 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
         </p>
       </div>
 
-      {classLabels.length > 0 && (
+      {(classLabels.length > 0 || withToc) && (
         <div className={styles.contentRow}>
           {/* Ohne Inhaltsverzeichnis bleibt der Platz des Pfeils frei, damit die Chips gleich eingerückt sind */}
           <button

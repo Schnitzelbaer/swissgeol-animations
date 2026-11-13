@@ -39,19 +39,6 @@
   margin: 0;
 }
 
-/* Status und Freigabe rechts neben dem Titel, vor dem Schliessen-Button */
-.titleChips {
-  display: flex;
-  flex-shrink: 0;
-  gap: 4px;
-  margin-left: 6px;
-  animation: content-in 350ms var(--ease-out);
-}
-
-.titleChips > span {
-  display: flex;
-}
-
 .scroll {
   flex: 1;
   min-height: 0;
@@ -128,6 +115,24 @@
   flex-wrap: wrap;
 }
 
+
+.statusRow {
+  display: flex;
+  gap: 8px;
+}
+
+.statusCard {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 13px 15px 15px;
+  background: var(--color-white);
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: var(--radius-4);
+}
 
 .columns {
   display: flex;
