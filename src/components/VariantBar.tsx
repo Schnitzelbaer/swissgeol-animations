@@ -8,11 +8,12 @@ import styles from './VariantBar.module.css'
 /**
  * Varianten-Leiste über der App (bewusst schwarz, damit sie nicht zur App gehört). Ein Dropdown listet die Gruppen
  * der aktuellen Seite mit ihren Varianten; «Link kopieren» teilt die aktuelle Kombination. Ausgeblendet bleibt oben
- * in der Mitte eine kleine Lasche, die beim Hover wächst und per Klick die Leiste wieder einblendet.
+ * in der Mitte eine kleine Lasche, die beim Hover wächst und per Klick die Leiste wieder einblendet. Cmd/Ctrl+Y blendet
+ * Leiste und Lasche ganz aus und wieder ein.
  */
 export function VariantBar() {
   const { t } = useI18n()
-  const { selection, select, barVisible, setBarVisible } = useVariants()
+  const { selection, select, barVisible, setBarVisible, barOff } = useVariants()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -114,7 +115,7 @@ export function VariantBar() {
           </button>
         </div>
       </div>
-      {!barVisible && (
+      {!barVisible && !barOff && (
         <button type="button" className={styles.tab} onClick={() => setBarVisible(true)} aria-label={t.variants.show} title={t.variants.show}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

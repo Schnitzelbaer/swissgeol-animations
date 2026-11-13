@@ -53,6 +53,9 @@ const handFiles: AssetFile[] = [
   fileFromDocument('16622', { id: '16622', assetId: '16622', uploaded: '27.01.2023 09:16' }),
   fileFromDocument('a56-55-csv', { id: 'a56-55-csv', assetId: '4841', uploaded: '27.01.2023 09:14' }),
   fileFromDocument('12304', { id: '12304', assetId: '4841', uploaded: '27.01.2023 09:20' }),
+  // Zwei weitere PDFs bei 4841 (gleiche Dokumente wie bei 8768 und 16622, eigene Datei-IDs)
+  fileFromDocument('8768', { id: '4841-8768', assetId: '4841', uploaded: '27.01.2023 09:24' }),
+  fileFromDocument('16622', { id: '4841-16622', assetId: '4841', uploaded: '27.01.2023 09:27' }),
   fileFromDocument('14366', { id: '14366', assetId: '14366', uploaded: '08.11.2026 18:13' }),
   fileFromDocument('BLGD-12', { id: 'BLGD-12', assetId: '41205', uploaded: '08.11.2026 18:32' }),
   fileFromDocument('GBD-22', { id: 'GBD-22', assetId: '19873', uploaded: '08.11.2026 18:31' }),
