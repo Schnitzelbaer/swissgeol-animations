@@ -231,6 +231,11 @@ const en = {
     updateOrder: 'Update order',
     addSection: 'Add section',
     deleteSection: 'Delete section',
+    deleteTitle: 'Delete section',
+    deleteText: (title: string) => `Do you really want to delete the section «${title}» from the table of contents?`,
+    deleteConfirm: 'Delete',
+    dragSection: 'Drag to reorder (or use the arrow keys)',
+    resize: 'Resize sections and viewer',
     collapse: 'Collapse',
     expand: 'Expand',
     pages: (range: string) => `p. ${range}`,
@@ -398,6 +403,7 @@ const en = {
   },
   form: {
     required: 'Required field',
+    noMatches: 'No matches',
   },
   viewer: {
     label: 'File viewer',
@@ -639,6 +645,11 @@ const de: Messages = {
     updateOrder: 'Reihenfolge aktualisieren',
     addSection: 'Abschnitt hinzufügen',
     deleteSection: 'Abschnitt löschen',
+    deleteTitle: 'Abschnitt löschen',
+    deleteText: (title: string) => `Möchtest du den Abschnitt «${title}» wirklich aus dem Inhaltsverzeichnis löschen?`,
+    deleteConfirm: 'Löschen',
+    dragSection: 'Ziehen zum Umsortieren (oder mit den Pfeiltasten)',
+    resize: 'Breite von Abschnitten und Viewer anpassen',
     collapse: 'Zuklappen',
     expand: 'Aufklappen',
     pages: (range) => `S. ${range}`,
@@ -796,6 +807,7 @@ const de: Messages = {
   },
   form: {
     required: 'Pflichtfeld',
+    noMatches: 'Keine Treffer',
   },
   viewer: {
     label: 'Datei-Viewer',

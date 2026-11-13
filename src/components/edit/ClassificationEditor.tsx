@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react'
 import { Button } from '../Button'
 import { Chip } from '../Chip'
 import { SelectField, TextField } from '../FormField'
@@ -6,6 +6,7 @@ import { PdfViewer } from '../viewer/PdfViewer'
 import { ViewerHeader } from '../viewer/ViewerHeader'
 import { loadPdf } from '../viewer/pdf'
 import { SaveBar } from './SaveBar'
+import { DeleteSectionDialog } from './DeleteSectionDialog'
 import { CLASSES_WITHOUT_LANGUAGE, LANGUAGES, PAGE_CLASSES, newSectionId, pageRange, sectionTitle, type AssetFile, type Section } from '../../data/files'
 import { useI18n } from '../../i18n'
 import styles from './ClassificationEditor.module.css'
@@ -24,16 +25,47 @@ type SectionCardProps = {
   onChange: (section: Section) => void
   onDelete: () => void
   cardRef: (element: HTMLDivElement | null) => void
+  dragging: boolean
+  onDragStart: (event: PointerEvent<HTMLButtonElement>) => void
+  onMove: (delta: -1 | 1) => void
 }
 
-function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelete, cardRef }: SectionCardProps) {
+/** Griff mit sechs Punkten zum Umsortieren */
+function GripIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      {[6, 10, 14].map((y) => (
+        <g key={y}>
+          <circle cx="7.5" cy={y} r="1.25" />
+          <circle cx="12.5" cy={y} r="1.25" />
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelete, cardRef, dragging, onDragStart, onMove }: SectionCardProps) {
   const { t } = useI18n()
   const pages = Array.from({ length: pageCount }, (_, index) => ({ value: index + 1, label: String(index + 1) }))
   const showLanguage = section.language && !CLASSES_WITHOUT_LANGUAGE.includes(section.type)
 
   return (
-    <div ref={cardRef} className={`${styles.card} ${expanded ? styles.expanded : ''}`}>
+    <div ref={cardRef} className={`${styles.card} ${expanded ? styles.expanded : ''} ${dragging ? styles.dragging : ''}`}>
       <div className={styles.cardHeader}>
+        <button
+          type="button"
+          className={styles.grip}
+          aria-label={t.classification.dragSection}
+          title={t.classification.dragSection}
+          onPointerDown={onDragStart}
+          onKeyDown={(event: KeyboardEvent) => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+            event.preventDefault()
+            onMove(event.key === 'ArrowUp' ? -1 : 1)
+          }}
+        >
+          <GripIcon />
+        </button>
         <button type="button" className={styles.cardToggle} aria-expanded={expanded} onClick={onToggle}>
           <span className={`${styles.cardTitle} body3-bold`}>{sectionTitle(section, t.pageClass)}</span>
           <span className={styles.cardChips}>
@@ -52,7 +84,6 @@ function SectionCard({ section, expanded, pageCount, onToggle, onChange, onDelet
           <div className={styles.cardBody}>
             <TextField
               label={t.classification.label}
-              help={t.classification.labelHelp}
               value={section.label}
               placeholder={t.pageClass[section.type]}
               onChange={(label) => onChange({ ...section, label })}
@@ -124,6 +155,10 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
     loadPdf(file.url).then(({ sizes }) => setPageCount(sizes.length))
   }, [file.url, file.pages])
 
+  // Ziehen zum Umsortieren: die gezogene Karte folgt dem Zeiger, die übrigen gleiten (FLIP) an ihre neue Stelle
+  const [dragId, setDragId] = useState<string | null>(null)
+  const drag = useRef<{ id: string; grabOffset: number; pointerY: number } | null>(null)
+
   // FLIP: Karten gleiten nach dem Umsortieren oder Löschen an ihre neue Position
   const rememberPositions = () => {
     positions.current = new Map([...cards.current].map(([id, element]) => [id, element.getBoundingClientRect().top]))
@@ -131,8 +166,10 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
   useLayoutEffect(() => {
     const before = positions.current
     positions.current = null
+    placeDragged()
     if (before) {
       for (const [id, element] of cards.current) {
+        if (id === drag.current?.id) continue
         const previous = before.get(id)
         if (previous === undefined) continue
         const delta = previous - element.getBoundingClientRect().top
@@ -174,6 +211,14 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
     update(sections.filter((section) => section.id !== id))
   }
 
+  // Löschen erst nach der Sicherheitsabfrage; der Titel bleibt während der Ausblendung des Dialogs stehen
+  const [pendingDelete, setPendingDelete] = useState<Section | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const askDelete = (section: Section) => {
+    setPendingDelete(section)
+    setDeleteOpen(true)
+  }
+
   const add = () => {
     const last = sections.reduce((max, section) => Math.max(max, section.to), 0)
     const from = Math.min(last + 1, pageCount)
@@ -184,6 +229,143 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
     update([...sections, section])
   }
 
+  // Gezogene Karte unter den Zeiger setzen (Lage im Inhalt, unabhängig vom Scrollen der Liste)
+  function placeDragged() {
+    const state = drag.current
+    const list = listRef.current
+    const element = state && cards.current.get(state.id)
+    if (!state || !list || !element) return
+    const pointerInList = state.pointerY - list.getBoundingClientRect().top + list.scrollTop
+    element.style.transform = `translateY(${pointerInList - state.grabOffset - element.offsetTop}px)`
+  }
+
+  // Neue Stelle: Mitte der gezogenen Karte gegenüber den Mitten der übrigen Karten (Layout-Lage ohne Verschiebung)
+  const dragTo = useCallback(() => {
+    const state = drag.current
+    const list = listRef.current
+    if (!state || !list) return
+    const pointerInList = state.pointerY - list.getBoundingClientRect().top + list.scrollTop
+    setSections((current) => {
+      const dragged = cards.current.get(state.id)
+      if (!dragged) return current
+      const center = pointerInList - state.grabOffset + dragged.offsetHeight / 2
+      const others = current.filter((section) => section.id !== state.id)
+      let index = others.findIndex((section) => {
+        const element = cards.current.get(section.id)
+        return element ? center < element.offsetTop + element.offsetHeight / 2 : false
+      })
+      if (index === -1) index = others.length
+      const next = [...others.slice(0, index), current.find((section) => section.id === state.id)!, ...others.slice(index)]
+      if (next.every((section, position) => section === current[position])) return current
+      rememberPositions()
+      setDirty(true)
+      return next
+    })
+    placeDragged()
+  }, [])
+
+  const startDrag = (id: string, event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return
+    const element = cards.current.get(id)
+    const list = listRef.current
+    if (!element || !list) return
+    event.preventDefault()
+    const pointerInList = event.clientY - list.getBoundingClientRect().top + list.scrollTop
+    drag.current = { id, grabOffset: pointerInList - element.offsetTop, pointerY: event.clientY }
+    setDragId(id)
+  }
+
+  useEffect(() => {
+    if (!dragId) return
+    let frame = 0
+    // Am oberen und unteren Rand der Liste weiterscrollen, solange gezogen wird
+    const autoScroll = () => {
+      const list = listRef.current
+      const state = drag.current
+      if (list && state) {
+        const rect = list.getBoundingClientRect()
+        const edge = 48
+        const speed = state.pointerY < rect.top + edge ? -(rect.top + edge - state.pointerY) / 3 : state.pointerY > rect.bottom - edge ? (state.pointerY - rect.bottom + edge) / 3 : 0
+        if (speed) {
+          list.scrollTop += Math.max(-16, Math.min(16, speed))
+          dragTo()
+        }
+      }
+      frame = requestAnimationFrame(autoScroll)
+    }
+    frame = requestAnimationFrame(autoScroll)
+    const onMove = (event: globalThis.PointerEvent) => {
+      if (!drag.current) return
+      drag.current.pointerY = event.clientY
+      dragTo()
+    }
+    const onUp = () => {
+      const element = drag.current && cards.current.get(drag.current.id)
+      if (element) {
+        const from = element.style.transform
+        element.style.transform = ''
+        element.animate([{ transform: from }, { transform: 'none' }], { duration: 250, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })
+      }
+      drag.current = null
+      setDragId(null)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'grabbing'
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+    }
+  }, [dragId, dragTo])
+
+  // Mit der Tastatur (Pfeiltasten auf dem Griff) eine Stelle nach oben oder unten
+  const move = (id: string, delta: -1 | 1) => {
+    const index = sections.findIndex((section) => section.id === id)
+    const target = index + delta
+    if (index === -1 || target < 0 || target >= sections.length) return
+    rememberPositions()
+    const next = [...sections]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    update(next)
+    requestAnimationFrame(() => cards.current.get(id)?.querySelector<HTMLButtonElement>('button')?.focus())
+  }
+
+  // Trennlinie zwischen Abschnitten und Viewer: ziehbar, Standard 50/50
+  const [split, setSplit] = useState(0.5)
+  const columnsRef = useRef<HTMLDivElement>(null)
+  const [resizing, setResizing] = useState(false)
+  const clampSplit = (value: number) => {
+    const width = columnsRef.current?.clientWidth ?? 1
+    const min = Math.min(0.45, 380 / width)
+    return Math.min(1 - min, Math.max(min, value))
+  }
+  useEffect(() => {
+    if (!resizing) return
+    const onMove = (event: globalThis.PointerEvent) => {
+      const rect = columnsRef.current?.getBoundingClientRect()
+      if (rect) setSplit(clampSplit((event.clientX - rect.left) / rect.width))
+    }
+    const onUp = () => setResizing(false)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'col-resize'
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+    }
+  }, [resizing])
+
   // «Reihenfolge aktualisieren»: Die Blöcke werden nach der ersten Seitenzahl geordnet
   const reorder = () => {
     rememberPositions()
@@ -192,12 +374,13 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
 
   return (
     <div className={styles.layout}>
-      <div className={styles.columns}>
+      {/* Titel über die ganze Breite, darunter Abschnitte und Viewer nebeneinander */}
+      <header className={styles.editorHeader}>
+        <h2 className="body2-bold">{t.classification.title}</h2>
+        <Button variant="secondary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
+      </header>
+      <div ref={columnsRef} className={`${styles.columns} ${resizing ? styles.resizing : ''}`} style={{ '--split': `${split * 100}%` } as CSSProperties}>
         <section className={styles.editor} aria-label={t.classification.title}>
-          <header className={styles.editorHeader}>
-            <h2 className="body2-bold">{t.classification.title}</h2>
-            <Button variant="secondary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
-          </header>
           <div ref={listRef} className={styles.editorContent}>
             <div className={styles.list}>
               {sections.map((section) => (
@@ -208,7 +391,10 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
                   expanded={expanded.has(section.id)}
                   onToggle={() => toggle(section)}
                   onChange={change}
-                  onDelete={() => remove(section.id)}
+                  onDelete={() => askDelete(section)}
+                  dragging={dragId === section.id}
+                  onDragStart={(event) => startDrag(section.id, event)}
+                  onMove={(delta) => move(section.id, delta)}
                   cardRef={(element) => {
                     if (element) cards.current.set(section.id, element)
                     else cards.current.delete(section.id)
@@ -223,11 +409,45 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
           </div>
         </section>
 
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t.classification.resize}
+          aria-valuenow={Math.round(split * 100)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          tabIndex={0}
+          className={styles.divider}
+          onPointerDown={(event) => {
+            if (event.button !== 0) return
+            event.preventDefault()
+            setResizing(true)
+          }}
+          onDoubleClick={() => setSplit(0.5)}
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+            event.preventDefault()
+            setSplit((current) => clampSplit(current + (event.key === 'ArrowLeft' ? -0.02 : 0.02)))
+          }}
+        >
+          <span className={styles.dividerHandle} />
+        </div>
+
         <div className={styles.viewer}>
           <ViewerHeader files={files} file={file} page={page} onSelectFile={onSelectFile} onGoToPage={setPage} onClose={onCancel} />
           <PdfViewer file={file} page={page} onPageChange={setPage} sections={sections} initialTocOpen={false} />
         </div>
       </div>
+
+      <DeleteSectionDialog
+        open={deleteOpen}
+        title={pendingDelete ? sectionTitle(pendingDelete, t.pageClass) : ''}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => {
+          setDeleteOpen(false)
+          if (pendingDelete) remove(pendingDelete.id)
+        }}
+      />
 
       <SaveBar dirty={dirty}>
         <Button variant="secondary-solid" label={t.classification.cancel} onClick={onCancel} />

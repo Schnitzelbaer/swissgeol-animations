@@ -44,6 +44,7 @@
   align-items: center;
   gap: 8px;
   height: 36px;
+  min-width: 0;
   max-width: 320px;
   /* Links wenig Abstand: das 28px-Badge sitzt 4px vom Rand wie ein Icon-Button */
   padding: 4px 12px 4px 4px;

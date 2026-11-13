@@ -49,6 +49,9 @@ export function Modal({ open, onClose, children, variant = 'fullscreen', label }
     if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || event.defaultPrevented) return
+      // Ein offenes Auswahlfeld (Combobox) schliesst mit Escape zuerst seine Liste
+      const focused = document.activeElement
+      if (focused?.getAttribute('role') === 'combobox' && focused.getAttribute('aria-expanded') === 'true') return
       event.preventDefault()
       onCloseRef.current()
     }

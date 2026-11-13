@@ -13,15 +13,11 @@
   color: var(--text-high-emphasis);
 }
 
-.labelIcon {
-  display: inline-flex;
+/* Pflichtfeld: rotes Sternchen nach dem Label (Rot wie das frühere Pflicht-Icon) */
+.required {
   flex-shrink: 0;
-  border-radius: 50%;
-  cursor: help;
-}
-
-.labelIcon:focus-visible {
-  outline: 2px solid var(--color-primary);
+  color: #d8232a;
+  font-weight: 500;
 }
 
 .input {
@@ -72,13 +68,22 @@
     box-shadow 150ms ease;
 }
 
-.selectValue {
-  flex: 1;
+/* Eingabe im Auswahlfeld: tippen filtert die Liste */
+/* Breite kommt vom Feld (flex), nicht vom Inhalt: size=1 hält die Eigenbreite klein */
+.selectInput {
+  flex: 1 1 0;
   min-width: 0;
+  width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
   font-size: 16px;
   line-height: 24px;
   letter-spacing: 0.016px;
   color: var(--text-high-emphasis);
+  text-overflow: ellipsis;
 }
 
 .selectChevron {
@@ -91,11 +96,54 @@
   border-radius: var(--radius-4);
 }
 
-.select select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
+.selectChevron {
   cursor: pointer;
+}
+
+.selectChevron img {
+  transition: transform 200ms var(--ease-out);
+}
+
+.selectOpen .selectChevron img {
+  transform: rotate(180deg);
+}
+
+/* Liste der Werte (im body, feste Lage unter oder über dem Feld) */
+.options {
+  position: fixed;
+  z-index: 1100;
+  max-height: 240px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--color-white);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-overlay);
+}
+
+.option {
+  padding: 8px 10px;
+  border-radius: var(--radius-4);
   font-size: 16px;
+  line-height: 24px;
+  color: var(--text-high-emphasis);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.optionActive {
+  background: var(--color-primary-tint);
+}
+
+.option[aria-selected='true'] {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.noMatches {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--text-disabled);
 }

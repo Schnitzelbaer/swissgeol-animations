@@ -12,9 +12,10 @@
   min-height: 0;
 }
 
+/* Breite der Abschnitte über --split (Standard 50%), der Viewer nimmt den Rest */
 .editor {
   display: flex;
-  flex: 1 0 0;
+  flex: 0 0 var(--split, 50%);
   flex-direction: column;
   min-width: 0;
   background: var(--color-white);
@@ -29,6 +30,7 @@
   flex-shrink: 0;
   padding: 0 24px 0 35px;
   background: var(--color-bg-grey);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .editorHeader h2 {
@@ -36,6 +38,7 @@
 }
 
 .editorContent {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -43,6 +46,12 @@
   flex-direction: column;
   gap: 36px;
   padding: 24px;
+}
+
+/* Karten und «Abschnitt hinzufügen» wachsen nur bis zu einer Maximalbreite */
+.list,
+.add {
+  max-width: 760px;
 }
 
 .list {
@@ -72,11 +81,50 @@
   border-color: var(--color-primary);
 }
 
+/* Gezogene Karte liegt über den anderen und hebt sich mit Schatten ab */
+.dragging {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 8px 24px rgba(28, 40, 52, 0.18);
+  transition: none;
+}
+
+.grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 36px;
+  margin-left: -11px;
+  border-radius: var(--radius-4);
+  color: var(--text-disabled);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.grip:hover,
+.dragging .grip {
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+.dragging .grip {
+  cursor: grabbing;
+}
+
+.grip:focus-visible {
+  outline: 2px solid var(--color-primary);
+}
+
 .cardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   padding: 11px 11px 11px 19px;
   background: var(--color-white);
   transition: background-color 250ms ease;
@@ -194,7 +242,55 @@
   flex: 1 0 0;
   flex-direction: column;
   min-width: 0;
-  border-left: 1px solid var(--border-default);
+}
+
+/* Trennlinie: sichtbare Linie mit Griff in der Mitte, breite Trefferfläche; ziehen, Doppelklick = 50/50 */
+.divider {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 4px;
+  background: var(--border-high-emphasis);
+  cursor: col-resize;
+  touch-action: none;
+  transition: background-color 150ms ease;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  inset: 0 -6px;
+}
+
+.divider:hover,
+.divider:focus-visible,
+.resizing .divider {
+  background: var(--color-primary);
+  outline: none;
+}
+
+.dividerHandle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 40px;
+  border: 1px solid var(--border-high-emphasis);
+  border-radius: 6px;
+  background: var(--color-white)
+    radial-gradient(circle, var(--text-disabled) 1.2px, transparent 1.6px) center / 6px 8px repeat-y;
+  transform: translate(-50%, -50%);
+  transition: border-color 150ms ease;
+}
+
+.divider:hover .dividerHandle,
+.divider:focus-visible .dividerHandle,
+.resizing .dividerHandle {
+  border-color: var(--color-primary);
+}
+
+/* Während des Ziehens fängt der PDF-Viewer keine Zeigerereignisse ab */
+.resizing .viewer {
+  pointer-events: none;
 }
 
 @media (max-width: 1100px) {
@@ -202,8 +298,15 @@
     flex-direction: column;
   }
 
+  .editor {
+    flex: 1 0 0;
+  }
+
+  .divider {
+    display: none;
+  }
+
   .viewer {
-    border-left: 0;
     border-top: 1px solid var(--border-default);
   }
 
