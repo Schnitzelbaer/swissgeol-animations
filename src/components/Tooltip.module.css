@@ -11,6 +11,8 @@
   letter-spacing: 0.048px;
   font-weight: 400;
   white-space: normal;
+  /* Lange Wörter ohne Leerzeichen (Dateinamen) innerhalb der Maximalbreite umbrechen statt über den Rand laufen */
+  overflow-wrap: anywhere;
   pointer-events: none;
   opacity: 0;
   transform: translateY(4px);
