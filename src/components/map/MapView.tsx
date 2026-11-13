@@ -67,8 +67,8 @@ type Props = {
   style: StyleFunction
   center: Coordinate
   resolution: number
-  /** Overlay oben links, z.B. die Legende */
-  legend?: ReactNode
+  /** Overlay oben links, z.B. die Legende; als Funktion erfährt sie, ob gerade die Heatmap zu sehen ist */
+  legend?: ReactNode | ((state: { heatmap: boolean }) => ReactNode)
   /** Breite des Preview-Panels, das rechts über der Karte liegt */
   panelOffset?: number
   /** Gewähltes Objekt, pink hervorgehoben */
@@ -101,7 +101,7 @@ type Props = {
 }
 
 /** Farbverlauf der Heatmap wie in der Live-App: Cyan am Rand über Grün und Gelb zu Rot */
-const HEATMAP_GRADIENT = ['rgba(56, 189, 248, 0)', 'rgba(94, 234, 212, 0.75)', '#4ade80', '#a3e635', '#fde047', '#fb923c', '#ef4444']
+export const HEATMAP_GRADIENT = ['rgba(56, 189, 248, 0)', 'rgba(94, 234, 212, 0.75)', '#4ade80', '#a3e635', '#fde047', '#fb923c', '#ef4444']
 
 /** Glühbirne der Legende: zwei violette Pulse um alle sichtbaren Objekte, je 0.9 s */
 const PULSE_MS = 900
@@ -158,6 +158,8 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
   const [tooltipIds, setTooltipIds] = useState<string[]>([])
   const [popoverIds, setPopoverIds] = useState<string[]>([])
   const [popoverInstant, setPopoverInstant] = useState(false)
+  // Heatmap sichtbar (herausgezoomt): die Legende zeigt dann die Dichte statt der Geometrien
+  const [heatmapVisible, setHeatmapVisible] = useState(() => (heatmap ? resolution >= heatmap.resolution : false))
   const popoverIdsRef = useRef<string[]>([])
   const hoveredRef = useRef<Feature[]>([])
   /** Startzeit des laufenden Pulses (Glühbirne), 0 = kein Puls */
@@ -327,6 +329,16 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
       }),
     })
     mapRef.current = map
+
+    // Wechsel zur Heatmap schon während des Zoomens melden: bei jedem gezeichneten Bild dieselbe Grenze wie die
+    // Heatmap-Ebene (change:resolution der View meldet beim animierten Zoomen nicht jeden Schritt)
+    if (heatmapOptions) {
+      map.on('postrender', (event) => {
+        const current = event.frameState?.viewState.resolution
+        if (current !== undefined) setHeatmapVisible(current >= heatmapOptions.resolution)
+      })
+      map.on('moveend', () => setHeatmapVisible((map.getView().getResolution() ?? 0) >= heatmapOptions.resolution))
+    }
 
     // Alle Objekte unter dem Zeiger (oberstes zuerst); ohne stacked nur das oberste.
     // Mit stacked ohne Toleranz: getroffen ist nur, was wirklich unter dem Zeiger liegt, nicht schon die Nachbarn.
@@ -610,7 +622,7 @@ export function MapView({ createFeatures, style, center, resolution, legend, pan
     <MapPulseContext.Provider value={pulse}>
       <div className={`${styles.root} ${embedded ? styles.embedded : ''}`} style={embedded ? ({ '--panel-offset': '0px' } as CSSProperties) : undefined}>
         <div ref={containerRef} className={styles.map} />
-        {legend}
+        {typeof legend === 'function' ? legend({ heatmap: heatmapVisible }) : legend}
         <MapControls
           basemap={basemap}
           onZoomIn={() => zoomBy(1)}

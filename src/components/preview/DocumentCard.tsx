@@ -43,11 +43,11 @@ export function DocumentCard({ file, showToc = true, tocOpen = false, onToggleTo
           </div>
           <div className={styles.actions}>
             {file.url ? (
-              <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={t.document.downloadFile(file.name)} tooltip={t.document.download} />
+              <ButtonLink icon={downloadIcon} href={file.url} download={file.name} aria-label={t.document.downloadFile(file.name)} />
             ) : (
-              <Button icon={downloadIcon} aria-label={t.document.downloadFile(file.name)} tooltip={t.document.download} />
+              <Button icon={downloadIcon} aria-label={t.document.downloadFile(file.name)} />
             )}
-            <Button icon={eyeIcon} aria-label={t.document.viewFile(file.name)} tooltip={t.document.view} disabled={!file.url} onClick={() => onOpen()} />
+            <Button icon={eyeIcon} aria-label={t.document.viewFile(file.name)} disabled={!file.url} onClick={() => onOpen()} />
           </div>
         </div>
         <p className={`${styles.meta} body3-medium`}>

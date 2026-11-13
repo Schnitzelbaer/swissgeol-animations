@@ -3,7 +3,7 @@ import { useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import { MapView } from '../components/map/MapView'
-import { Legend } from '../components/map/Legend'
+import { DensityLegend, Legend } from '../components/map/Legend'
 import { assetStyle } from '../components/map/styles'
 import { ASSET_HEATMAP_RESOLUTION, createAssetFeatures, createAssetHeatPoints, INITIAL_CENTER, INITIAL_RESOLUTION } from '../components/map/geometries'
 import { TableBar } from '../components/TableBar'
@@ -104,7 +104,7 @@ export function MapPage() {
             style={assetStyle}
             center={INITIAL_CENTER}
             resolution={INITIAL_RESOLUTION}
-            legend={
+            legend={({ heatmap }) => (
               <Legend
                 title={t.legend.title}
                 highlightLabel={t.legend.highlightAssets}
@@ -114,8 +114,10 @@ export function MapPage() {
                   { icon: legendLine, label: t.legend.line },
                   { icon: legendArea, label: t.legend.polygon },
                 ]}
+                // Herausgezoomt (Heatmap): Dichte statt Geometrien
+                alternate={{ active: heatmap, title: t.legend.density, content: <DensityLegend few={t.legend.few} many={t.legend.many} /> }}
               />
-            }
+            )}
             panelOffset={panelOffset}
             selectedId={selectedGeometryId}
             onFeatureClick={selectGeometry}

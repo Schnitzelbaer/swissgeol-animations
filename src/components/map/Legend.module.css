@@ -169,3 +169,52 @@
   height: 1px;
   background: var(--border-default);
 }
+
+/* Zwei Zustände (z.B. Geometrie und Dichte): Höhe gleitet über grid-template-rows, der Inhalt blendet über */
+.pane {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 300ms var(--ease-out),
+    opacity 150ms ease;
+}
+
+.paneActive {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 300ms var(--ease-out),
+    opacity 200ms ease 120ms;
+}
+
+.paneInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Dichte-Legende der Heatmap: Farbverlauf mit «Wenige» und «Viele», Ecken leicht gerundet wie das Flächen-Symbol */
+.density {
+  padding: 14px 16px 12px;
+}
+
+.densityBar {
+  height: 10px;
+  border-radius: 2px;
+}
+
+.densityLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--text-medium-emphasis);
+}
+
+/* Zweiter Zustand aktiv: mindestens die Figma-Breite, bei längerem Titel (z.B. «Asset density») so breit wie nötig */
+.fitTitle {
+  width: max-content;
+}
+
+.fitTitle .titleText {
+  white-space: nowrap;
+}

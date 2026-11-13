@@ -48,6 +48,9 @@ const en = {
     polygon: 'Asset polygon',
     highlightAssets: 'Highlight assets on the map',
     highlightBoreholes: 'Highlight boreholes on the map',
+    density: 'Asset density',
+    few: 'Few',
+    many: 'Many',
   },
   map: {
     zoomIn: 'Zoom in',
@@ -455,6 +458,9 @@ const de: Messages = {
     polygon: 'Asset Fläche',
     highlightAssets: 'Assets auf der Karte hervorheben',
     highlightBoreholes: 'Bohrungen auf der Karte hervorheben',
+    density: 'Asset-Dichte',
+    few: 'Wenige',
+    many: 'Viele',
   },
   map: {
     zoomIn: 'Hineinzoomen',

@@ -51,7 +51,7 @@
 }
 
 /* Download und Auge erscheinen erst beim Hover über dem Dokument (oder mit Tastatur-Fokus darin). Ohne Hover nimmt
-   der Dateiname die ganze Breite ein; die Buttons schieben sich herein und kürzen ihn. Breite: 12px Abstand + 2 × 36px
+   der Dateiname die ganze Breite ein; beim Hover wird er sofort (ohne Animation) gekürzt, die Buttons blenden ein. Breite: 12px Abstand + 2 × 36px
    + 4px. Ohne Hover (Touch) immer sichtbar. */
 .actions {
   display: flex;
@@ -62,10 +62,7 @@
   padding-left: 0;
   overflow: hidden;
   opacity: 0;
-  transition:
-    max-width 200ms var(--ease-out),
-    padding-left 200ms var(--ease-out),
-    opacity 150ms ease;
+  transition: opacity 150ms ease;
 }
 
 .item:hover .actions,
