@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { initialFiles, type AssetFile, type Section } from './files'
+import { analysePdf, type AnalysisResult } from './analysis'
 import { ALL_LEGEND_TOPICS, CONTENT_KINDS, type ContentKind, type LegendTopic } from '../components/map/boreholeLegends'
 
-/** Dauer der simulierten AI-Analyse (in der echten Anwendung teils über 20 Minuten) */
+/** Mindestdauer der Analyse, damit sie sichtbar bleibt (in der echten Anwendung teils über 20 Minuten) */
 export const ANALYSIS_DURATION_MS = 7000
 
 type Store = {
@@ -13,7 +14,10 @@ type Store = {
   saveFiles: (assetId: string, files: AssetFile[]) => void
   updateSections: (fileId: string, sections: Section[]) => void
   analysing: Set<string>
-  startAnalysis: (fileIds: string[]) => void
+  /** Analysiert PDFs (pdf.js im Browser, siehe analysis.ts); Ergebnis landet in den Dateien und in analysisResults */
+  startAnalysis: (targets: AssetFile[]) => void
+  /** Letztes Ergebnis je Datei, mit Laufnummer; die Bearbeiten-Seite übernimmt es in ihren Entwurf */
+  analysisResults: Map<string, { run: number; result: AnalysisResult | null }>
   /** Legende der Boreholes-Karte; bleibt beim Wechsel zur Detailseite und zurück erhalten */
   /** Gewählte Legende; null = erste Legende der aktiven Variante (useBoreholeLegendView) */
   boreholeLegend: LegendTopic | null
@@ -60,7 +64,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (search === before) return
     navigate({ pathname: location.pathname, search: search ? `?${search}` : '', hash: location.hash }, { replace: true, state: location.state })
   }, [boreholeLegend, boreholeContent, location, navigate])
-  const timers = useRef(new Map<string, number>())
 
   const getFile = useCallback((id: string | null | undefined) => files.find((file) => file.id === id), [files])
 
@@ -72,24 +75,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setFiles((current) => current.map((file) => (file.id === fileId ? { ...file, sections } : file)))
   }, [])
 
-  const startAnalysis = useCallback((fileIds: string[]) => {
-    setAnalysing((current) => new Set([...current, ...fileIds]))
-    for (const id of fileIds) {
-      window.clearTimeout(timers.current.get(id))
-      const timer = window.setTimeout(() => {
+  const [analysisResults, setAnalysisResults] = useState<Store['analysisResults']>(new Map())
+  const runs = useRef(new Map<string, number>())
+
+  const startAnalysis = useCallback((targets: AssetFile[]) => {
+    const pdfs = targets.filter((file) => file.format === 'PDF' && file.url)
+    setAnalysing((current) => new Set([...current, ...pdfs.map((file) => file.id)]))
+    for (const file of pdfs) {
+      const run = (runs.current.get(file.id) ?? 0) + 1
+      runs.current.set(file.id, run)
+      const finish = (result: AnalysisResult | null) => {
+        // Ein neuerer Lauf für dieselbe Datei hat Vorrang
+        if (runs.current.get(file.id) !== run) return
+        const patch = result ? { sections: result.sections, pages: result.pages, languages: result.languages, analysed: true } : { analysed: false }
+        setFiles((current) => current.map((candidate) => (candidate.id === file.id ? { ...candidate, ...patch } : candidate)))
+        setAnalysisResults((current) => new Map(current).set(file.id, { run, result }))
         setAnalysing((current) => {
           const next = new Set(current)
-          next.delete(id)
+          next.delete(file.id)
           return next
         })
-      }, ANALYSIS_DURATION_MS)
-      timers.current.set(id, timer)
+      }
+      analysePdf(file.url!, ANALYSIS_DURATION_MS).then(finish, () => finish(null))
     }
   }, [])
 
   const value = useMemo(
-    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend, setBoreholeLegend, boreholeContent, setBoreholeContent }),
-    [files, getFile, saveFiles, updateSections, analysing, startAnalysis, boreholeLegend, boreholeContent],
+    () => ({ files, getFile, saveFiles, updateSections, analysing, startAnalysis, analysisResults, boreholeLegend, setBoreholeLegend, boreholeContent, setBoreholeContent }),
+    [files, getFile, saveFiles, updateSections, analysing, startAnalysis, analysisResults, boreholeLegend, boreholeContent],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

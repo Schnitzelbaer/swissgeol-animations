@@ -188,7 +188,7 @@
   color: var(--text-high-emphasis);
 }
 
-/* Tabelle: «Hochgeladen» und Aktionen fix, «Name» und «OCR» teilen sich den Rest (Figma-Notiz) */
+/* Tabelle: Name nimmt den Rest, Analyse-Status, «Hochgeladen» und Aktionen fix */
 .grid {
   display: flex;
   flex-direction: column;
@@ -196,7 +196,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) 190px 160px;
+  grid-template-columns: 44px minmax(0, 1fr) 180px 190px 160px;
   align-items: center;
   min-height: 44px;
   border-left: 1px solid var(--border-high-emphasis);
@@ -263,7 +263,6 @@
 }
 
 .nameHead {
-  grid-column: span 2;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -279,10 +278,6 @@
 
 .descending img {
   transform: rotate(180deg);
-}
-
-.nameWide {
-  grid-column: span 2;
 }
 
 .nameCell,
@@ -307,6 +302,22 @@
   align-items: center;
   gap: 4px;
   animation: row-in 300ms var(--ease-out);
+}
+
+.analysed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0a7b55;
+  animation: row-in 300ms var(--ease-out);
+}
+
+.analysed .cellText {
+  color: inherit;
+}
+
+.statusMuted {
+  color: var(--text-disabled);
 }
 
 .spinner {

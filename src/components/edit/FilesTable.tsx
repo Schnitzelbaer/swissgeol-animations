@@ -219,6 +219,9 @@ export function FilesTable({ legal = false, files, analysing, onUpload, onDelete
               <img src={sortIcon} alt="" />
               <span className="body3-bold">{t.files.name}</span>
             </button>
+            <div className={`${styles.ocrCell} body3-bold`} role="columnheader">
+              {t.files.analysis}
+            </div>
             <div className={`${styles.dateCell} body3-bold`} role="columnheader">
               {t.files.uploaded}
             </div>
@@ -233,18 +236,29 @@ export function FilesTable({ legal = false, files, analysing, onUpload, onDelete
                 <div className={styles.checkCell} role="cell">
                   <Checkbox checked={selected.has(file.id)} label={t.files.select(file.name)} onChange={() => toggle(file.id)} />
                 </div>
-                {/* Ohne laufende Analyse nutzt der Name auch die OCR-Spalte */}
-                <div className={`${styles.nameCell} ${running ? '' : styles.nameWide}`} role="cell">
+                <div className={styles.nameCell} role="cell">
                   <TruncatedText text={file.name} className={styles.cellText} />
                 </div>
-                {running && (
-                  <div className={styles.ocrCell} role="cell">
-                    <span className={styles.analysing}>
+                {/* Analyse-Status: läuft (Spinner), analysiert, noch nicht analysiert; andere Formate werden nicht analysiert */}
+                <div className={styles.ocrCell} role="cell">
+                  {!isPdf ? (
+                    <span className={`${styles.cellText} ${styles.statusMuted}`}>–</span>
+                  ) : running ? (
+                    <span key="running" className={styles.analysing}>
                       <span className={styles.cellText}>{t.files.analysing}</span>
                       <img src={spinnerIcon} alt="" className={styles.spinner} />
                     </span>
-                  </div>
-                )}
+                  ) : file.analysed === false ? (
+                    <span key="none" className={`${styles.cellText} ${styles.statusMuted}`}>{t.files.notAnalysed}</span>
+                  ) : (
+                    <span key="done" className={styles.analysed}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className={styles.cellText}>{t.files.analysed}</span>
+                    </span>
+                  )}
+                </div>
                 <div className={`${styles.dateCell} ${styles.cellText}`} role="cell">
                   {file.uploaded}
                 </div>

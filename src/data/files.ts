@@ -37,6 +37,8 @@ export type AssetFile = {
   /** Nur PDFs werden analysiert und haben ein Inhaltsverzeichnis */
   sections?: Section[]
   legal?: boolean
+  /** false = noch nicht analysiert (z.B. frisch hochgeladen); ohne Angabe gilt die Datei als analysiert */
+  analysed?: boolean
 }
 
 let sectionCounter = 0

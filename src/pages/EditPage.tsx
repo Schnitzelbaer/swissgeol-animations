@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Button } from '../components/Button'
@@ -48,6 +48,8 @@ function toAssetFile(file: File, assetId: string, legal: boolean): AssetFile {
     url: URL.createObjectURL(file),
     legal,
     sections: [],
+    // Wird direkt nach dem Hochladen analysiert (nur PDFs); bis dahin «nicht analysiert»
+    analysed: false,
   }
 }
 
@@ -72,7 +74,7 @@ export function EditPage() {
   const { assetId, section = 'files' } = useParams()
   const asset = getAsset(assetId) ?? getAsset(DEFAULT_ASSET_ID)!
   const [searchParams, setSearchParams] = useSearchParams()
-  const { files, saveFiles, analysing, startAnalysis, updateSections, getFile } = useStore()
+  const { files, saveFiles, analysing, startAnalysis, analysisResults, updateSections, getFile } = useStore()
   const assetFiles = files.filter((file) => file.assetId === asset.id)
   const { openDocument } = useDocumentViewer()
   const [draft, setDraft] = useState(assetFiles)
@@ -89,6 +91,23 @@ export function EditPage() {
   useEffect(() => {
     setDraft((current) => current.map((file) => getFile(file.id) ?? file))
   }, [files, getFile])
+
+  // Fertige Analysen in den Entwurf übernehmen (auch für hochgeladene, noch nicht gespeicherte Dateien), je Lauf einmal
+  const appliedRuns = useRef(new Map<string, number>())
+  useEffect(() => {
+    const fresh = [...analysisResults].filter(([id, { run }]) => appliedRuns.current.get(id) !== run)
+    if (!fresh.length) return
+    for (const [id, { run }] of fresh) appliedRuns.current.set(id, run)
+    setDraft((current) =>
+      current.map((file) => {
+        const entry = analysisResults.get(file.id)
+        if (!entry || !fresh.some(([id]) => id === file.id)) return file
+        return entry.result
+          ? { ...file, sections: entry.result.sections, pages: entry.result.pages, languages: entry.result.languages, analysed: true }
+          : { ...file, analysed: false }
+      }),
+    )
+  }, [analysisResults])
 
   const tab = searchParams.get('tab') === 'legal' ? 'legal' : 'normal'
   const classifyId = searchParams.get('classify')
@@ -167,7 +186,12 @@ export function EditPage() {
                     legal={tab === 'legal'}
                     files={tabFiles}
                     analysing={analysing}
-                    onUpload={(uploads) => setDraft((current) => [...current, ...uploads.map((file) => toAssetFile(file, asset.id, tab === 'legal'))])}
+                    onUpload={(uploads) => {
+                      // Neue Dateien kommen in den Entwurf, PDFs werden sofort analysiert
+                      const added = uploads.map((file) => toAssetFile(file, asset.id, tab === 'legal'))
+                      setDraft((current) => [...current, ...added])
+                      startAnalysis(added)
+                    }}
                     onDelete={(ids) => setDraft((current) => current.filter((file) => !ids.includes(file.id)))}
                     onAnalyse={setAnalysisRequest}
                     onClassify={(id) => setParam('classify', id)}
@@ -192,7 +216,7 @@ export function EditPage() {
         open={analysisRequest !== null}
         onCancel={() => setAnalysisRequest(null)}
         onConfirm={() => {
-          if (analysisRequest) startAnalysis(analysisRequest)
+          if (analysisRequest) startAnalysis(draft.filter((file) => analysisRequest.includes(file.id)))
           setAnalysisRequest(null)
         }}
       />
