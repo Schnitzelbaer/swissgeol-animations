@@ -379,7 +379,7 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
       <header className={styles.editorHeader}>
         <h2 className="body2-bold">{t.classification.title}</h2>
         <div className={styles.headerActions}>
-          <Button variant="secondary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
+          <Button variant="tertiary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
           <span className={styles.headerSeparator} aria-hidden="true" />
           <Button icon={closeIcon} aria-label={t.classification.close} onClick={onCancel} />
         </div>
