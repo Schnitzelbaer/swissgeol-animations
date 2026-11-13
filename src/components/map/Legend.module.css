@@ -194,8 +194,9 @@
 }
 
 /* Dichte-Legende der Heatmap: Farbverlauf mit «Wenige» und «Viele», Ecken leicht gerundet wie das Flächen-Symbol */
+/* Abstände wie optisch bei der Geometrie-Legende: dort sitzen die Symbole mit Luft in 30px-Feldern (16px + rund 6px) */
 .density {
-  padding: 14px 16px 12px;
+  padding: 24px 24px 22px 22px;
 }
 
 .densityBar {
