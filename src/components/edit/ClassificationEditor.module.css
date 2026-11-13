@@ -28,13 +28,26 @@
   gap: 16px;
   height: 76px;
   flex-shrink: 0;
-  padding: 0 24px 0 35px;
+  padding: 0 16px 0 35px;
   background: var(--color-bg-grey);
   border-bottom: 1px solid var(--border-default);
 }
 
 .editorHeader h2 {
   margin: 0;
+}
+
+/* Rechts im Titel: «Update order», Trennstrich, Schliessen */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerSeparator {
+  width: 1px;
+  height: 24px;
+  background: var(--border-high-emphasis);
 }
 
 .editorContent {
@@ -48,10 +61,12 @@
   padding: 24px;
 }
 
-/* Karten und «Abschnitt hinzufügen» wachsen nur bis zu einer Maximalbreite */
+/* Karten und «Abschnitt hinzufügen» wachsen nur bis zu einer Maximalbreite und stehen in der Spalte mittig */
 .list,
 .add {
+  width: 100%;
   max-width: 760px;
+  margin: 0 auto;
 }
 
 .list {
@@ -244,7 +259,7 @@
   min-width: 0;
 }
 
-/* Trennlinie: sichtbare Linie mit Griff in der Mitte, breite Trefferfläche; ziehen, Doppelklick = 50/50 */
+/* Trennlinie: sichtbare Linie mit breiter Trefferfläche; ziehen, Doppelklick = 50/50 */
 .divider {
   position: relative;
   z-index: 3;
@@ -266,26 +281,6 @@
 .resizing .divider {
   background: var(--color-primary);
   outline: none;
-}
-
-.dividerHandle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12px;
-  height: 40px;
-  border: 1px solid var(--border-high-emphasis);
-  border-radius: 6px;
-  background: var(--color-white)
-    radial-gradient(circle, var(--text-disabled) 1.2px, transparent 1.6px) center / 6px 8px repeat-y;
-  transform: translate(-50%, -50%);
-  transition: border-color 150ms ease;
-}
-
-.divider:hover .dividerHandle,
-.divider:focus-visible .dividerHandle,
-.resizing .dividerHandle {
-  border-color: var(--color-primary);
 }
 
 /* Während des Ziehens fängt der PDF-Viewer keine Zeigerereignisse ab */

@@ -14,6 +14,7 @@ import resetIcon from '../../assets/icons/reset.svg'
 import trashIcon from '../../assets/icons/trash.svg'
 import chevronUpIcon from '../../assets/icons/chevron-up.svg'
 import plusIcon from '../../assets/icons/plus-small.svg'
+import closeIcon from '../../assets/icons/close.svg'
 
 const NO_LANGUAGE = '–'
 
@@ -377,7 +378,11 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
       {/* Titel über die ganze Breite, darunter Abschnitte und Viewer nebeneinander */}
       <header className={styles.editorHeader}>
         <h2 className="body2-bold">{t.classification.title}</h2>
-        <Button variant="secondary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
+        <div className={styles.headerActions}>
+          <Button variant="secondary" label={t.classification.updateOrder} icon={resetIcon} iconPosition="right" onClick={reorder} />
+          <span className={styles.headerSeparator} aria-hidden="true" />
+          <Button icon={closeIcon} aria-label={t.classification.close} onClick={onCancel} />
+        </div>
       </header>
       <div ref={columnsRef} className={`${styles.columns} ${resizing ? styles.resizing : ''}`} style={{ '--split': `${split * 100}%` } as CSSProperties}>
         <section className={styles.editor} aria-label={t.classification.title}>
@@ -429,12 +434,10 @@ export function ClassificationEditor({ file, files, onCancel, onSave, onSelectFi
             event.preventDefault()
             setSplit((current) => clampSplit(current + (event.key === 'ArrowLeft' ? -0.02 : 0.02)))
           }}
-        >
-          <span className={styles.dividerHandle} />
-        </div>
+        />
 
         <div className={styles.viewer}>
-          <ViewerHeader files={files} file={file} page={page} onSelectFile={onSelectFile} onGoToPage={setPage} onClose={onCancel} />
+          <ViewerHeader files={files} file={file} page={page} onSelectFile={onSelectFile} onGoToPage={setPage} />
           <PdfViewer file={file} page={page} onPageChange={setPage} sections={sections} initialTocOpen={false} />
         </div>
       </div>

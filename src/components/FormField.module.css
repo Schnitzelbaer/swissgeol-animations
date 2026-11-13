@@ -37,6 +37,15 @@
     box-shadow 150ms ease;
 }
 
+/* Mitwachsendes Textfeld: Höhe setzt TextField per Script, mindestens 44px */
+.grow {
+  display: block;
+  height: auto;
+  min-height: 44px;
+  overflow: hidden;
+  resize: none;
+}
+
 .input::placeholder {
   color: var(--text-disabled);
 }

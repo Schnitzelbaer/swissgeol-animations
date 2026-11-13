@@ -39,10 +39,38 @@ type TextFieldProps = {
   className?: string
 }
 
+/** Einzeiliger Text, der bei langem Inhalt in die Höhe wächst (Textarea ohne Zeilenumbruch per Enter) */
 export function TextField({ label, value, onChange, placeholder, required, className }: TextFieldProps) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  // Höhe an den Inhalt anpassen, auch wenn sich die Breite ändert (z.B. beim Ziehen der Trennlinie)
+  useLayoutEffect(() => {
+    const element = ref.current
+    if (!element) return
+    const fit = () => {
+      element.style.height = 'auto'
+      element.style.height = `${element.scrollHeight + 2}px`
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [value])
   return (
     <Field label={label} required={required} className={className}>
-      {(id) => <input id={id} className={styles.input} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />}
+      {(id) => (
+        <textarea
+          ref={ref}
+          id={id}
+          rows={1}
+          className={`${styles.input} ${styles.grow}`}
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value.replace(/\n/g, ' '))}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') event.preventDefault()
+          }}
+        />
+      )}
     </Field>
   )
 }
